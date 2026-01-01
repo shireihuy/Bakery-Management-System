@@ -12,9 +12,7 @@ import {
   SlidersHorizontal, 
   History, 
   Clock, 
-  CheckCircle2, 
   XCircle, 
-  Package as PackageIcon, 
   Eye 
 } from 'lucide-vue-next';
 import { useProducts, type Product } from '../composables/useProducts';
