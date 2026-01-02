@@ -19,10 +19,22 @@ import {
   ChevronRight
 } from "lucide-vue-next";
 
+import { useAuth } from '../composables/useAuth';
+
 const router = useRouter();
+const { user } = useAuth();
 
 const onGetStarted = () => {
-    router.push('/login');
+    if (user.value) {
+        // Redirect based on role
+        if (['admin', 'manager', 'baker', 'cashier'].includes(user.value.role)) {
+            router.push('/dashboard');
+        } else {
+            router.push('/customer');
+        }
+    } else {
+        router.push('/login');
+    }
 };
 
 // Mock Products Data (since we are migrating without full backend yet)

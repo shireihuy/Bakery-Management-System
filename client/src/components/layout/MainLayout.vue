@@ -27,7 +27,7 @@ const notifications = computed(() => notificationStore.notifications.value);
 const isNotificationOpen = ref(false);
 
 // Initialize auth
-autoLogin();
+// autoLogin(); // Now handled in App.vue for global availability
 
 const navigation = computed(() => {
   const tabs = [];
