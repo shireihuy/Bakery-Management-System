@@ -16,17 +16,13 @@ import {
   Sparkles,
   Star,
   ChevronLeft,
-  ChevronRight,
-  LayoutDashboard
+  ChevronRight
 } from "lucide-vue-next";
 
 import { useAuth } from '../composables/useAuth';
 
+const router = useRouter();
 const { user } = useAuth();
-
-const isStaff = computed(() => {
-    return user.value && ['admin', 'manager', 'baker', 'cashier'].includes(user.value.role);
-});
 
 const onGetStarted = () => {
     if (user.value) {
@@ -274,14 +270,6 @@ const products = [
             </router-link>
             <div class="flex items-center gap-3">
               <button 
-                v-if="isStaff"
-                @click="router.push('/dashboard')"
-                class="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 border border-green-200 text-green-900 font-bold hover:bg-green-50 transition-colors"
-              >
-                <LayoutDashboard class="w-4 h-4 mr-2 text-green-600" />
-                Go to Dashboard
-              </button>
-              <button 
                 @click="onGetStarted"
                 class="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition-all"
               >
@@ -399,14 +387,6 @@ const products = [
               Welcome to Matcha Bakery, where traditional baking meets Japanese-inspired flavors. Every morning, we bake fresh breads, pastries, and our signature matcha treats using premium ingredients and time-honored techniques.
             </p>
             <div class="flex flex-wrap gap-4 pt-4">
-              <button 
-                v-if="isStaff"
-                @click="router.push('/dashboard')"
-                class="inline-flex items-center justify-center rounded-md text-sm font-medium h-11 px-8 border-2 border-green-600 text-green-700 hover:bg-green-50 bg-transparent"
-              >
-                <LayoutDashboard class="w-5 h-5 mr-1.5" />
-                Management Dashboard
-              </button>
               <button 
                 @click="onGetStarted"
                 class="inline-flex items-center justify-center rounded-md text-sm font-medium h-11 px-8 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all"
