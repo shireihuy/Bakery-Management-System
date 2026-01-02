@@ -34,7 +34,7 @@ const navigation = computed(() => {
   // Fallback to empty role if user is null
   const role = user.value?.role || '';
   
-  if (['admin', 'manager'].includes(role)) {
+  if (['admin', 'manager', 'cashier', 'baker'].includes(role)) {
     tabs.push({ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard });
   }
   if (['admin', 'manager', 'cashier'].includes(role)) {
