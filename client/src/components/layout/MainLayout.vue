@@ -19,7 +19,7 @@ import { useNotifications } from '../../composables/useNotifications';
 
 const router = useRouter();
 const route = useRoute();
-const { user, logout: authLogout, autoLogin } = useAuth();
+const { user, logout: authLogout } = useAuth();
 const notificationStore = useNotifications();
 const { unreadCount, markAsRead, markAllAsRead } = notificationStore;
 const notifications = computed(() => notificationStore.notifications.value);
