@@ -381,6 +381,7 @@ const products = [
                 <ShoppingCart class="w-5 h-5 ml-2" />
               </button>
               <button 
+                @click="router.push('/customer')"
                 class="inline-flex items-center justify-center rounded-md text-sm font-medium h-11 px-8 border-2 border-green-600 text-green-700 hover:bg-green-50 bg-transparent"
               >
                 View Menu

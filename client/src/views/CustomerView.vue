@@ -161,7 +161,7 @@ const getStatusColor = (status: string) => {
     <!-- Header with Cart -->
     <div class="flex justify-between items-center mb-6">
         <div>
-            <h2 class="text-2xl font-bold text-green-900">Welcome, {{ user?.name }}!</h2>
+            <h2 class="text-2xl font-bold text-green-900">Welcome, {{ user ? user.name : 'Guest' }}!</h2>
             <p class="text-sm text-green-600">Browse our menu or check your order history</p>
         </div>
         <button 
@@ -187,6 +187,7 @@ const getStatusColor = (status: string) => {
             Menu
         </button>
         <button 
+            v-if="user"
             class="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200"
             :class="activeTab === 'orders' ? 'bg-white text-green-900 shadow-sm' : 'text-green-700 hover:text-green-900 hover:bg-green-200/50'"
             @click="activeTab = 'orders'"

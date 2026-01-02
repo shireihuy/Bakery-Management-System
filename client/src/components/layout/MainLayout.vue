@@ -53,6 +53,11 @@ const navigation = computed(() => {
     tabs.push({ name: 'Users', href: '/users', icon: Users });
   }
   
+  // Static tabs for everyone (including guests)
+  if (!role || role === 'customer') {
+    tabs.push({ name: 'Customer Menu', href: '/customer', icon: ShoppingCart });
+  }
+  
   return tabs;
 });
 
@@ -93,8 +98,8 @@ const getNotifIconColor = (type: string) => {
               </div>
             </div>
             <div class="flex items-center gap-3">
-              <!-- Notifications Popover -->
-              <div class="relative">
+              <!-- Notifications Popover (Hidden for guests) -->
+              <div v-if="user" class="relative">
                 <button 
                   @click="isNotificationOpen = !isNotificationOpen"
                   class="relative p-2 rounded-full hover:bg-green-50 text-green-700 transition-colors"
@@ -153,28 +158,39 @@ const getNotifIconColor = (type: string) => {
                 </div>
               </div>
 
-              <!-- Click outside to close -->
-              <div v-if="isNotificationOpen" @click="isNotificationOpen = false" class="fixed inset-0 z-40"></div>
+              <!-- Click outside to close (Hidden for guests) -->
+              <div v-if="user && isNotificationOpen" @click="isNotificationOpen = false" class="fixed inset-0 z-40"></div>
 
-              <div class="flex items-center gap-2 px-3 py-1 bg-green-50/50 rounded-lg border border-green-100">
-                <User class="w-4 h-4 text-green-600" />
-                <span class="text-sm text-green-900 font-medium">{{ user?.name }}</span>
-                <span class="capitalize inline-flex items-center rounded-full border border-green-200 px-2.5 py-0.5 text-[10px] font-bold transition-colors bg-white text-green-700">{{ user?.role }}</span>
-              </div>
-              <button 
-                @click="router.push('/settings')"
-                class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input hover:text-accent-foreground h-9 px-3 border-green-200 hover:bg-green-50 bg-transparent text-green-900"
-              >
-                <SettingsIcon class="w-4 h-4 mr-2" />
-                Settings
-              </button>
-              <button 
-                @click="logout"
-                class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input hover:text-accent-foreground h-9 px-3 border-green-200 hover:bg-green-50 bg-transparent text-green-900"
-              >
-                <LogOut class="w-4 h-4 mr-2" />
-                Logout
-              </button>
+              <template v-if="user">
+                <div class="flex items-center gap-2 px-3 py-1 bg-green-50/50 rounded-lg border border-green-100">
+                  <User class="w-4 h-4 text-green-600" />
+                  <span class="text-sm text-green-900 font-medium">{{ user.name }}</span>
+                  <span class="capitalize inline-flex items-center rounded-full border border-green-200 px-2.5 py-0.5 text-[10px] font-bold transition-colors bg-white text-green-700">{{ user.role }}</span>
+                </div>
+                <button 
+                  @click="router.push('/settings')"
+                  class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input hover:text-accent-foreground h-9 px-3 border-green-200 hover:bg-green-50 bg-transparent text-green-900"
+                >
+                  <SettingsIcon class="w-4 h-4 mr-2" />
+                  Settings
+                </button>
+                <button 
+                  @click="logout"
+                  class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input hover:text-accent-foreground h-9 px-3 border-green-200 hover:bg-green-50 bg-transparent text-green-900"
+                >
+                  <LogOut class="w-4 h-4 mr-2" />
+                  Logout
+                </button>
+              </template>
+              <template v-else>
+                <button 
+                  @click="router.push('/login')"
+                  class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition-all"
+                >
+                  <User class="w-4 h-4 mr-2" />
+                  Login
+                </button>
+              </template>
             </div>
           </div>
         </div>
