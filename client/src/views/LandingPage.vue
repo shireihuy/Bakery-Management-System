@@ -16,13 +16,17 @@ import {
   Sparkles,
   Star,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LayoutDashboard
 } from "lucide-vue-next";
 
 import { useAuth } from '../composables/useAuth';
 
-const router = useRouter();
 const { user } = useAuth();
+
+const isStaff = computed(() => {
+    return user.value && ['admin', 'manager', 'baker', 'cashier'].includes(user.value.role);
+});
 
 const onGetStarted = () => {
     if (user.value) {
@@ -268,13 +272,23 @@ const products = [
                 <p class="text-sm text-green-600">Fresh Daily Since 2020</p>
               </div>
             </router-link>
-            <button 
-              @click="onGetStarted"
-              class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
-            >
-              Order Online
-              <ArrowRight class="w-4 h-4 ml-2" />
-            </button>
+            <div class="flex items-center gap-3">
+              <button 
+                v-if="isStaff"
+                @click="router.push('/dashboard')"
+                class="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 border border-green-200 text-green-900 font-bold hover:bg-green-50 transition-colors"
+              >
+                <LayoutDashboard class="w-4 h-4 mr-2 text-green-600" />
+                Go to Dashboard
+              </button>
+              <button 
+                @click="onGetStarted"
+                class="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition-all"
+              >
+                {{ user ? 'Enter Shop' : 'Order Online' }}
+                <ArrowRight class="w-4 h-4 ml-2" />
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -386,10 +400,18 @@ const products = [
             </p>
             <div class="flex flex-wrap gap-4 pt-4">
               <button 
+                v-if="isStaff"
+                @click="router.push('/dashboard')"
+                class="inline-flex items-center justify-center rounded-md text-sm font-medium h-11 px-8 border-2 border-green-600 text-green-700 hover:bg-green-50 bg-transparent"
+              >
+                <LayoutDashboard class="w-5 h-5 mr-1.5" />
+                Management Dashboard
+              </button>
+              <button 
                 @click="onGetStarted"
                 class="inline-flex items-center justify-center rounded-md text-sm font-medium h-11 px-8 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all"
               >
-                Order Now
+                {{ user ? 'Access Store' : 'Order Now' }}
                 <ShoppingCart class="w-5 h-5 ml-2" />
               </button>
               <button 
