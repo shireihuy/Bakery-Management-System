@@ -247,7 +247,7 @@ const products = [
       <header class="bg-white/80 backdrop-blur-md border-b border-green-200 sticky top-0 z-50 shadow-sm">
         <div class="container mx-auto px-6 py-4">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
+            <router-link to="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <div class="w-10 h-10 rounded-lg overflow-hidden border border-green-200 shadow-sm">
                 <img src="/matcha-cake-logo.png" alt="Matcha Bakery Logo" class="w-full h-full object-cover" />
               </div>
@@ -255,7 +255,7 @@ const products = [
                 <h1 class="text-green-900 font-bold text-lg">Matcha Bakery</h1>
                 <p class="text-sm text-green-600">Fresh Daily Since 2020</p>
               </div>
-            </div>
+            </router-link>
             <button 
               @click="onGetStarted"
               class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
@@ -564,7 +564,7 @@ const products = [
        <footer class="bg-green-900 py-12">
         <div class="container mx-auto px-6">
           <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="flex items-center gap-3">
+            <router-link to="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <div class="w-10 h-10 rounded-lg overflow-hidden border border-green-200 shadow-sm">
                 <img src="/matcha-cake-logo.png" alt="Matcha Bakery Logo" class="w-full h-full object-cover" />
               </div>
@@ -572,7 +572,7 @@ const products = [
                 <h3 class="text-white font-bold">Matcha Bakery</h3>
                 <p class="text-sm text-green-300">Fresh Daily Since 2020</p>
               </div>
-            </div>
+            </router-link>
             <div class="text-green-300 text-sm">
               © 2025 Matcha Bakery. All rights reserved.
             </div>

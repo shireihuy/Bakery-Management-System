@@ -88,7 +88,7 @@ const getNotifIconColor = (type: string) => {
       <header class="bg-white border-b border-green-200 shadow-sm">
         <div class="container mx-auto px-6 py-4">
           <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
+            <router-link to="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
               <div class="w-10 h-10 rounded-lg overflow-hidden border border-green-200 shadow-sm">
                 <img src="/matcha-cake-logo.png" alt="Matcha Bakery Logo" class="w-full h-full object-cover" />
               </div>
@@ -96,7 +96,7 @@ const getNotifIconColor = (type: string) => {
                 <h1 class="text-green-900 font-bold">Matcha Bakery Management</h1>
                 <p class="text-sm text-green-600">Manage your bakery operations efficiently</p>
               </div>
-            </div>
+            </router-link>
             <div class="flex items-center gap-3">
               <!-- Notifications Popover (Hidden for guests) -->
               <div v-if="user" class="relative">
