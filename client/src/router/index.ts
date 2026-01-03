@@ -142,7 +142,7 @@ const router = createRouter({
     ]
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
     const { user } = useAuth()
 
     // Check if user is already logged in when visiting login/register
