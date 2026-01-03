@@ -85,19 +85,19 @@ const getNotifIconColor = (type: string) => {
 
 <template>
   <div class="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
-      <header class="bg-white border-b border-green-200 shadow-sm">
-        <div class="container mx-auto px-6 py-4">
-          <div class="flex items-center justify-between">
-            <router-link to="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div class="w-10 h-10 rounded-lg overflow-hidden border border-green-200 shadow-sm">
+      <header class="bg-white border-b border-green-200 shadow-sm sticky top-0 z-30">
+        <div class="container mx-auto px-3 sm:px-6 py-3 sm:py-4">
+          <div class="flex items-center justify-between gap-2">
+            <router-link to="/" class="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity min-w-0 flex-shrink">
+              <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden border border-green-200 shadow-sm flex-shrink-0">
                 <img src="/matcha-cake-logo.png" alt="Matcha Bakery Logo" class="w-full h-full object-cover" />
               </div>
-              <div>
-                <h1 class="text-green-900 font-bold">Matcha Bakery Management</h1>
-                <p class="text-sm text-green-600">Manage your bakery operations efficiently</p>
+              <div class="min-w-0">
+                <h1 class="text-sm sm:text-base md:text-lg text-green-900 font-bold truncate">Matcha Bakery</h1>
+                <p class="text-xs text-green-600 hidden sm:block truncate">Manage your bakery operations</p>
               </div>
             </router-link>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1 sm:gap-3 flex-shrink-0">
               <!-- Notifications Popover (Hidden for guests) -->
               <div v-if="user" class="relative">
                 <button 
@@ -105,8 +105,8 @@ const getNotifIconColor = (type: string) => {
                   class="relative p-2 rounded-full hover:bg-green-50 text-green-700 transition-colors"
                   title="Notifications"
                 >
-                  <Bell class="w-5 h-5" />
-                  <span v-if="unreadCount > 0" class="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold flex items-center justify-center rounded-full border border-white">
+                  <Bell class="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span v-if="unreadCount > 0" class="absolute top-0 right-0 sm:top-1 sm:right-1 w-3 h-3 sm:w-4 sm:h-4 bg-red-500 text-white text-[8px] sm:text-[10px] font-bold flex items-center justify-center rounded-full border border-white">
                     {{ unreadCount }}
                   </span>
                 </button>
@@ -114,10 +114,10 @@ const getNotifIconColor = (type: string) => {
                 <!-- Dropdown -->
                 <div 
                   v-if="isNotificationOpen" 
-                  class="absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-xl border border-green-100 z-50 overflow-hidden"
+                  class="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-md bg-white rounded-xl shadow-xl border border-green-100 z-50 overflow-hidden"
                 >
-                  <div class="p-4 border-b border-green-50 flex justify-between items-center bg-green-50/30">
-                    <h3 class="font-bold text-green-900">Notifications</h3>
+                  <div class="p-3 sm:p-4 border-b border-green-50 flex justify-between items-center bg-green-50/30">
+                    <h3 class="text-sm sm:text-base font-bold text-green-900">Notifications</h3>
                     <button 
                       @click="markAllAsRead" 
                       class="text-xs text-green-600 hover:text-green-800 font-medium"
@@ -133,17 +133,17 @@ const getNotifIconColor = (type: string) => {
                       v-for="notif in notifications" 
                       :key="notif.id"
                       @click="markAsRead(notif.id)"
-                      class="p-4 border-b border-gray-50 hover:bg-green-50/30 cursor-pointer transition-colors"
+                      class="p-3 sm:p-4 border-b border-gray-50 hover:bg-green-50/30 cursor-pointer transition-colors"
                       :class="{ 'bg-blue-50/20': !notif.isRead }"
                     >
-                      <div class="flex gap-3">
-                        <div :class="`p-2 rounded-lg h-fit ${getNotifIconColor(notif.type)}`">
-                          <Bell class="w-4 h-4" />
+                      <div class="flex gap-2 sm:gap-3">
+                        <div :class="`p-1.5 sm:p-2 rounded-lg h-fit ${getNotifIconColor(notif.type)}`">
+                          <Bell class="w-3 h-3 sm:w-4 sm:h-4" />
                         </div>
-                        <div class="flex-1">
-                          <div class="flex justify-between items-start mb-1">
-                            <span class="text-sm font-bold text-gray-900">{{ notif.title }}</span>
-                            <span class="text-[10px] text-gray-400">{{ formatTime(notif.timestamp) }}</span>
+                        <div class="flex-1 min-w-0">
+                          <div class="flex justify-between items-start mb-1 gap-2">
+                            <span class="text-xs sm:text-sm font-bold text-gray-900 truncate">{{ notif.title }}</span>
+                            <span class="text-[10px] text-gray-400 flex-shrink-0">{{ formatTime(notif.timestamp) }}</span>
                           </div>
                           <p class="text-xs text-gray-600 leading-relaxed">{{ notif.message }}</p>
                         </div>
@@ -162,33 +162,35 @@ const getNotifIconColor = (type: string) => {
               <div v-if="user && isNotificationOpen" @click="isNotificationOpen = false" class="fixed inset-0 z-40"></div>
 
               <template v-if="user">
-                <div class="flex items-center gap-2 px-3 py-1 bg-green-50/50 rounded-lg border border-green-100">
+                <div class="hidden md:flex items-center gap-2 px-3 py-1 bg-green-50/50 rounded-lg border border-green-100">
                   <User class="w-4 h-4 text-green-600" />
                   <span class="text-sm text-green-900 font-medium">{{ user.name }}</span>
                   <span class="capitalize inline-flex items-center rounded-full border border-green-200 px-2.5 py-0.5 text-[10px] font-bold transition-colors bg-white text-green-700">{{ user.role }}</span>
                 </div>
                 <button 
                   @click="router.push('/settings')"
-                  class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input hover:text-accent-foreground h-9 px-3 border-green-200 hover:bg-green-50 bg-transparent text-green-900"
+                  class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors h-8 sm:h-9 px-2 sm:px-3 border border-green-200 hover:bg-green-50 bg-transparent text-green-900"
+                  title="Settings"
                 >
-                  <SettingsIcon class="w-4 h-4 mr-2" />
-                  Settings
+                  <SettingsIcon class="w-4 h-4" />
+                  <span class="hidden lg:inline ml-2">Settings</span>
                 </button>
                 <button 
                   @click="logout"
-                  class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input hover:text-accent-foreground h-9 px-3 border-green-200 hover:bg-green-50 bg-transparent text-green-900"
+                  class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors h-8 sm:h-9 px-2 sm:px-3 border border-green-200 hover:bg-green-50 bg-transparent text-green-900"
+                  title="Logout"
                 >
-                  <LogOut class="w-4 h-4 mr-2" />
-                  Logout
+                  <LogOut class="w-4 h-4" />
+                  <span class="hidden lg:inline ml-2">Logout</span>
                 </button>
               </template>
               <template v-else>
                 <button 
                   @click="router.push('/login')"
-                  class="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition-all"
+                  class="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 sm:h-9 px-3 sm:px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition-all"
                 >
-                  <User class="w-4 h-4 mr-2" />
-                  Login
+                  <User class="w-4 h-4" />
+                  <span class="hidden sm:inline ml-2">Login</span>
                 </button>
               </template>
             </div>
@@ -196,20 +198,22 @@ const getNotifIconColor = (type: string) => {
         </div>
       </header>
 
-      <main class="container mx-auto px-6 py-8">
+      <main class="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
         <!-- Navigation Tabs -->
-        <div class="space-y-6">
-            <div class="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground bg-white/50 border border-green-100">
-                <router-link
-                    v-for="item in navigation"
-                    :key="item.name"
-                    :to="item.href"
-                    class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-2"
-                    :class="[isActive(item.href) ? 'bg-white text-green-900 shadow-sm' : 'text-green-600 hover:text-green-800']"
-                >
-                    <component :is="item.icon" class="w-4 h-4" />
-                    <span class="hidden sm:inline">{{ item.name }}</span>
-                </router-link>
+        <div class="space-y-4 sm:space-y-6">
+            <div class="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 scrollbar-hide">
+                <div class="inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground bg-white/50 border border-green-100 min-w-min">
+                    <router-link
+                        v-for="item in navigation"
+                        :key="item.name"
+                        :to="item.href"
+                        class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1 sm:gap-2"
+                        :class="[isActive(item.href) ? 'bg-white text-green-900 shadow-sm' : 'text-green-600 hover:text-green-800']"
+                    >
+                        <component :is="item.icon" class="w-4 h-4 flex-shrink-0" />
+                        <span class="hidden sm:inline">{{ item.name }}</span>
+                    </router-link>
+                </div>
             </div>
 
             <!-- Content Area -->

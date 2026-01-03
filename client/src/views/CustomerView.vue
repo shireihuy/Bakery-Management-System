@@ -157,84 +157,88 @@ const getStatusColor = (status: string) => {
 </script>
 
 <template>
-<div class="space-y-6">
+<div class="space-y-4 sm:space-y-6">
     <!-- Header with Cart -->
-    <div class="flex justify-between items-center mb-6">
-        <div>
-            <h2 class="text-2xl font-bold text-green-900">Welcome, {{ user ? user.name : 'Guest' }}!</h2>
-            <p class="text-sm text-green-600">Browse our menu or check your order history</p>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+        <div class="min-w-0 flex-1">
+            <h2 class="text-xl sm:text-2xl font-bold text-green-900 truncate">Welcome, {{ user ? user.name : 'Guest' }}!</h2>
+            <p class="text-xs sm:text-sm text-green-600">Browse our menu or check your order history</p>
         </div>
         <button 
             @click="isCartOpen = true"
-            class="relative inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition-all"
+            class="relative inline-flex items-center justify-center rounded-md text-sm font-medium h-9 sm:h-10 px-3 sm:px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition-all flex-shrink-0"
         >
-            <ShoppingCart class="w-4 h-4 mr-2" />
-            Cart
-            <span v-if="totalItems > 0" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+            <ShoppingCart class="w-4 h-4" />
+            <span class="hidden sm:inline ml-2">Cart</span>
+            <span v-if="totalItems > 0" class="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-500 text-white text-[10px] sm:text-xs font-bold w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center rounded-full border-2 border-white">
                 {{ totalItems }}
             </span>
         </button>
     </div>
 
     <!-- Tabs -->
-    <div class="flex space-x-1 rounded-lg bg-green-100/50 p-1 mb-6 max-w-md">
+    <div class="flex space-x-1 rounded-lg bg-green-100/50 p-1 mb-4 sm:mb-6 max-w-full sm:max-w-md">
         <button 
-            class="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200"
+            class="flex-1 flex items-center justify-center px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200"
             :class="activeTab === 'menu' ? 'bg-white text-green-900 shadow-sm' : 'text-green-700 hover:text-green-900 hover:bg-green-200/50'"
             @click="activeTab = 'menu'"
         >
-            <ShoppingCart class="w-4 h-4 mr-2" />
-            Menu
+            <ShoppingCart class="w-4 h-4 flex-shrink-0" />
+            <span class="hidden sm:inline ml-2">Menu</span>
         </button>
         <button 
             v-if="user"
-            class="flex-1 flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md transition-all duration-200"
+            class="flex-1 flex items-center justify-center px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200"
             :class="activeTab === 'orders' ? 'bg-white text-green-900 shadow-sm' : 'text-green-700 hover:text-green-900 hover:bg-green-200/50'"
             @click="activeTab = 'orders'"
         >
-            <History class="w-4 h-4 mr-2" />
-            Order History ({{ customerOrders.length }})
+            <History class="w-4 h-4 flex-shrink-0" />
+            <span class="hidden sm:inline ml-2">Order History</span>
+            <span class="sm:hidden ml-1">({{ customerOrders.length }})</span>
+            <span class="hidden sm:inline ml-1">({{ customerOrders.length }})</span>
         </button>
     </div>
 
     <!-- Menu Content -->
     <div v-if="activeTab === 'menu'" class="space-y-6">
         <!-- Filters -->
-        <div class="bg-white p-4 rounded-xl border border-green-200 shadow-sm">
-            <div class="flex flex-col md:flex-row gap-4">
+        <div class="bg-white p-3 sm:p-4 rounded-xl border border-green-200 shadow-sm">
+            <div class="flex flex-col gap-3 sm:gap-4">
                 <div class="flex-1 relative">
                     <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-600" />
                     <input 
                         v-model="searchQuery" 
                         type="text" 
                         placeholder="Search products..." 
-                        class="w-full pl-10 h-10 rounded-md border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                        class="w-full pl-10 h-9 sm:h-10 rounded-md border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
                     >
                 </div>
-                <div class="flex items-center gap-2 min-w-[200px]">
-                    <Filter class="w-4 h-4 text-green-600" />
-                    <select v-model="selectedCategory" class="h-10 w-full rounded-md border border-green-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
-                        <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-                    </select>
-                </div>
-                <div class="flex items-center gap-2 min-w-[200px]">
-                    <SlidersHorizontal class="w-4 h-4 text-green-600" />
-                    <select v-model="sortBy" class="h-10 w-full rounded-md border border-green-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
-                        <option value="name">Name</option>
-                        <option value="price-low">Price: Low to High</option>
-                        <option value="price-high">Price: High to Low</option>
-                        <option value="rating">Rating</option>
-                    </select>
+                <div class="grid grid-cols-2 gap-3 sm:flex sm:gap-4">
+                    <div class="flex items-center gap-2">
+                        <Filter class="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <select v-model="selectedCategory" class="h-9 sm:h-10 w-full rounded-md border border-green-200 text-xs sm:text-sm px-2 sm:px-3 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
+                            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <SlidersHorizontal class="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <select v-model="sortBy" class="h-9 sm:h-10 w-full rounded-md border border-green-200 text-xs sm:text-sm px-2 sm:px-3 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
+                            <option value="name">Name</option>
+                            <option value="price-low">Price: Low to High</option>
+                            <option value="price-high">Price: High to Low</option>
+                            <option value="rating">Rating</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-            <div class="mt-3 flex items-center justify-between text-sm">
+            <div class="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs sm:text-sm">
                  <p class="text-green-600">
                   Showing {{ filteredAndSortedProducts.length }} of {{ products.length }} products
                 </p>
                 <button 
                     v-if="searchQuery || selectedCategory !== 'All'"
                     @click="searchQuery = ''; selectedCategory = 'All'"
-                    class="text-green-600 hover:text-green-800 hover:underline"
+                    class="text-green-600 hover:text-green-800 hover:underline text-xs sm:text-sm"
                 >
                     Clear filters
                 </button>
@@ -252,7 +256,7 @@ const getStatusColor = (status: string) => {
                 <button @click="searchQuery = ''; selectedCategory = 'All'" class="text-sm text-green-700 hover:underline">Clear all filters</button>
             </div>
         </div>
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div 
                 v-for="product in filteredAndSortedProducts" 
                 :key="product.id"
@@ -307,7 +311,7 @@ const getStatusColor = (status: string) => {
                 </button>
             </div>
         </div>
-        <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <div v-for="order in customerOrders" :key="order.id" class="bg-white rounded-xl border border-green-200 p-4 hover:shadow-md transition-shadow">
                  <div class="text-center border-b border-green-100 pb-3 mb-3">
                     <p class="text-xs text-green-600 uppercase tracking-wider font-semibold">Matcha Bakery</p>
@@ -343,8 +347,8 @@ const getStatusColor = (status: string) => {
     </div>
 
     <!-- Cart Modal (Simple overlay for now) -->
-    <div v-if="isCartOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+    <div v-if="isCartOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
             <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                 <h3 class="font-bold text-lg text-gray-900">Shopping Cart</h3>
                 <button @click="isCartOpen = false" class="text-gray-500 hover:text-gray-700">
@@ -388,8 +392,8 @@ const getStatusColor = (status: string) => {
     </div>
     
     <!-- Product Details Modal -->
-    <div v-if="isProductDialogOpen && selectedProduct" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div v-if="isProductDialogOpen && selectedProduct" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
              <div class="p-6 overflow-y-auto">
                  <div class="flex justify-between items-start mb-6">
                      <div>
@@ -456,8 +460,8 @@ const getStatusColor = (status: string) => {
     </div>
     
     <!-- Order Details Modal -->
-    <div v-if="isOrderDetailsOpen && viewingOrder" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div v-if="isOrderDetailsOpen && viewingOrder" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
             <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-green-50 to-emerald-50">
                 <div class="flex justify-between items-start">
                     <div>
