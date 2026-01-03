@@ -454,5 +454,134 @@ const getStatusColor = (status: string) => {
              </div>
         </div>
     </div>
+    
+    <!-- Order Details Modal -->
+    <div v-if="isOrderDetailsOpen && viewingOrder" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-green-50 to-emerald-50">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h2 class="text-2xl font-bold text-green-900">Order Details</h2>
+                        <p class="text-sm text-green-600 mt-1">Order #{{ viewingOrder.id }}</p>
+                    </div>
+                    <button @click="isOrderDetailsOpen = false" class="text-gray-400 hover:text-gray-600">
+                        <XCircle class="w-6 h-6" />
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6 overflow-y-auto flex-1 space-y-6">
+                <!-- Order Status -->
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div>
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Status</p>
+                        <span :class="`px-3 py-1 rounded-full text-sm font-medium border inline-flex items-center gap-2 ${getStatusColor(viewingOrder.status)}`">
+                            <Clock class="w-4 h-4" />
+                            <span class="capitalize">{{ viewingOrder.status }}</span>
+                        </span>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Order Date</p>
+                        <p class="text-sm font-medium text-gray-900">{{ viewingOrder.date }}</p>
+                    </div>
+                </div>
+
+                <!-- Customer Information -->
+                <div class="space-y-3">
+                    <h3 class="font-semibold text-gray-900 flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                            <span class="text-green-700 text-sm font-bold">{{ viewingOrder.customerName.charAt(0) }}</span>
+                        </div>
+                        Customer Information
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Name</p>
+                            <p class="text-sm font-medium text-gray-900">{{ viewingOrder.customerName }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Email</p>
+                            <p class="text-sm font-medium text-gray-900">{{ viewingOrder.customerEmail }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Phone</p>
+                            <p class="text-sm font-medium text-gray-900">{{ viewingOrder.phone }}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Address</p>
+                            <p class="text-sm font-medium text-gray-900">{{ viewingOrder.address }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="space-y-3">
+                    <h3 class="font-semibold text-gray-900">Order Items</h3>
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-gray-50 px-4 py-2 border-b border-gray-200">
+                            <div class="grid grid-cols-12 gap-2 text-xs font-medium text-gray-600 uppercase tracking-wider">
+                                <div class="col-span-6">Product</div>
+                                <div class="col-span-2 text-center">Qty</div>
+                                <div class="col-span-2 text-right">Price</div>
+                                <div class="col-span-2 text-right">Total</div>
+                            </div>
+                        </div>
+                        <div class="divide-y divide-gray-200">
+                            <div v-for="(item, idx) in viewingOrder.items" :key="idx" class="px-4 py-3 hover:bg-gray-50 transition-colors">
+                                <div class="grid grid-cols-12 gap-2 items-center">
+                                    <div class="col-span-6">
+                                        <p class="text-sm font-medium text-gray-900">{{ item.productName }}</p>
+                                    </div>
+                                    <div class="col-span-2 text-center">
+                                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-700 text-sm font-medium">
+                                            {{ item.quantity }}
+                                        </span>
+                                    </div>
+                                    <div class="col-span-2 text-right">
+                                        <p class="text-sm text-gray-600">${{ item.price.toFixed(2) }}</p>
+                                    </div>
+                                    <div class="col-span-2 text-right">
+                                        <p class="text-sm font-medium text-gray-900">${{ (item.price * item.quantity).toFixed(2) }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="space-y-3 pt-4 border-t border-gray-200">
+                    <h3 class="font-semibold text-gray-900">Order Summary</h3>
+                    <div class="space-y-2 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Subtotal</span>
+                            <span class="font-medium text-gray-900">${{ viewingOrder.total.toFixed(2) }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Tax (0%)</span>
+                            <span class="font-medium text-gray-900">$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Delivery Fee</span>
+                            <span class="font-medium text-gray-900">$0.00</span>
+                        </div>
+                        <div class="pt-2 border-t border-green-300 flex justify-between items-center">
+                            <span class="font-bold text-gray-900">Total</span>
+                            <span class="text-2xl font-bold text-green-700">${{ viewingOrder.total.toFixed(2) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+                <button 
+                    @click="isOrderDetailsOpen = false" 
+                    class="px-6 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 shadow-md transition-colors"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 </template>
