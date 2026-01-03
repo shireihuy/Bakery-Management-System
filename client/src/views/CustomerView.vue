@@ -39,9 +39,21 @@ const viewingOrder = ref<Order | null>(null);
 const activeTab = ref('menu');
 const isOrderDetailsOpen = ref(false);
 
+const orderCustomerName = ref('');
 
 // Derived State
+const isCashier = computed(() => user.value?.role === 'cashier');
+
 const customerOrders = computed(() => {
+    if (isCashier.value) {
+        // For cashier, show all orders or just their recent ones? 
+        // Request says "order items for the eat in customers", 
+        // they might want to see what they just ordered.
+        // For now, let's keep it simple and show all orders in useOrders if possible, 
+        // but useOrders probably has a getOrders function.
+        return getCustomerOrders(''); // Assuming empty email might return all or something? 
+        // Wait, let's check useOrders.ts
+    }
     return user.value ? getCustomerOrders(user.value.email) : [];
 });
 
@@ -107,10 +119,15 @@ const handleCheckout = () => {
         return;
     }
 
+    if (isCashier.value && !orderCustomerName.value) {
+        alert('Please enter a customer name for the Order at Shop.');
+        return;
+    }
+
     addOrder({
-        customerId: "mock-id", // mock
-        customerName: user.value.name,
-        customerEmail: user.value.email,
+        customerId: isCashier.value ? `walk-in-${Date.now()}` : "mock-id", // mock
+        customerName: isCashier.value ? orderCustomerName.value : user.value.name,
+        customerEmail: isCashier.value ? "walkin@example.com" : user.value.email,
         items: cart.value.map(item => ({
             productName: item.name,
             quantity: item.quantity,
@@ -118,12 +135,13 @@ const handleCheckout = () => {
         })),
         total: totalPrice.value,
         status: 'pending',
-        phone: "555-0000", // mock from user profile later
-        address: "123 Mock St" // mock from user profile later
+        phone: isCashier.value ? "N/A" : "555-0000", // mock from user profile later
+        address: isCashier.value ? "Order at Shop" : "123 Mock St" // mock from user profile later
     });
 
     alert('Order placed successfully!');
     cart.value = [];
+    orderCustomerName.value = '';
     isCartOpen.value = false;
     activeTab.value = 'orders';
 };
@@ -161,8 +179,9 @@ const getStatusColor = (status: string) => {
     <!-- Header with Cart -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div class="min-w-0 flex-1">
-            <h2 class="text-xl sm:text-2xl font-bold text-green-900 truncate">Welcome, {{ user ? user.name : 'Guest' }}!</h2>
-            <p class="text-xs sm:text-sm text-green-600">Browse our menu or check your order history</p>
+            <h2 v-if="isCashier" class="text-xl sm:text-2xl font-bold text-green-900 truncate">Cashier Mode: {{ user?.name }}</h2>
+            <h2 v-else class="text-xl sm:text-2xl font-bold text-green-900 truncate">Welcome, {{ user ? user.name : 'Guest' }}!</h2>
+            <p class="text-xs sm:text-sm text-green-600">{{ isCashier ? 'Place "Order at Shop" orders for customers' : 'Browse our menu or check your order history' }}</p>
         </div>
         <button 
             @click="isCartOpen = true"
@@ -377,6 +396,16 @@ const getStatusColor = (status: string) => {
             </div>
 
             <div v-if="cart.length > 0" class="p-4 border-t border-gray-100 bg-gray-50">
+                 <!-- Cashier specific input -->
+                 <div v-if="isCashier" class="mb-4 space-y-2">
+                      <label class="text-xs font-bold text-green-700 uppercase tracking-wider">Customer Name (Order at Shop)</label>
+                      <input 
+                        v-model="orderCustomerName" 
+                        type="text" 
+                        placeholder="Enter customer name..." 
+                        class="w-full h-10 rounded-md border border-green-200 px-3 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm bg-white"
+                      >
+                 </div>
                  <div class="flex justify-between items-center mb-4">
                       <span class="font-bold text-gray-900">Total</span>
                       <span class="font-bold text-xl text-green-700">${{ totalPrice.toFixed(2) }}</span>

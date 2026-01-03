@@ -54,8 +54,8 @@ const navigation = computed(() => {
   }
   
   // Static tabs for everyone (including guests)
-  if (!role || role === 'customer') {
-    tabs.push({ name: 'Customer Menu', href: '/customer', icon: ShoppingCart });
+  if (!role || role === 'customer' || role === 'cashier') {
+    tabs.push({ name: 'Shop', href: '/customer', icon: ShoppingCart });
   }
   
   return tabs;

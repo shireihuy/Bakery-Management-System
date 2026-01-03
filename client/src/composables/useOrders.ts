@@ -52,8 +52,8 @@ export function useOrders() {
     };
 
     const getCustomerOrders = (email: string) => {
-        // Simple mock matching by email for now since we don't have real IDs
-        return orders.value.filter(o => o.customerEmail === email || o.customerEmail.includes('customer'));
+        if (!email) return orders.value;
+        return orders.value.filter(o => o.customerEmail === email);
     };
 
     const updateOrderStatus = (orderId: string, status: Order['status']) => {
