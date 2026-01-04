@@ -5,7 +5,13 @@ const jwt = require('jsonwebtoken');
 const register = async (req, res) => {
     const { name, email, password, phone_number, address, role } = req.body;
 
+    console.log('Registration attempt:', { name, email, role, phone_number, address });
+
     try {
+        // Handle empty strings as null for optional fields
+        const finalPhone = (phone_number === '' || phone_number === undefined) ? null : phone_number;
+        const finalAddress = (address === '' || address === undefined) ? null : address;
+
         // For development, we allow setting roles. In production, this should be guarded.
         const userRole = (role && ['Admin', 'Manager', 'Baker', 'Cashier', 'Customer'].includes(role)) ? role : 'Customer';
 
@@ -18,9 +24,10 @@ const register = async (req, res) => {
 
         const newUser = await pool.query(
             'INSERT INTO users (name, email, password, phone_number, address, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, role, phone_number as phone, address',
-            [name, email, hashedPassword, phone_number, address, userRole]
+            [name, email, hashedPassword, finalPhone, finalAddress, userRole]
         );
 
+        console.log('User registered successfully:', newUser.rows[0].email);
         res.status(201).json(newUser.rows[0]);
     } catch (err) {
         console.error(err);
