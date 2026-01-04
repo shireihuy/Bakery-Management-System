@@ -156,9 +156,9 @@ router.beforeEach((to, _from, next) => {
     if (requiresAuth && !user.value) {
         // Not logged in, redirect to login
         next({ name: 'login', query: { redirect: to.fullPath } })
-    } else if (requiresAuth && allowedRoles && !allowedRoles.includes(user.value?.role || '')) {
+    } else if (requiresAuth && allowedRoles && !allowedRoles.includes(user.value?.role?.toLowerCase() || '')) {
         // Logged in but doesn't have required role
-        if (user.value?.role === 'customer') {
+        if (user.value?.role?.toLowerCase() === 'customer') {
             next({ name: 'customer-view' })
         } else {
             next({ name: 'dashboard' })

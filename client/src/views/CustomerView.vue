@@ -42,7 +42,7 @@ const isOrderDetailsOpen = ref(false);
 const orderCustomerName = ref('');
 
 // Derived State
-const isCashier = computed(() => user.value?.role === 'cashier');
+const isCashier = computed(() => user.value?.role?.toLowerCase() === 'cashier');
 
 const customerOrders = computed(() => {
     if (isCashier.value) {
