@@ -133,8 +133,8 @@ const updateOrderStatus = async (req, res) => {
         const result = await query(
             `UPDATE orders 
              SET status = $1,
-                 start_time = CASE WHEN $1 = 'Baking' THEN CURRENT_TIMESTAMP ELSE start_time END,
-                 completed_time = CASE WHEN $1 = 'Completed' THEN CURRENT_TIMESTAMP ELSE completed_time END
+                 start_time = CASE WHEN $1::text = 'Baking' THEN CURRENT_TIMESTAMP ELSE start_time END,
+                 completed_time = CASE WHEN $1::text = 'Completed' THEN CURRENT_TIMESTAMP ELSE completed_time END
              WHERE id = $2 
              RETURNING *`,
             [status, id]
