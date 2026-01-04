@@ -24,13 +24,15 @@ const handleSubmit = async () => {
     error.value = '';
     isLoading.value = true;
     
-    // Simulate API call and login
-    setTimeout(() => {
-        isLoading.value = false;
-        const redirectPath = login(email.value);
+    try {
+        const redirectPath = await login(email.value, password.value);
         console.log('Logged in as:', email.value);
         router.push(redirectPath);
-    }, 1000);
+    } catch (err: any) {
+        error.value = err.message || 'Login failed. Please check your credentials.';
+    } finally {
+        isLoading.value = false;
+    }
 };
 </script>
 
@@ -123,11 +125,11 @@ const handleSubmit = async () => {
           <div class="mt-6 pt-6 border-t border-green-200">
             <p class="text-sm text-green-600 mb-3">Demo accounts:</p>
             <div class="space-y-1 text-xs text-green-700">
-              <p>Admin: admin@bakery.com / admin123</p>
-              <p>Manager: manager@bakery.com / manager123</p>
-              <p>Baker: baker@bakery.com / baker123</p>
-              <p>Cashier: cashier@bakery.com / cashier123</p>
-              <p>Customer: customer@bakery.com / customer123</p>
+              <p>Admin: admin@bakery.com / adminpassword</p>
+              <p>Manager: manager@bakery.com / managerpassword</p>
+              <p>Baker: baker@bakery.com / bakerpassword</p>
+              <p>Cashier: cashier@bakery.com / cashierpassword</p>
+              <p>Customer: john@example.com / password123</p>
             </div>
           </div>
         </div>

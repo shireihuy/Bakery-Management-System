@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Loader2, ArrowLeft, Phone, MapPin } from 'lucide-vue-next';
+import { useAuth } from '../composables/useAuth';
 
 const router = useRouter();
 
@@ -13,6 +14,8 @@ const phone = ref('');
 const address = ref('');
 const error = ref('');
 const isLoading = ref(false);
+
+const { register, login } = useAuth();
 
 const onToggleMode = () => {
     router.push('/login');
@@ -37,20 +40,23 @@ const handleSubmit = async () => {
 
     isLoading.value = true;
     
-    // Simulate API call
-    setTimeout(() => {
-        isLoading.value = false;
-        // For now just log
-        console.log('Register attempt', {
+    try {
+        await register({
             name: name.value,
             email: email.value,
             password: password.value,
-            phone: phone.value,
-            address: address.value
+            phone_number: phone.value,
+            role: 'Customer' // Default to customer on public registration
         });
-        // Navigate to dashboard on success (mocking success)
-         router.push('/dashboard');
-    }, 1000);
+        
+        // Auto login after registration
+        const redirectPath = await login(email.value, password.value);
+        router.push(redirectPath);
+    } catch (err: any) {
+        error.value = err.message || 'Registration failed. Please try again.';
+    } finally {
+        isLoading.value = false;
+    }
 };
 </script>
 
