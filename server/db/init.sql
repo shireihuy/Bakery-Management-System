@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS inventory (
 -- Orders Table
 CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
-    customer_id UUID REFERENCES users(id),
+    customer_id VARCHAR(255), -- UUID for registered users, 'GUEST' for walk-ins
+    customer_name VARCHAR(255), -- Stores name for walk-ins or snapshot for users
     total_price DECIMAL(10, 2) NOT NULL,
     status VARCHAR(50) DEFAULT 'Pending', -- Pending, Baking, Ready, Completed, Cancelled
     order_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
