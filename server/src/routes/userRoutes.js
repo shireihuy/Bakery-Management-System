@@ -13,6 +13,7 @@ router.get('/', authenticateToken, authorizeRoles('Admin', 'Manager'), async (re
         // Transform data to match frontend expectations if needed
         const users = result.rows.map(user => ({
             ...user,
+            role: user.role.toLowerCase(),
             status: 'active', // For now, default to active as we don't have this in DB yet
             joinDate: user.joinDate ? new Date(user.joinDate).toISOString().split('T')[0] : 'N/A'
         }));

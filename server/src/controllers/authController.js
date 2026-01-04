@@ -21,7 +21,10 @@ const register = async (req, res) => {
             [name, email, hashedPassword, phone_number, userRole]
         );
 
-        res.status(201).json(newUser.rows[0]);
+        res.status(201).json({
+            ...newUser.rows[0],
+            role: newUser.rows[0].role.toLowerCase()
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server error during registration' });
@@ -56,7 +59,7 @@ const login = async (req, res) => {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role.toLowerCase()
             }
         });
     } catch (err) {

@@ -4,7 +4,7 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    role: 'Admin' | 'Manager' | 'Baker' | 'Cashier' | 'Customer';
+    role: 'admin' | 'manager' | 'baker' | 'cashier' | 'customer';
     status: 'active' | 'inactive';
     phone?: string;
     address?: string;
@@ -12,12 +12,11 @@ export interface User {
 }
 
 const users = ref<User[]>([]);
-const API_URL = 'http://localhost:3000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export function useUsers() {
     const fetchUsers = async () => {
         try {
-            // In a real app, you would get this token from localStorage/AuthStore
             const token = localStorage.getItem('token');
             const response = await fetch(`${API_URL}/users`, {
                 headers: {
@@ -25,7 +24,11 @@ export function useUsers() {
                 }
             });
             if (response.ok) {
-                users.value = await response.json();
+                const data = await response.json();
+                users.value = data.map((u: any) => ({
+                    ...u,
+                    role: u.role.toLowerCase() as User['role']
+                }));
             }
         } catch (err) {
             console.error('Failed to fetch users:', err);
