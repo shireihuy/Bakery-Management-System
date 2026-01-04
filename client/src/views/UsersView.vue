@@ -251,7 +251,11 @@ const getRoleBadgeColor = (role: string) => {
                         </div>
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">Role</label>
-                            <select v-model="form.role" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white">
+                            <select 
+                                v-model="form.role" 
+                                :disabled="editingUser?.role === 'Admin'"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                            >
                                 <option value="Admin">Admin</option>
                                 <option value="Manager">Manager</option>
                                 <option value="Baker">Baker</option>
