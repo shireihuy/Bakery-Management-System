@@ -42,5 +42,15 @@ services:
     depends_on:
       - server
 
+  # Database UI
+  adminer:
+    image: adminer
+    container_name: bakery-adminer
+    restart: always
+    ports:
+      - "8085:8080"
+    depends_on:
+      - db
+
 volumes:
   postgres_data:
