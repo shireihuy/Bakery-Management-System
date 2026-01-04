@@ -113,6 +113,7 @@ export function useOrders() {
                 },
                 body: JSON.stringify({
                     customer_id: orderData.customerId,
+                    customer_name: orderData.customerName,
                     total_price: orderData.total,
                     items: orderData.items.map((item: any) => ({
                         product_id: item.productId,

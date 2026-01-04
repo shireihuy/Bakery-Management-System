@@ -1,8 +1,8 @@
 const { pool, query } = require('../config/db');
 
 const createOrder = async (req, res) => {
-    const { customer_id, total_price, items } = req.body;
-    console.log('Creating order:', { customer_id, total_price, itemsCount: items?.length });
+    const { customer_id, customer_name, total_price, items } = req.body;
+    console.log('Creating order:', { customer_id, customer_name, total_price, itemsCount: items?.length });
 
     const client = await pool.connect();
 
@@ -11,8 +11,8 @@ const createOrder = async (req, res) => {
 
         // 1. Insert into orders table
         const orderResult = await client.query(
-            'INSERT INTO orders (customer_id, total_price, status) VALUES ($1, $2, $3) RETURNING id',
-            [customer_id || null, total_price, 'Pending']
+            'INSERT INTO orders (customer_id, customer_name, total_price, status) VALUES ($1, $2, $3, $4) RETURNING id',
+            [customer_id || 'GUEST', customer_name || 'Walk-in Customer', total_price, 'Pending']
         );
 
         const orderId = orderResult.rows[0].id;
@@ -45,13 +45,13 @@ const getOrders = async (req, res) => {
             SELECT 
                 o.id, 
                 o.customer_id, 
-                u.name as customer_name, 
+                COALESCE(o.customer_name, u.name, 'Unknown') as customer_name, 
                 u.email as customer_email,
                 o.total_price, 
                 o.status, 
                 o.order_date
             FROM orders o
-            LEFT JOIN users u ON o.customer_id = u.id
+            LEFT JOIN users u ON o.customer_id::varchar = u.id::varchar
             ORDER BY o.order_date DESC
         `);
 
