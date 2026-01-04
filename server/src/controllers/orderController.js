@@ -1,10 +1,8 @@
-const pool = require('../config/db');
+const { pool, query } = require('../config/db');
 
 const createOrder = async (req, res) => {
     const { customer_id, total_price, items } = req.body;
-
-    // customer_id can be null for walk-in/guest if not logged in, 
-    // but typically we expect it if they are logged in.
+    console.log('Creating order:', { customer_id, total_price, itemsCount: items?.length });
 
     const client = await pool.connect();
 
@@ -33,9 +31,9 @@ const createOrder = async (req, res) => {
     } catch (err) {
         await client.query('ROLLBACK');
         console.error('Error creating order:', err);
-        res.status(500).json({ message: 'Server error creating order' });
+        res.status(500).json({ message: 'Server error creating order', error: err.message });
     } finally {
-        client.release();
+        if (client) client.release();
     }
 };
 
@@ -43,7 +41,7 @@ const getOrders = async (req, res) => {
     try {
         // Simple join to get order info and customer name
         // We might want to get items too, but that might be a separate query or a complex join
-        const result = await pool.query(`
+        const result = await query(`
             SELECT 
                 o.id, 
                 o.customer_id, 
@@ -60,7 +58,7 @@ const getOrders = async (req, res) => {
         // Now for each order, fetch items
         const orders = [];
         for (const row of result.rows) {
-            const itemsResult = await pool.query(`
+            const itemsResult = await query(`
                 SELECT 
                     od.id, 
                     od.product_id, 
@@ -88,7 +86,7 @@ const getOrders = async (req, res) => {
 const getMyOrders = async (req, res) => {
     const userId = req.user.id;
     try {
-        const result = await pool.query(`
+        const result = await query(`
             SELECT id, total_price, status, order_date
             FROM orders
             WHERE customer_id = $1
@@ -97,7 +95,7 @@ const getMyOrders = async (req, res) => {
 
         const orders = [];
         for (const row of result.rows) {
-            const itemsResult = await pool.query(`
+            const itemsResult = await query(`
                 SELECT 
                     od.id, 
                     od.product_id, 
@@ -127,7 +125,7 @@ const updateOrderStatus = async (req, res) => {
     const { status } = req.body;
 
     try {
-        const result = await pool.query(
+        const result = await query(
             'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
             [status, id]
         );
