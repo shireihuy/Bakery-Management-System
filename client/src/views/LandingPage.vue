@@ -27,7 +27,9 @@ const { user } = useAuth();
 const onGetStarted = () => {
     if (user.value) {
         // Redirect based on role
-        if (['admin', 'manager', 'baker', 'cashier'].includes(user.value.role)) {
+        const role = user.value.role.toLowerCase();
+        const staffRoles = ['admin', 'manager', 'baker', 'cashier'];
+        if (staffRoles.includes(role)) {
             router.push('/dashboard');
         } else {
             router.push('/customer');
@@ -38,8 +40,14 @@ const onGetStarted = () => {
 };
 
 const onViewMenu = () => {
-    if (user.value && ['admin', 'manager', 'baker', 'cashier'].includes(user.value.role)) {
-        router.push('/products');
+    if (user.value) {
+        const role = user.value.role.toLowerCase();
+        const staffRoles = ['admin', 'manager', 'baker', 'cashier'];
+        if (staffRoles.includes(role)) {
+            router.push('/products');
+        } else {
+            router.push('/customer');
+        }
     } else {
         router.push('/customer');
     }

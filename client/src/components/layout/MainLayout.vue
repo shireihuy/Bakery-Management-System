@@ -32,7 +32,7 @@ const isNotificationOpen = ref(false);
 const navigation = computed(() => {
   const tabs = [];
   // Fallback to empty role if user is null
-  const role = user.value?.role || '';
+  const role = user.value?.role?.toLowerCase() || '';
   
   if (['admin', 'manager', 'cashier', 'baker'].includes(role)) {
     tabs.push({ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard });

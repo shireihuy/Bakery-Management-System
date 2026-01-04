@@ -20,11 +20,18 @@ const roleFilter = ref('all');
 const isModalOpen = ref(false);
 const editingUser = ref<User | null>(null);
 
-const form = ref({
+const form = ref<{
+    name: string;
+    email: string;
+    role: User['role'];
+    status: User['status'];
+    phone: string;
+    address: string;
+}>({
     name: '',
     email: '',
-    role: 'customer' as User['role'],
-    status: 'active' as User['status'],
+    role: 'Customer',
+    status: 'active',
     phone: '',
     address: ''
 });
@@ -44,7 +51,7 @@ const openAddModal = () => {
     form.value = {
         name: '',
         email: '',
-        role: 'customer',
+        role: 'Customer',
         status: 'active',
         phone: '',
         address: ''
@@ -127,11 +134,11 @@ const getRoleBadgeColor = (role: string) => {
                     class="border border-gray-200 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                 >
                     <option value="all">All Roles</option>
-                    <option value="admin">Admin</option>
-                    <option value="manager">Manager</option>
-                    <option value="baker">Baker</option>
-                    <option value="cashier">Cashier</option>
-                    <option value="customer">Customer</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Baker">Baker</option>
+                    <option value="Cashier">Cashier</option>
+                    <option value="Customer">Customer</option>
                 </select>
             </div>
         </div>
@@ -245,11 +252,11 @@ const getRoleBadgeColor = (role: string) => {
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">Role</label>
                             <select v-model="form.role" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white">
-                                <option value="admin">Admin</option>
-                                <option value="manager">Manager</option>
-                                <option value="baker">Baker</option>
-                                <option value="cashier">Cashier</option>
-                                <option value="customer">Customer</option>
+                                <option value="Admin">Admin</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Baker">Baker</option>
+                                <option value="Cashier">Cashier</option>
+                                <option value="Customer">Customer</option>
                             </select>
                         </div>
                         <div class="space-y-1">

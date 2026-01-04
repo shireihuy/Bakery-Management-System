@@ -3,7 +3,7 @@ import { ref, readonly } from 'vue';
 interface User {
     name: string;
     email: string;
-    role: 'admin' | 'manager' | 'baker' | 'cashier' | 'customer';
+    role: 'Admin' | 'Manager' | 'Baker' | 'Cashier' | 'Customer';
     phone?: string;
     address?: string;
 }
@@ -13,30 +13,30 @@ const user = ref<User | null>(null);
 export function useAuth() {
     const login = (email: string) => {
         // Mock login logic based on email prefix or specific demo emails
-        let role: User['role'] = 'customer';
+        let role: User['role'] = 'Customer';
         let name = 'Customer';
         let redirectPath = '/customer';
 
         const emailLower = email.toLowerCase();
 
         if (emailLower.startsWith('admin')) {
-            role = 'admin';
+            role = 'Admin';
             name = 'Admin User';
             redirectPath = '/dashboard';
         } else if (emailLower.startsWith('manager')) {
-            role = 'manager';
+            role = 'Manager';
             name = 'Manager User';
             redirectPath = '/dashboard';
         } else if (emailLower.startsWith('baker')) {
-            role = 'baker';
+            role = 'Baker';
             name = 'Baker User';
             redirectPath = '/dashboard';
         } else if (emailLower.startsWith('cashier')) {
-            role = 'cashier';
+            role = 'Cashier';
             name = 'Cashier User';
             redirectPath = '/dashboard';
         } else if (emailLower.startsWith('customer')) {
-            role = 'customer';
+            role = 'Customer';
             name = 'John Doe';
             redirectPath = '/customer';
         }

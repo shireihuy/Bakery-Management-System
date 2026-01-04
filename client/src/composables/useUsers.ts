@@ -4,7 +4,7 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    role: 'admin' | 'manager' | 'baker' | 'cashier' | 'customer';
+    role: 'Admin' | 'Manager' | 'Baker' | 'Cashier' | 'Customer';
     status: 'active' | 'inactive';
     phone?: string;
     address?: string;
@@ -27,7 +27,7 @@ export function useUsers() {
                 const data = await response.json();
                 users.value = data.map((u: any) => ({
                     ...u,
-                    role: u.role.toLowerCase() as User['role']
+                    role: u.role as User['role']
                 }));
             }
         } catch (err) {
@@ -35,15 +35,15 @@ export function useUsers() {
         }
     };
 
-    const addUser = (userData: Omit<User, 'id' | 'joinDate'>) => {
+    const addUser = (_userData: Omit<User, 'id' | 'joinDate'>) => {
         // Logic to call POST /api/auth/register or similar
     };
 
-    const updateUser = (id: string, updates: Partial<Omit<User, 'id' | 'joinDate'>>) => {
+    const updateUser = (_id: string, _updates: Partial<Omit<User, 'id' | 'joinDate'>>) => {
         // Logic to call PUT /api/users/:id
     };
 
-    const deleteUser = (id: string) => {
+    const deleteUser = (_id: string) => {
         // Logic to call DELETE /api/users/:id
     };
 
