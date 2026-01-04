@@ -3,9 +3,9 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const register = async (req, res) => {
-    const { name, email, password, phone_number, address, role } = req.body;
+    const { name, email, password, phone_number, address, role, status } = req.body;
 
-    console.log('Registration attempt:', { name, email, role, phone_number, address });
+    console.log('Registration attempt:', { name, email, role, phone_number, address, status });
 
     try {
         // Handle empty strings as null for optional fields
@@ -14,32 +14,43 @@ const register = async (req, res) => {
 
         // For development, we allow setting roles. In production, this should be guarded.
         const userRole = (role && ['Admin', 'Manager', 'Baker', 'Cashier', 'Customer'].includes(role)) ? role : 'Customer';
+        const userStatus = (status && ['active', 'inactive'].includes(status)) ? status : 'active';
 
-        const userExists = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        const normalizedEmail = email ? email.toLowerCase() : '';
+
+        const userExists = await pool.query('SELECT * FROM users WHERE email = $1', [normalizedEmail]);
         if (userExists.rows.length > 0) {
-            return res.status(400).json({ message: 'User already exists' });
+            console.log('Registration failed: User already exists -', normalizedEmail);
+            return res.status(400).json({ message: `User with email ${normalizedEmail} already exists` });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        console.log('Inserting new user into database...');
         const newUser = await pool.query(
             'INSERT INTO users (name, email, password, phone_number, address, role, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, email, role, status, phone_number as phone, address',
-            [name, email, hashedPassword, finalPhone, finalAddress, userRole, 'active']
+            [name, normalizedEmail, hashedPassword, finalPhone, finalAddress, userRole, userStatus]
         );
 
-        console.log('User registered successfully:', newUser.rows[0].email);
+        if (newUser.rows.length === 0) {
+            throw new Error('Failed to insert user - no rows returned');
+        }
+
+        console.log('User registered successfully:', newUser.rows[0].email, 'assigned ID:', newUser.rows[0].id);
         res.status(201).json(newUser.rows[0]);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error during registration' });
+        console.error('Registration error details:', err);
+        res.status(500).json({ message: 'Server error during registration', error: err.message });
     }
 };
 
+
 const login = async (req, res) => {
     const { email, password } = req.body;
+    const normalizedEmail = email ? email.toLowerCase() : '';
 
     try {
-        const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        const result = await pool.query('SELECT * FROM users WHERE email = $1', [normalizedEmail]);
         const user = result.rows[0];
 
         if (!user) {

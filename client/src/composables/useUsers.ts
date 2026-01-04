@@ -49,11 +49,19 @@ export function useUsers() {
                     phone_number: userData.phone // Mapping frontend 'phone' to backend 'phone_number'
                 })
             });
-            if (response.ok) {
-                await fetchUsers(); // Refresh list
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to add user');
+
             }
+
+            const newUser = await response.json();
+            await fetchUsers(); // Refresh list
+            return newUser;
         } catch (err) {
             console.error('Failed to add user:', err);
+            throw err;
         }
     };
 

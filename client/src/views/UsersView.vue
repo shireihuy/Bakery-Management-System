@@ -22,6 +22,8 @@ const isDeleteModalOpen = ref(false);
 const editingUser = ref<User | null>(null);
 const userToDelete = ref<User | null>(null);
 const confirmDeleteCheckbox = ref(false);
+const error = ref('');
+const isSubmitting = ref(false);
 
 const form = ref<{
     name: string;
@@ -79,13 +81,21 @@ const openEditModal = (user: User) => {
     isModalOpen.value = true;
 };
 
-const handleSubmit = () => {
-    if (editingUser.value) {
-        updateUser(editingUser.value.id, form.value);
-    } else {
-        addUser(form.value);
+const handleSubmit = async () => {
+    error.value = '';
+    isSubmitting.value = true;
+    try {
+        if (editingUser.value) {
+            await updateUser(editingUser.value.id, form.value);
+        } else {
+            await addUser(form.value);
+        }
+        isModalOpen.value = false;
+    } catch (err: any) {
+        error.value = err.message || 'An error occurred while saving the user.';
+    } finally {
+        isSubmitting.value = false;
     }
-    isModalOpen.value = false;
 };
 
 const handleDelete = (user: User) => {
@@ -255,6 +265,9 @@ const getRoleBadgeColor = (role: string) => {
                 </div>
 
                 <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
+                    <div v-if="error" class="p-3 bg-red-100 border border-red-200 text-red-700 rounded-lg text-sm font-medium">
+                        {{ error }}
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">Full Name</label>
@@ -302,11 +315,12 @@ const getRoleBadgeColor = (role: string) => {
                     </div>
 
                     <div class="flex justify-end gap-3 pt-4">
-                        <button type="button" @click="isModalOpen = false" class="px-4 py-2 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-colors">
+                        <button type="button" @click="isModalOpen = false" :disabled="isSubmitting" class="px-4 py-2 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 cursor-pointer">
                             Cancel
                         </button>
-                        <button type="submit" class="px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 shadow-md transition-all active:scale-95">
-                            {{ editingUser ? 'Update User' : 'Create User' }}
+                        <button type="submit" :disabled="isSubmitting" class="px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
+                            <span v-if="isSubmitting" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                            {{ editingUser ? (isSubmitting ? 'Updating...' : 'Update User') : (isSubmitting ? 'Creating...' : 'Create User') }}
                         </button>
                     </div>
                 </form>
