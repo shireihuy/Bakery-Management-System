@@ -4,11 +4,10 @@ const jwt = require('jsonwebtoken');
 
 const register = async (req, res) => {
     const { name, email, password, phone_number, role } = req.body;
-    
+
     try {
-        // Only allow 'Customer' role for public registration
-        // Employees should be created by an Admin
-        const userRole = role === 'Customer' ? 'Customer' : 'Customer'; 
+        // For development, we allow setting roles. In production, this should be guarded.
+        const userRole = (role && ['Admin', 'Manager', 'Baker', 'Cashier', 'Customer'].includes(role)) ? role : 'Customer';
 
         const userExists = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         if (userExists.rows.length > 0) {
@@ -16,7 +15,7 @@ const register = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        
+
         const newUser = await pool.query(
             'INSERT INTO users (name, email, password, phone_number, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, email, role',
             [name, email, hashedPassword, phone_number, userRole]

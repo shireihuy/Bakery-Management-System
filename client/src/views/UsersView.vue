@@ -81,7 +81,8 @@ const handleDelete = (id: string) => {
 };
 
 const getRoleBadgeColor = (role: string) => {
-    switch (role) {
+    const r = role.toLowerCase();
+    switch (r) {
         case 'admin': return 'bg-purple-100 text-purple-700 border-purple-200';
         case 'manager': return 'bg-blue-100 text-blue-700 border-blue-200';
         case 'baker': return 'bg-orange-100 text-orange-700 border-orange-200';

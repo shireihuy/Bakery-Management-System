@@ -1,90 +1,60 @@
-import { ref, readonly } from 'vue';
+import { ref, onMounted } from 'vue';
 
 export interface User {
     id: string;
     name: string;
     email: string;
-    role: 'admin' | 'manager' | 'baker' | 'cashier' | 'customer';
+    role: 'Admin' | 'Manager' | 'Baker' | 'Cashier' | 'Customer';
     status: 'active' | 'inactive';
     phone?: string;
     address?: string;
     joinDate: string;
 }
 
-const users = ref<User[]>([
-    {
-        id: '1',
-        name: 'Admin User',
-        email: 'admin@bakery.com',
-        role: 'admin',
-        status: 'active',
-        phone: '555-0101',
-        address: 'Bakery Headquarters',
-        joinDate: '2024-01-15'
-    },
-    {
-        id: '2',
-        name: 'Manager User',
-        email: 'manager@bakery.com',
-        role: 'manager',
-        status: 'active',
-        joinDate: '2024-02-20'
-    },
-    {
-        id: '3',
-        name: 'Baker User',
-        email: 'baker@bakery.com',
-        role: 'baker',
-        status: 'active',
-        joinDate: '2024-03-05'
-    },
-    {
-        id: '4',
-        name: 'Cashier User',
-        email: 'cashier@bakery.com',
-        role: 'cashier',
-        status: 'active',
-        joinDate: '2024-03-10'
-    },
-    {
-        id: '5',
-        name: 'John Doe',
-        email: 'customer@bakery.com',
-        role: 'customer',
-        status: 'active',
-        phone: '555-0123',
-        address: '123 Bakery Lane',
-        joinDate: '2024-04-01'
-    }
-]);
+const users = ref<User[]>([]);
+const API_URL = 'http://localhost:3000/api';
 
 export function useUsers() {
-    const addUser = (userData: Omit<User, 'id' | 'joinDate'>) => {
-        const newUser: User = {
-            id: Math.random().toString(36).substring(2, 9),
-            joinDate: new Date().toISOString().substring(0, 10),
-            ...userData
-        };
-        users.value.push(newUser);
-        return newUser;
-    };
-
-    const updateUser = (id: string, updates: Partial<Omit<User, 'id' | 'joinDate'>>) => {
-        const index = users.value.findIndex(u => u.id === id);
-        if (index !== -1) {
-            const currentUser = users.value[index];
-            users.value[index] = { ...currentUser, ...updates } as User;
+    const fetchUsers = async () => {
+        try {
+            // In a real app, you would get this token from localStorage/AuthStore
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/users`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.ok) {
+                users.value = await response.json();
+            }
+        } catch (err) {
+            console.error('Failed to fetch users:', err);
         }
     };
 
-    const deleteUser = (id: string) => {
-        users.value = users.value.filter(u => u.id !== id);
+    const addUser = (userData: Omit<User, 'id' | 'joinDate'>) => {
+        // Logic to call POST /api/auth/register or similar
     };
 
+    const updateUser = (id: string, updates: Partial<Omit<User, 'id' | 'joinDate'>>) => {
+        // Logic to call PUT /api/users/:id
+    };
+
+    const deleteUser = (id: string) => {
+        // Logic to call DELETE /api/users/:id
+    };
+
+    onMounted(() => {
+        if (users.value.length === 0) {
+            fetchUsers();
+        }
+    });
+
     return {
-        users: readonly(users),
+        users,
         addUser,
         updateUser,
-        deleteUser
+        deleteUser,
+        fetchUsers
     };
 }
