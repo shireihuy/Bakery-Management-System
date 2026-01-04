@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { 
     Search, 
     Filter, 
@@ -13,12 +13,16 @@ import {
 } from 'lucide-vue-next';
 import { useOrders, type Order } from '../composables/useOrders';
 
-const { orders, updateOrderStatus } = useOrders();
+const { orders, updateOrderStatus, fetchOrders } = useOrders();
 
 const searchQuery = ref('');
-const statusFilter = ref<'all' | 'pending' | 'processing' | 'completed' | 'cancelled'>('all');
-const viewingOrder = ref<Order | null>(null);
+const statusFilter = ref<'all' | 'Pending' | 'Baking' | 'Ready' | 'Completed' | 'Cancelled'>('all');
+const viewingOrder = ref<any | null>(null); // Use any to avoid DeepReadonly mismatch with the composable's readonly() wrapper
 const isDetailOpen = ref(false);
+
+onMounted(async () => {
+    await fetchOrders();
+});
 
 const filteredOrders = computed(() => {
     return orders.value.filter(order => {
@@ -34,19 +38,21 @@ const filteredOrders = computed(() => {
 
 const stats = computed(() => {
     const total = orders.value.length;
-    const pending = orders.value.filter(o => o.status === 'pending').length;
-    const processing = orders.value.filter(o => o.status === 'processing').length;
-    const completed = orders.value.filter(o => o.status === 'completed').length;
-    const revenue = orders.value.reduce((acc, curr) => acc + (curr.status !== 'cancelled' ? curr.total : 0), 0);
+    const pending = orders.value.filter(o => o.status === 'Pending').length;
+    const processing = orders.value.filter(o => ['Baking', 'Ready'].includes(o.status)).length;
+    const completed = orders.value.filter(o => o.status === 'Completed').length;
+    const revenue = orders.value.reduce((acc, curr) => acc + (curr.status !== 'Cancelled' ? curr.total : 0), 0);
     
     return { total, pending, processing, completed, revenue };
 });
 
 const getStatusColor = (status: Order['status']) => {
     switch (status) {
-        case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-        case 'processing': return 'bg-blue-100 text-blue-800 border-blue-200';
-        case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
+        case 'Completed': return 'bg-green-100 text-green-800 border-green-200';
+        case 'Baking': 
+        case 'Ready': return 'bg-blue-100 text-blue-800 border-blue-200';
+        case 'Cancelled': return 'bg-red-100 text-red-800 border-red-200';
+        case 'Pending':
         default: return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     }
 };
@@ -56,8 +62,8 @@ const viewDetails = (order: Order) => {
     isDetailOpen.value = true;
 };
 
-const changeStatus = (order: Order, status: string) => {
-    updateOrderStatus(order.id, status as Order['status']);
+const changeStatus = async (order: Order, status: string) => {
+    await updateOrderStatus(order.id, status as Order['status']);
 };
 </script>
 
@@ -129,10 +135,11 @@ const changeStatus = (order: Order, status: string) => {
                         class="text-sm border border-gray-200 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                     >
                         <option value="all">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Baking">Baking</option>
+                        <option value="Ready">Ready</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Cancelled">Cancelled</option>
                     </select>
                 </div>
             </div>
@@ -204,30 +211,37 @@ const changeStatus = (order: Order, status: string) => {
                         <span class="text-sm font-medium text-gray-700 flex items-center w-full sm:w-auto">Update Status:</span>
                         <div class="flex gap-2 flex-wrap">
                             <button 
-                                v-if="viewingOrder.status === 'pending'"
-                                @click="changeStatus(viewingOrder, 'processing')"
+                                v-if="viewingOrder.status === 'Pending'"
+                                @click="changeStatus(viewingOrder, 'Baking')"
                                 class="px-3 py-1.5 bg-blue-100 text-blue-700 text-sm font-medium rounded hover:bg-blue-200 border border-blue-200 transition-colors"
                             >
-                                Start Processing
+                                Start Baking
                             </button>
                              <button 
-                                v-if="viewingOrder.status === 'processing'"
-                                @click="changeStatus(viewingOrder, 'completed')"
+                                v-if="viewingOrder.status === 'Baking'"
+                                @click="changeStatus(viewingOrder, 'Ready')"
                                 class="px-3 py-1.5 bg-green-100 text-green-700 text-sm font-medium rounded hover:bg-green-200 border border-green-200 transition-colors"
+                            >
+                                Mark Ready
+                            </button>
+                             <button 
+                                v-if="viewingOrder.status === 'Ready'"
+                                @click="changeStatus(viewingOrder, 'Completed')"
+                                class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 border border-green-700 transition-colors"
                             >
                                 Mark Completed
                             </button>
                             <button 
-                                v-if="['pending', 'processing'].includes(viewingOrder.status)"
-                                @click="changeStatus(viewingOrder, 'cancelled')"
+                                v-if="['Pending', 'Baking', 'Ready'].includes(viewingOrder.status)"
+                                @click="changeStatus(viewingOrder, 'Cancelled')"
                                 class="px-3 py-1.5 bg-red-100 text-red-700 text-sm font-medium rounded hover:bg-red-200 border border-red-200 transition-colors"
                             >
                                 Cancel Order
                             </button>
-                             <span v-if="viewingOrder.status === 'completed'" class="text-sm text-green-600 font-medium flex items-center gap-1">
+                             <span v-if="viewingOrder.status === 'Completed'" class="text-sm text-green-600 font-medium flex items-center gap-1">
                                 <CheckCircle2 class="w-4 h-4" /> Order Fulfilled
                              </span>
-                             <span v-if="viewingOrder.status === 'cancelled'" class="text-sm text-red-600 font-medium flex items-center gap-1">
+                             <span v-if="viewingOrder.status === 'Cancelled'" class="text-sm text-red-600 font-medium flex items-center gap-1">
                                 <XCircle class="w-4 h-4" /> Order Cancelled
                              </span>
                         </div>

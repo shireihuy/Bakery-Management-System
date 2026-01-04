@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, onMounted } from 'vue';
 import { 
   DollarSign, 
   ShoppingCart, 
@@ -11,14 +11,18 @@ import { useOrders } from '../composables/useOrders';
 import { useProducts } from '../composables/useProducts';
 import { useInventory } from '../composables/useInventory';
 
-const { orders } = useOrders();
+const { orders, fetchOrders } = useOrders();
 const { products } = useProducts();
 const { lowStockItems: inventoryLowStock } = useInventory();
+
+onMounted(async () => {
+    await fetchOrders();
+});
 
 const stats = computed(() => [
   {
     title: "Total Revenue",
-    value: `$${orders.value.reduce((sum, o) => sum + o.total, 0).toLocaleString()}`,
+    value: `$${orders.value.reduce((sum, o) => sum + (o.status !== 'Cancelled' ? o.total : 0), 0).toLocaleString()}`,
     change: `From ${orders.value.length} orders`,
     icon: DollarSign,
     color: "text-green-600",
@@ -26,7 +30,7 @@ const stats = computed(() => [
   },
   {
     title: "Active Orders",
-    value: orders.value.filter(o => ['pending', 'processing'].includes(o.status)).length.toString(),
+    value: orders.value.filter(o => ['Pending', 'Baking', 'Ready'].includes(o.status)).length.toString(),
     change: "Waiting for action",
     icon: ShoppingCart,
     color: "text-blue-600",
@@ -51,7 +55,7 @@ const stats = computed(() => [
 ]);
 
 const recentOrders = computed(() => {
-    return [...orders.value].sort((a, b) => b.id.localeCompare(a.id)).slice(0, 4);
+    return [...orders.value].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 4);
 });
 
 const lowStockDisplay = computed(() => {
@@ -118,7 +122,7 @@ const lowStockDisplay = computed(() => {
                   <div 
                     class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     :class="[
-                        order.status === 'completed' 
+                        order.status === 'Completed' 
                         ? 'border-transparent bg-primary text-primary-foreground hover:bg-primary/80 bg-green-900 text-white' 
                         : 'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 bg-green-200 text-green-800'
                     ]"

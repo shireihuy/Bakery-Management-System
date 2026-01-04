@@ -22,9 +22,21 @@ import { useAuth } from '../composables/useAuth';
 
 // State
 const { products } = useProducts();
-const { addOrder, getCustomerOrders } = useOrders();
+const { addOrder, orders, fetchMyOrders, fetchOrders } = useOrders();
 const { user } = useAuth();
 const router = useRouter();
+
+import { onMounted } from 'vue';
+
+onMounted(async () => {
+    if (user.value) {
+        if (isCashier.value) {
+            await fetchOrders();
+        } else {
+            await fetchMyOrders();
+        }
+    }
+});
 
 interface CartItem extends Product {
   quantity: number;
@@ -37,7 +49,7 @@ const selectedProduct = ref<Product | null>(null);
 const isCartOpen = ref(false); // We'll simple simulate a dialog/modal with v-if or CSS
 const searchQuery = ref('');
 const sortBy = ref<'name' | 'price-low' | 'price-high' | 'rating'>('name');
-const viewingOrder = ref<Order | null>(null);
+const viewingOrder = ref<any | null>(null);
 const activeTab = ref('menu');
 const isOrderDetailsOpen = ref(false);
 
@@ -47,18 +59,7 @@ const showLoginPrompt = ref(false);
 // Derived State
 const isCashier = computed(() => user.value?.role?.toLowerCase() === 'cashier');
 
-const customerOrders = computed(() => {
-    if (isCashier.value) {
-        // For cashier, show all orders or just their recent ones? 
-        // Request says "order items for the eat in customers", 
-        // they might want to see what they just ordered.
-        // For now, let's keep it simple and show all orders in useOrders if possible, 
-        // but useOrders probably has a getOrders function.
-        return getCustomerOrders(''); // Assuming empty email might return all or something? 
-        // Wait, let's check useOrders.ts
-    }
-    return user.value ? getCustomerOrders(user.value.email) : [];
-});
+const customerOrders = computed(() => orders.value);
 
 const categories = computed(() => ['All', ...new Set(products.value.map(p => p.category))]);
 
@@ -116,7 +117,7 @@ const removeFromCart = (productId: string) => {
     cart.value = cart.value.filter(item => item.id !== productId);
 };
 
-const handleCheckout = () => {
+const handleCheckout = async () => {
     if (!user.value) {
         showLoginPrompt.value = true;
         return;
@@ -127,26 +128,33 @@ const handleCheckout = () => {
         return;
     }
 
-    addOrder({
-        customerId: isCashier.value ? `walk-in-${Date.now()}` : "mock-id", // mock
-        customerName: isCashier.value ? orderCustomerName.value : user.value.name,
-        customerEmail: isCashier.value ? "walkin@example.com" : user.value.email,
-        items: cart.value.map(item => ({
-            productName: item.name,
-            quantity: item.quantity,
-            price: item.price
-        })),
-        total: totalPrice.value,
-        status: 'pending',
-        phone: isCashier.value ? "N/A" : "555-0000", // mock from user profile later
-        address: isCashier.value ? "Order at Shop" : "123 Mock St" // mock from user profile later
-    });
+    try {
+        await addOrder({
+            customerId: isCashier.value ? null : user.value.id,
+            customerName: isCashier.value ? orderCustomerName.value : user.value.name,
+            items: cart.value.map(item => ({
+                productId: parseInt(item.id),
+                quantity: item.quantity,
+                price: item.price
+            })),
+            total: totalPrice.value
+        });
 
-    alert('Order placed successfully!');
-    cart.value = [];
-    orderCustomerName.value = '';
-    isCartOpen.value = false;
-    activeTab.value = 'orders';
+        // Refresh orders
+        if (isCashier.value) {
+            await fetchOrders();
+        } else {
+            await fetchMyOrders();
+        }
+
+        alert('Order placed successfully!');
+        cart.value = [];
+        orderCustomerName.value = '';
+        isCartOpen.value = false;
+        activeTab.value = 'orders';
+    } catch (err) {
+        alert('Failed to place order. Please try again.');
+    }
 };
 
 const openProductDetails = (product: Product) => {
@@ -168,9 +176,11 @@ const viewOrderDetails = (order: Order) => {
 
 const getStatusColor = (status: string) => {
     switch (status) {
-        case 'completed': return 'bg-green-100 text-green-800 border-green-200';
-        case 'cancelled': return 'bg-red-100 text-red-800 border-red-200';
-        case 'processing': return 'bg-blue-100 text-blue-800 border-blue-200';
+        case 'Completed': return 'bg-green-100 text-green-800 border-green-200';
+        case 'Cancelled': return 'bg-red-100 text-red-800 border-red-200';
+        case 'Baking': 
+        case 'Ready': return 'bg-blue-100 text-blue-800 border-blue-200';
+        case 'Pending':
         default: return 'bg-yellow-100 text-yellow-800 border-yellow-200';
     }
 };

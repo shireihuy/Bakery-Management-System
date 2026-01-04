@@ -1,6 +1,7 @@
 import { ref, readonly } from 'vue';
 
 interface User {
+    id: string;
     name: string;
     email: string;
     role: 'Admin' | 'Manager' | 'Baker' | 'Cashier' | 'Customer';

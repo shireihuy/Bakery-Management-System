@@ -1,77 +1,172 @@
 import { ref, readonly } from 'vue';
 
 export interface OrderItem {
-    productName: string;
-    quantity: number;
-    price: number;
+    readonly id?: number;
+    readonly productId?: number;
+    readonly productName: string;
+    readonly quantity: number;
+    readonly price: number;
+    readonly subtotal: number;
 }
 
 export interface Order {
     readonly id: string;
-    readonly customerId: string;
+    readonly customerId: string | null;
     readonly customerName: string;
     readonly customerEmail: string;
     readonly items: readonly OrderItem[];
     readonly total: number;
-    status: 'pending' | 'processing' | 'completed' | 'cancelled';
+    status: 'Pending' | 'Baking' | 'Ready' | 'Completed' | 'Cancelled';
     readonly date: string;
-    startTime?: string;
-    completedTime?: string;
+    readonly startTime?: string;
+    readonly completedTime?: string;
     readonly phone?: string;
     readonly address?: string;
     readonly notes?: string;
 }
 
-const orders = ref<Order[]>([
-    {
-        id: "ORD-1234",
-        customerId: "cust-001",
-        customerName: "John Doe",
-        customerEmail: "customer@bakery.com",
-        items: [
-            { productName: "Croissant", quantity: 2, price: 5.00 },
-            { productName: "Matcha Latte", quantity: 1, price: 5.50 }
-        ],
-        total: 15.50,
-        status: "completed",
-        date: new Date().toLocaleDateString(),
-        phone: "555-0123",
-        address: "123 Main St"
-    }
-]);
+const orders = ref<Order[]>([]);
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export function useOrders() {
-    const addOrder = (orderData: Omit<Order, 'id' | 'date'>) => {
-        const newOrder: Order = {
-            id: `ORD-${Math.floor(Math.random() * 10000)}`,
-            date: new Date().toLocaleDateString(),
-            ...orderData
-        };
-        orders.value.push(newOrder);
-        return newOrder;
-    };
+    const fetchOrders = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/orders`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
 
-    const getCustomerOrders = (email: string) => {
-        if (!email) return orders.value;
-        return orders.value.filter(o => o.customerEmail === email);
-    };
-
-    const updateOrderStatus = (orderId: string, status: Order['status']) => {
-        const order = orders.value.find(o => o.id === orderId);
-        if (order) {
-            order.status = status;
-            if (status === 'completed') {
-                order.completedTime = new Date().toLocaleTimeString();
-            } else if (status === 'processing' && !order.startTime) {
-                order.startTime = new Date().toLocaleTimeString();
+            if (!response.ok) {
+                throw new Error('Failed to fetch orders');
             }
+
+            const data = await response.json();
+            // Map DB fields to frontend interface
+            orders.value = data.map((o: any) => ({
+                id: o.id,
+                customerId: o.customer_id,
+                customerName: o.customer_name || 'Guest',
+                customerEmail: o.customer_email || 'walkin@example.com',
+                total: parseFloat(o.total_price),
+                status: o.status,
+                date: new Date(o.order_date).toLocaleString(),
+                items: o.items.map((i: any) => ({
+                    id: i.id,
+                    productId: i.product_id,
+                    productName: i.product_name,
+                    quantity: i.quantity,
+                    price: parseFloat(i.subtotal) / i.quantity,
+                    subtotal: parseFloat(i.subtotal)
+                }))
+            }));
+        } catch (err) {
+            console.error('Error fetching orders:', err);
+        }
+    };
+
+    const fetchMyOrders = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/orders/my-orders`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch my orders');
+            }
+
+            const data = await response.json();
+            orders.value = data.map((o: any) => ({
+                id: o.id,
+                customerId: o.customer_id,
+                customerName: 'Me', // We know it's us
+                customerEmail: '', // Not needed for history
+                total: parseFloat(o.total_price),
+                status: o.status,
+                date: new Date(o.order_date).toLocaleString(),
+                items: o.items.map((i: any) => ({
+                    id: i.id,
+                    productId: i.product_id,
+                    productName: i.product_name,
+                    quantity: i.quantity,
+                    price: parseFloat(i.subtotal) / i.quantity,
+                    subtotal: parseFloat(i.subtotal)
+                }))
+            }));
+        } catch (err) {
+            console.error('Error fetching my orders:', err);
+        }
+    };
+
+    const addOrder = async (orderData: any) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/orders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    customer_id: orderData.customerId,
+                    total_price: orderData.total,
+                    items: orderData.items.map((item: any) => ({
+                        product_id: item.productId,
+                        quantity: item.quantity,
+                        subtotal: item.price * item.quantity
+                    }))
+                })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message || 'Failed to place order');
+            }
+
+            const result = await response.json();
+            return result;
+        } catch (err) {
+            console.error('Error adding order:', err);
+            throw err;
+        }
+    };
+
+    const updateOrderStatus = async (orderId: string, status: Order['status']) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update order status');
+            }
+
+            // Update local state
+            const order = orders.value.find(o => o.id === orderId);
+            if (order) {
+                order.status = status;
+            }
+        } catch (err) {
+            console.error('Error updating status:', err);
+            throw err;
         }
     };
 
     return {
         orders: readonly(orders),
+        fetchOrders,
+        fetchMyOrders,
         addOrder,
-        getCustomerOrders,
         updateOrderStatus
     };
 }

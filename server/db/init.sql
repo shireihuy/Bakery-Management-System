@@ -77,3 +77,15 @@ CREATE TABLE IF NOT EXISTS payments (
 -- Initial Data (Optional - Admin Account)
 -- Password is 'admin123' (hashed version should be used in production)
 -- INSERT INTO users (name, email, password, role) VALUES ('Admin User', 'admin@bakery.com', '$2b$10$YourHashedPasswordHere', 'Admin');
+
+-- Initial Products
+INSERT INTO products (id, name, category, price, description, image_url) VALUES
+(1, 'Croissant', 'Pastries', 5.00, 'Buttery, flaky French pastry with a golden, crisp exterior and soft, layered interior.', 'https://images.unsplash.com/photo-1733754348873-feeb45df3bab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcm9pc3NhbnQlMjBwYXN0cnl8ZW58MXx8fHwxNzYxOTE5MTc0fDA&ixlib=rb-4.1.0&q=80&w=400'),
+(2, 'Sourdough Bread', 'Bread', 6.00, 'Traditional sourdough with a crispy crust and tangy flavor.', 'https://images.unsplash.com/photo-1597604391235-a7429b4b350c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzb3VyZG91Z2glMjBicmVhZHxlbnwxfHx8fDE3NjE4NTc4ODR8MA&ixlib=rb-4.1.0&q=80&w=400'),
+(3, 'Chocolate Chip Cookies', 'Cookies', 3.00, 'Classic chewy cookies loaded with semi-sweet chocolate chips.', 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjaG9jb2xhdGUlMjBjaGlwJTIwY29va2llc3xlbnwxfHx8fDE3NjE4NjYwMjV8MA&ixlib=rb-4.1.0&q=80&w=400'),
+(7, 'Matcha Cake', 'Cakes', 22.00, 'Delicate layers of premium Japanese matcha cake with white chocolate cream frosting.', 'https://images.unsplash.com/photo-1622374149938-1c0b1a08ad11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBjYWtlJTIwZ3JlZW4lMjB0ZWF8ZW58MXx8fHwxNzY0OTM5NzU4fDA&ixlib=rb-4.1.0&q=80&w=1080'),
+(10, 'Matcha Latte', 'Beverages', 5.50, 'Creamy matcha latte made with ceremonial grade matcha and steamed milk.', 'https://images.unsplash.com/photo-1725799957338-51f677c0ffa3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBsYXR0ZSUyMGRyaW5rfGVufDF8fHx8MTc2NDkxNzk0Nnww&ixlib=rb-4.1.0&q=80&w=1080')
+ON CONFLICT (id) DO NOTHING;
+
+-- Reset serial sequence
+SELECT setval('products_id_seq', (SELECT MAX(id) FROM products));
