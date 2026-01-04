@@ -35,16 +35,36 @@ export function useUsers() {
         }
     };
 
-    const addUser = (_userData: Omit<User, 'id' | 'joinDate'>) => {
-        // Logic to call POST /api/auth/register or similar
+    const addUser = async (userData: Omit<User, 'id' | 'joinDate'>) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    ...userData,
+                    phone_number: userData.phone // Mapping frontend 'phone' to backend 'phone_number'
+                })
+            });
+            if (response.ok) {
+                await fetchUsers(); // Refresh list
+            }
+        } catch (err) {
+            console.error('Failed to add user:', err);
+        }
     };
 
-    const updateUser = (_id: string, _updates: Partial<Omit<User, 'id' | 'joinDate'>>) => {
-        // Logic to call PUT /api/users/:id
+    const updateUser = async (id: string, updates: Partial<Omit<User, 'id' | 'joinDate'>>) => {
+        // Placeholder for PUT /api/users/:id - backend needs this endpoint first
+        console.log('Update user', id, updates);
     };
 
-    const deleteUser = (_id: string) => {
-        // Logic to call DELETE /api/users/:id
+    const deleteUser = async (id: string) => {
+        // Placeholder for DELETE /api/users/:id - backend needs this endpoint first
+        console.log('Delete user', id);
     };
 
     onMounted(() => {

@@ -7,7 +7,7 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 router.get('/', authenticateToken, authorizeRoles('Admin', 'Manager'), async (req, res) => {
     try {
         const result = await pool.query(
-            'SELECT id, name, email, role, phone_number as phone, created_at as "joinDate" FROM users ORDER BY created_at DESC'
+            'SELECT id, name, email, role, phone_number as phone, address, created_at as "joinDate" FROM users ORDER BY created_at DESC'
         );
 
         // Transform data to match frontend expectations if needed

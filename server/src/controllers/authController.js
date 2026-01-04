@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const register = async (req, res) => {
-    const { name, email, password, phone_number, role } = req.body;
+    const { name, email, password, phone_number, address, role } = req.body;
 
     try {
         // For development, we allow setting roles. In production, this should be guarded.
@@ -17,8 +17,8 @@ const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = await pool.query(
-            'INSERT INTO users (name, email, password, phone_number, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, email, role',
-            [name, email, hashedPassword, phone_number, userRole]
+            'INSERT INTO users (name, email, password, phone_number, address, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, role, phone_number as phone, address',
+            [name, email, hashedPassword, phone_number, address, userRole]
         );
 
         res.status(201).json(newUser.rows[0]);
@@ -56,7 +56,9 @@ const login = async (req, res) => {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                phone: user.phone_number,
+                address: user.address
             }
         });
     } catch (err) {

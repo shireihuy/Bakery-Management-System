@@ -46,6 +46,7 @@ const handleSubmit = async () => {
             email: email.value,
             password: password.value,
             phone_number: phone.value,
+            address: address.value,
             role: 'Customer' // Default to customer on public registration
         });
         
