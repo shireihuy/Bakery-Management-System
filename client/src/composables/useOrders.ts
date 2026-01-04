@@ -39,7 +39,9 @@ export function useOrders() {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to fetch orders');
+                const errData = await response.json().catch(() => ({}));
+                console.error('Fetch orders error:', errData);
+                throw new Error(errData.message || 'Failed to fetch orders');
             }
 
             const data = await response.json();
