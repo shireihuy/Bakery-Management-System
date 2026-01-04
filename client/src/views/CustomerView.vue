@@ -21,7 +21,7 @@ import { useOrders, type Order } from '../composables/useOrders';
 import { useAuth } from '../composables/useAuth';
 
 // State
-const { products } = useProducts();
+const { products, fetchProducts } = useProducts();
 const { addOrder, orders, fetchMyOrders, fetchOrders } = useOrders();
 const { user } = useAuth();
 const router = useRouter();
@@ -29,6 +29,7 @@ const router = useRouter();
 import { onMounted } from 'vue';
 
 onMounted(async () => {
+    await fetchProducts();
     if (user.value) {
         if (isCashier.value) {
             await fetchOrders();

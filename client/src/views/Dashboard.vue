@@ -12,11 +12,14 @@ import { useProducts } from '../composables/useProducts';
 import { useInventory } from '../composables/useInventory';
 
 const { orders, fetchOrders } = useOrders();
-const { products } = useProducts();
+const { products, fetchProducts } = useProducts();
 const { lowStockItems: inventoryLowStock } = useInventory();
 
 onMounted(async () => {
-    await fetchOrders();
+    await Promise.all([
+        fetchOrders(),
+        fetchProducts()
+    ]);
 });
 
 const stats = computed(() => [

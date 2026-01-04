@@ -9,7 +9,13 @@ import {
 } from 'lucide-vue-next';
 import { useProducts, type Product } from '../composables/useProducts';
 
-const { products, addProduct, updateProduct, deleteProduct } = useProducts();
+const { products, addProduct, updateProduct, deleteProduct, fetchProducts } = useProducts();
+
+import { onMounted } from 'vue';
+
+onMounted(async () => {
+    await fetchProducts();
+});
 
 const isDialogOpen = ref(false);
 const editingProduct = ref<Product | null>(null);
