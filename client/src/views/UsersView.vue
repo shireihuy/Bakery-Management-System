@@ -27,13 +27,15 @@ const form = ref<{
     status: User['status'];
     phone: string;
     address: string;
+    password?: string;
 }>({
     name: '',
     email: '',
     role: 'Customer',
     status: 'active',
     phone: '',
-    address: ''
+    address: '',
+    password: ''
 });
 
 const filteredUsers = computed(() => {
@@ -54,7 +56,8 @@ const openAddModal = () => {
         role: 'Customer',
         status: 'active',
         phone: '',
-        address: ''
+        address: '',
+        password: ''
     };
     isModalOpen.value = true;
 };
@@ -67,7 +70,8 @@ const openEditModal = (user: User) => {
         role: user.role,
         status: user.status,
         phone: user.phone || '',
-        address: user.address || ''
+        address: user.address || '',
+        password: '' // Reset password field when editing
     };
     isModalOpen.value = true;
 };
@@ -262,6 +266,10 @@ const getRoleBadgeColor = (role: string) => {
                                 <option value="Cashier">Cashier</option>
                                 <option value="Customer">Customer</option>
                             </select>
+                        </div>
+                        <div v-if="!editingUser" class="space-y-1">
+                            <label class="text-sm font-medium text-gray-700">Password</label>
+                            <input v-model="form.password" type="password" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
                         </div>
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">Status</label>

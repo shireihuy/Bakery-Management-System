@@ -35,7 +35,7 @@ export function useUsers() {
         }
     };
 
-    const addUser = async (userData: Omit<User, 'id' | 'joinDate'>) => {
+    const addUser = async (userData: Omit<User, 'id' | 'joinDate'> & { password?: string }) => {
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`${API_URL}/auth/register`, {
