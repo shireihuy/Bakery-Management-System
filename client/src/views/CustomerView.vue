@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { 
   ShoppingCart, 
   Plus, 
@@ -22,7 +23,8 @@ import { useAuth } from '../composables/useAuth';
 // State
 const { products } = useProducts();
 const { addOrder, getCustomerOrders } = useOrders();
-const { user } = useAuth(); // Assuming useAuth provides a reactive user object
+const { user } = useAuth();
+const router = useRouter();
 
 interface CartItem extends Product {
   quantity: number;
@@ -40,6 +42,7 @@ const activeTab = ref('menu');
 const isOrderDetailsOpen = ref(false);
 
 const orderCustomerName = ref('');
+const showLoginPrompt = ref(false);
 
 // Derived State
 const isCashier = computed(() => user.value?.role?.toLowerCase() === 'cashier');
@@ -115,7 +118,7 @@ const removeFromCart = (productId: string) => {
 
 const handleCheckout = () => {
     if (!user.value) {
-        alert('Please log in to place an order.');
+        showLoginPrompt.value = true;
         return;
     }
 
@@ -613,6 +616,35 @@ const getStatusColor = (status: string) => {
                 >
                     Close
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Prompt Modal -->
+    <div v-if="showLoginPrompt" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div class="p-8 text-center space-y-6">
+                <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                    <Info class="w-10 h-10 text-green-600" />
+                </div>
+                <div class="space-y-2">
+                    <h3 class="text-2xl font-bold text-green-900">Yêu cầu đăng nhập</h3>
+                    <p class="text-green-600">Bạn cần đăng nhập để thực hiện đặt hàng. Tham gia với chúng tôi ngay để nhận được nhiều ưu đãi!</p>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <button 
+                        @click="router.push('/login')"
+                        class="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95"
+                    >
+                        Đăng nhập ngay
+                    </button>
+                    <button 
+                        @click="showLoginPrompt = false"
+                        class="w-full py-3 px-4 bg-gray-50 hover:bg-gray-100 text-gray-600 font-medium rounded-xl transition-colors"
+                    >
+                        Để sau
+                    </button>
+                </div>
             </div>
         </div>
     </div>
