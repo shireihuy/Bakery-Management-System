@@ -53,7 +53,9 @@ CREATE TABLE IF NOT EXISTS orders (
     customer_name VARCHAR(255), -- Stores name for walk-ins or snapshot for users
     total_price DECIMAL(10, 2) NOT NULL,
     status VARCHAR(50) DEFAULT 'Pending', -- Pending, Baking, Ready, Completed, Cancelled
-    order_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    order_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    start_time TIMESTAMP WITH TIME ZONE,
+    completed_time TIMESTAMP WITH TIME ZONE
 );
 
 -- Order Details (Line items)

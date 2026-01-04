@@ -16,10 +16,14 @@ const { products, fetchProducts } = useProducts();
 const { lowStockItems: inventoryLowStock } = useInventory();
 
 onMounted(async () => {
-    await Promise.all([
-        fetchOrders(),
-        fetchProducts()
-    ]);
+    try {
+        await Promise.all([
+            fetchOrders(),
+            fetchProducts()
+        ]);
+    } catch (err) {
+        console.error('Error loading dashboard data:', err);
+    }
 });
 
 const stats = computed(() => [

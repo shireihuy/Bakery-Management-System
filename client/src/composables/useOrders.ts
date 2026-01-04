@@ -51,9 +51,13 @@ export function useOrders() {
                 customerId: o.customer_id,
                 customerName: o.customer_name || 'Guest',
                 customerEmail: o.customer_email || 'walkin@example.com',
+                phone: o.customer_phone,
+                address: o.customer_address,
                 total: parseFloat(o.total_price),
                 status: o.status,
                 date: new Date(o.order_date).toLocaleString(),
+                startTime: o.start_time ? new Date(o.start_time).toLocaleString() : undefined,
+                completedTime: o.completed_time ? new Date(o.completed_time).toLocaleString() : undefined,
                 items: o.items.map((i: any) => ({
                     id: i.id,
                     productId: i.product_id,
@@ -90,6 +94,8 @@ export function useOrders() {
                 total: parseFloat(o.total_price),
                 status: o.status,
                 date: new Date(o.order_date).toLocaleString(),
+                startTime: o.start_time ? new Date(o.start_time).toLocaleString() : undefined,
+                completedTime: o.completed_time ? new Date(o.completed_time).toLocaleString() : undefined,
                 items: o.items.map((i: any) => ({
                     id: i.id,
                     productId: i.product_id,

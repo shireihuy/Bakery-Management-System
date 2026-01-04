@@ -47,9 +47,13 @@ const getOrders = async (req, res) => {
                 o.customer_id, 
                 COALESCE(o.customer_name, u.name, 'Unknown') as customer_name, 
                 u.email as customer_email,
+                u.phone_number as customer_phone,
+                u.address as customer_address,
                 o.total_price, 
                 o.status, 
-                o.order_date
+                o.order_date,
+                o.start_time,
+                o.completed_time
             FROM orders o
             LEFT JOIN users u ON o.customer_id::text = u.id::text
             ORDER BY o.order_date DESC
@@ -59,12 +63,12 @@ const getOrders = async (req, res) => {
         const orders = [];
         for (const row of result.rows) {
             const itemsResult = await query(`
-                SELECT 
-                    od.id, 
-                    od.product_id, 
-                    p.name as product_name, 
-                    od.quantity, 
-                    od.subtotal
+        SELECT
+        od.id,
+            od.product_id,
+            p.name as product_name,
+            od.quantity,
+            od.subtotal
                 FROM order_details od
                 JOIN products p ON od.product_id = p.id
                 WHERE od.order_id = $1
@@ -88,21 +92,21 @@ const getMyOrders = async (req, res) => {
     const userId = req.user.id;
     try {
         const result = await query(`
-            SELECT id, total_price, status, order_date
+            SELECT id, total_price, status, order_date, start_time, completed_time
             FROM orders
             WHERE customer_id = $1
             ORDER BY order_date DESC
-        `, [userId]);
+            `, [userId]);
 
         const orders = [];
         for (const row of result.rows) {
             const itemsResult = await query(`
-                SELECT 
-                    od.id, 
-                    od.product_id, 
-                    p.name as product_name, 
-                    od.quantity, 
-                    od.subtotal
+        SELECT
+        od.id,
+            od.product_id,
+            p.name as product_name,
+            od.quantity,
+            od.subtotal
                 FROM order_details od
                 JOIN products p ON od.product_id = p.id
                 WHERE od.order_id = $1
@@ -127,7 +131,12 @@ const updateOrderStatus = async (req, res) => {
 
     try {
         const result = await query(
-            'UPDATE orders SET status = $1 WHERE id = $2 RETURNING *',
+            `UPDATE orders 
+             SET status = $1,
+                 start_time = CASE WHEN $1 = 'Baking' THEN CURRENT_TIMESTAMP ELSE start_time END,
+                 completed_time = CASE WHEN $1 = 'Completed' THEN CURRENT_TIMESTAMP ELSE completed_time END
+             WHERE id = $2 
+             RETURNING *`,
             [status, id]
         );
 
