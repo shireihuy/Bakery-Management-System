@@ -320,19 +320,19 @@ const getRoleBadgeColor = (role: string) => {
             <div class="p-6 border-b border-red-100 bg-red-50">
                 <h3 class="text-xl font-bold text-red-900 flex items-center gap-2">
                     <Trash2 class="w-5 h-5" />
-                    Xác nhận xóa tài khoản
+                    Confirm Account Deletion
                 </h3>
             </div>
             
             <div class="p-6 space-y-4">
                 <div class="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                    <p class="text-sm text-gray-600">Bạn đang thực hiện xóa tài khoản:</p>
+                    <p class="text-sm text-gray-600">You are about to delete the following account:</p>
                     <p class="font-bold text-gray-900 mt-1">{{ userToDelete?.name }}</p>
                     <p class="text-xs text-gray-500">{{ userToDelete?.email }}</p>
                 </div>
 
                 <p class="text-sm text-red-600 font-medium">
-                    Cảnh báo: Hành động này không thể hoàn tác. Mọi dữ liệu liên quan đến người dùng này sẽ bị xóa vĩnh viễn.
+                    Warning: This action cannot be undone. All data associated with this user will be permanently removed.
                 </p>
 
                 <label class="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
@@ -342,7 +342,7 @@ const getRoleBadgeColor = (role: string) => {
                         class="mt-1 w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
                     >
                     <span class="text-sm text-gray-700 select-none">
-                        Tôi xác nhận hiểu rằng hành động này là <strong>vĩnh viễn</strong> và muốn tiếp tục xóa.
+                        I confirm that I understand this action is <strong>permanent</strong> and I want to proceed.
                     </span>
                 </label>
             </div>
@@ -352,14 +352,14 @@ const getRoleBadgeColor = (role: string) => {
                     @click="isDeleteModalOpen = false"
                     class="px-4 py-2 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                    Hủy bỏ
+                    Cancel
                 </button>
                 <button 
                     @click="confirmDelete"
                     :disabled="!confirmDeleteCheckbox"
                     class="px-6 py-2 bg-red-600 text-white font-bold rounded-lg shadow-md hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale active:scale-95"
                 >
-                    Xóa vĩnh viễn
+                    Delete Permanently
                 </button>
             </div>
         </div>
