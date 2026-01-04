@@ -77,10 +77,29 @@ export function useAuth() {
         }
     };
 
-    const updateProfile = (updates: Partial<User>) => {
-        if (user.value) {
-            user.value = { ...user.value, ...updates };
-            localStorage.setItem('user', JSON.stringify(user.value));
+    const updateProfile = async (updates: Partial<User>) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/users/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(updates)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update profile');
+            }
+
+            const updatedUser = await response.json();
+            user.value = updatedUser;
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            return updatedUser;
+        } catch (err) {
+            console.error('Update profile error:', err);
+            throw err;
         }
     };
 

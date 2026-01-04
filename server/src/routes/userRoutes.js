@@ -2,6 +2,10 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
+const userController = require('../controllers/userController');
+
+// Update user profile (Any authenticated user)
+router.put('/profile', authenticateToken, userController.updateProfile);
 
 // Get all users (Admin and Manager only)
 router.get('/', authenticateToken, authorizeRoles('Admin', 'Manager'), async (req, res) => {

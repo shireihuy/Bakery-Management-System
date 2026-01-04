@@ -31,10 +31,7 @@ const handleSave = async () => {
     message.value = { text: '', type: '' };
 
     try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 800));
-        
-        updateProfile({
+        await updateProfile({
             name: formData.value.name,
             email: formData.value.email,
             phone: formData.value.phone,
