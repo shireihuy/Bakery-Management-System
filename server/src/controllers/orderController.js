@@ -130,15 +130,19 @@ const updateOrderStatus = async (req, res) => {
     const { status } = req.body;
 
     try {
-        const result = await query(
-            `UPDATE orders 
-             SET status = $1,
-                 start_time = CASE WHEN $1::text = 'Baking' THEN CURRENT_TIMESTAMP ELSE start_time END,
-                 completed_time = CASE WHEN $1::text = 'Completed' THEN CURRENT_TIMESTAMP ELSE completed_time END
-             WHERE id = $2 
-             RETURNING *`,
-            [status, id]
-        );
+        let updateQuery = 'UPDATE orders SET status = $1';
+        const params = [status];
+
+        if (status === 'Baking') {
+            updateQuery += ', start_time = CURRENT_TIMESTAMP';
+        } else if (status === 'Completed') {
+            updateQuery += ', completed_time = CURRENT_TIMESTAMP';
+        }
+
+        updateQuery += ' WHERE id = $2 RETURNING *';
+        params.push(id);
+
+        const result = await query(updateQuery, params);
 
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Order not found' });
