@@ -27,7 +27,7 @@ onMounted(async () => {
 const filteredOrders = computed(() => {
     return orders.value.filter(order => {
         const matchesSearch = 
-            order.id.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+            String(order.id).toLowerCase().includes(searchQuery.value.toLowerCase()) ||
             order.customerName.toLowerCase().includes(searchQuery.value.toLowerCase());
         
         const matchesStatus = statusFilter.value === 'all' || order.status === statusFilter.value;
@@ -122,7 +122,7 @@ const changeStatus = async (order: Order, status: string) => {
                         <input 
                             v-model="searchQuery"
                             type="text" 
-                            placeholder="Search order ID or customer..." 
+                            placeholder="Search #ID or customer..." 
                             class="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         >
                     </div>
@@ -165,7 +165,7 @@ const changeStatus = async (order: Order, status: string) => {
                             </td>
                         </tr>
                         <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 font-medium text-gray-900">{{ order.id }}</td>
+                            <td class="px-6 py-4 font-medium text-gray-900">#{{ order.id }}</td>
                             <td class="px-6 py-4">
                                 <div class="font-medium text-gray-900">{{ order.customerName }}</div>
                                 <div class="text-xs text-gray-500">{{ order.customerEmail }}</div>

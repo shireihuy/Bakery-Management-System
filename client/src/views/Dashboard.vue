@@ -121,7 +121,7 @@ const lowStockDisplay = computed(() => {
             <div v-for="order in recentOrders" :key="order.id" class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
               <div class="flex-1">
                 <div class="flex items-center gap-2">
-                  <p class="text-sm text-green-900 font-medium">{{ order.id }}</p>
+                  <p class="text-sm text-green-900 font-medium">#{{ order.id }}</p>
                   <div 
                     class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     :class="[

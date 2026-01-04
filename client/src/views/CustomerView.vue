@@ -348,7 +348,7 @@ const getStatusColor = (status: string) => {
             <div v-for="order in customerOrders" :key="order.id" class="bg-white rounded-xl border border-green-200 p-4 hover:shadow-md transition-shadow">
                  <div class="text-center border-b border-green-100 pb-3 mb-3">
                     <p class="text-xs text-green-600 uppercase tracking-wider font-semibold">Matcha Bakery</p>
-                    <p class="text-sm font-bold text-green-900 my-1">{{ order.id }}</p>
+                    <p class="text-sm font-bold text-green-900 my-1">#{{ order.id }}</p>
                     <p class="text-xs text-cool-gray-500">{{ order.date }}</p>
                  </div>
                  <div class="flex justify-center mb-4">

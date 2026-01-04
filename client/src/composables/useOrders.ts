@@ -10,7 +10,7 @@ export interface OrderItem {
 }
 
 export interface Order {
-    readonly id: string;
+    readonly id: number;
     readonly customerId: string | null;
     readonly customerName: string;
     readonly customerEmail: string;
@@ -135,7 +135,7 @@ export function useOrders() {
         }
     };
 
-    const updateOrderStatus = async (orderId: string, status: Order['status']) => {
+    const updateOrderStatus = async (orderId: number, status: Order['status']) => {
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`${API_URL}/orders/${orderId}/status`, {

@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS inventory (
 
 -- Orders Table
 CREATE TABLE IF NOT EXISTS orders (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id SERIAL PRIMARY KEY,
     customer_id UUID REFERENCES users(id),
     total_price DECIMAL(10, 2) NOT NULL,
     status VARCHAR(50) DEFAULT 'Pending', -- Pending, Baking, Ready, Completed, Cancelled
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS orders (
 -- Order Details (Line items)
 CREATE TABLE IF NOT EXISTS order_details (
     id SERIAL PRIMARY KEY,
-    order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+    order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
     product_id INTEGER REFERENCES products(id),
     quantity INTEGER NOT NULL,
     subtotal DECIMAL(10, 2) NOT NULL
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS order_details (
 -- Payments Table
 CREATE TABLE IF NOT EXISTS payments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    order_id UUID REFERENCES orders(id) ON DELETE CASCADE,
+    order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
     method VARCHAR(50) NOT NULL, -- Cash, Credit Card, etc.
     amount DECIMAL(10, 2) NOT NULL,
     status VARCHAR(50) DEFAULT 'Pending',
