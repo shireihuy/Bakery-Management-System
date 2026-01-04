@@ -14,7 +14,9 @@ app.get('/', (req, res) => {
   res.send('Bakery Management System API is running');
 });
 
-// Routes will be imported here
+// Routes
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

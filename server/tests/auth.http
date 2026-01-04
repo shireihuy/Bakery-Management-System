@@ -1,0 +1,27 @@
+@baseUrl = http://localhost:3000
+
+### Register a new customer
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "password123",
+    "phone_number": "1234567890"
+}
+
+### Login with the new customer
+# @name login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "test@example.com",
+    "password": "password123"
+}
+
+### Access a protected route (Example - to be implemented)
+@token = {{login.response.body.token}}
+GET {{baseUrl}}/api/auth/profile
+Authorization: Bearer {{token}}
