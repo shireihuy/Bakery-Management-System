@@ -58,13 +58,39 @@ export function useUsers() {
     };
 
     const updateUser = async (id: string, updates: Partial<Omit<User, 'id' | 'joinDate'>>) => {
-        // Placeholder for PUT /api/users/:id - backend needs this endpoint first
-        console.log('Update user', id, updates);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/users/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(updates)
+            });
+            if (response.ok) {
+                await fetchUsers(); // Refresh list
+            }
+        } catch (err) {
+            console.error('Failed to update user:', err);
+        }
     };
 
     const deleteUser = async (id: string) => {
-        // Placeholder for DELETE /api/users/:id - backend needs this endpoint first
-        console.log('Delete user', id);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/users/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.ok) {
+                await fetchUsers(); // Refresh list
+            }
+        } catch (err) {
+            console.error('Failed to delete user:', err);
+        }
     };
 
     onMounted(() => {

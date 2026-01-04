@@ -7,6 +7,10 @@ const userController = require('../controllers/userController');
 // Update user profile (Any authenticated user)
 router.put('/profile', authenticateToken, userController.updateProfile);
 
+// Administrative User Management (Admin and Manager only)
+router.put('/:id', authenticateToken, authorizeRoles('Admin', 'Manager'), userController.updateUser);
+router.delete('/:id', authenticateToken, authorizeRoles('Admin', 'Manager'), userController.deleteUser);
+
 // Get all users (Admin and Manager only)
 router.get('/', authenticateToken, authorizeRoles('Admin', 'Manager'), async (req, res) => {
     try {
