@@ -38,8 +38,8 @@ const updateUser = async (req, res) => {
         const finalAddress = (address === '' || address === undefined) ? null : address;
 
         const result = await pool.query(
-            'UPDATE users SET name = $1, email = $2, role = $3, phone_number = $4, address = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 RETURNING id, name, email, role, phone_number as phone, address',
-            [name, email, role, finalPhone, finalAddress, id]
+            'UPDATE users SET name = $1, email = $2, role = $3, phone_number = $4, address = $5, status = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7 RETURNING id, name, email, role, status, phone_number as phone, address',
+            [name, email, role, finalPhone, finalAddress, status || 'active', id]
         );
 
         if (result.rows.length === 0) {

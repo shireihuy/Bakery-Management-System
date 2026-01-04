@@ -15,13 +15,12 @@ router.delete('/:id', authenticateToken, authorizeRoles('Admin', 'Manager'), use
 router.get('/', authenticateToken, authorizeRoles('Admin', 'Manager'), async (req, res) => {
     try {
         const result = await pool.query(
-            'SELECT id, name, email, role, phone_number as phone, address, created_at as "joinDate" FROM users ORDER BY created_at DESC'
+            'SELECT id, name, email, role, status, phone_number as phone, address, created_at as "joinDate" FROM users ORDER BY created_at DESC'
         );
 
         // Transform data to match frontend expectations if needed
         const users = result.rows.map(user => ({
             ...user,
-            status: 'active', // For now, default to active as we don't have this in DB yet
             joinDate: user.joinDate ? new Date(user.joinDate).toISOString().split('T')[0] : 'N/A'
         }));
 

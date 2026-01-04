@@ -23,8 +23,8 @@ const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = await pool.query(
-            'INSERT INTO users (name, email, password, phone_number, address, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, role, phone_number as phone, address',
-            [name, email, hashedPassword, finalPhone, finalAddress, userRole]
+            'INSERT INTO users (name, email, password, phone_number, address, role, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, email, role, status, phone_number as phone, address',
+            [name, email, hashedPassword, finalPhone, finalAddress, userRole, 'active']
         );
 
         console.log('User registered successfully:', newUser.rows[0].email);
@@ -51,6 +51,10 @@ const login = async (req, res) => {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
+        if (user.status === 'inactive') {
+            return res.status(403).json({ message: 'Your account is inactive. Please contact the administrator.' });
+        }
+
         const token = jwt.sign(
             { id: user.id, role: user.role },
             process.env.JWT_SECRET,
@@ -64,6 +68,7 @@ const login = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                status: user.status,
                 phone: user.phone_number,
                 address: user.address
             }
