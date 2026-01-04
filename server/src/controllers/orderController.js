@@ -77,7 +77,7 @@ const getOrders = async (req, res) => {
         }
 
         res.json(orders);
-        res.json(orders);
+
     } catch (err) {
         console.error('Detailed Error fetching orders:', err);
         res.status(500).json({ message: 'Server error fetching orders', error: err.message, stack: err.stack });
