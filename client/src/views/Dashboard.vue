@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
-import { AlertTriangle, DollarSign, Package, ShoppingCart, Sparkles } from 'lucide-vue-next';
+import { 
+  DollarSign, 
+  ShoppingCart, 
+  Package, 
+  Sparkles, 
+  AlertTriangle 
+} from 'lucide-vue-next';
 import { useOrders } from '../composables/useOrders';
 import { useProducts } from '../composables/useProducts';
 import { useInventory } from '../composables/useInventory';
-import { useI18n } from '../composables/useI18n';
 
-const { t } = useI18n();
 const { orders, fetchOrders } = useOrders();
 const { products, fetchProducts } = useProducts();
 const { lowStockItems: inventoryLowStock } = useInventory();
@@ -24,23 +28,23 @@ onMounted(async () => {
 
 const stats = computed(() => [
   {
-    title: t('totalRevenue'),
-    value: `$${orders.value.reduce((sum: number, o: any) => sum + (o.status !== 'Cancelled' ? o.total : 0), 0).toLocaleString()}`,
+    title: "Total Revenue",
+    value: `$${orders.value.reduce((sum, o) => sum + (o.status !== 'Cancelled' ? o.total : 0), 0).toLocaleString()}`,
     change: `From ${orders.value.length} orders`,
     icon: DollarSign,
     color: "text-green-600",
     bgColor: "bg-green-100"
   },
   {
-    title: t('activeOrders'),
-    value: orders.value.filter((o: any) => ['Pending', 'Baking', 'Ready'].includes(o.status)).length.toString(),
+    title: "Active Orders",
+    value: orders.value.filter(o => ['Pending', 'Baking', 'Ready'].includes(o.status)).length.toString(),
     change: "Waiting for action",
     icon: ShoppingCart,
     color: "text-blue-600",
     bgColor: "bg-blue-100"
   },
   {
-    title: t('totalProducts'),
+    title: "Total Products",
     value: products.value.length.toString(),
     change: "Active catalog",
     icon: Package,
@@ -48,7 +52,7 @@ const stats = computed(() => [
     bgColor: "bg-purple-100"
   },
   {
-    title: t('lowStock'),
+    title: "Low Stock Items",
     value: inventoryLowStock.value.length.toString(),
     change: "Requiring attention",
     icon: AlertTriangle,
@@ -82,9 +86,9 @@ const lowStockDisplay = computed(() => {
           <div class="text-center sm:text-left space-y-4">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-bakery-500/20 border border-white/20 backdrop-blur-md">
               <Sparkles class="w-4 h-4 text-bakery-200" />
-              <span class="text-xs font-bold text-bakery-100 uppercase tracking-widest">{{ t('managementSuite') }}</span>
+              <span class="text-xs font-bold text-bakery-100 uppercase tracking-widest">Management Suite</span>
             </div>
-            <h2 class="text-4xl sm:text-5xl font-black text-white leading-tight">{{ t('artisanInsights') }}</h2>
+            <h2 class="text-4xl sm:text-5xl font-black text-white leading-tight">Artisan Insights</h2>
             <p class="text-bakery-100/80 text-lg max-w-md font-medium">Real-time performance metrics for your handcrafted bakery operations.</p>
           </div>
           
@@ -102,18 +106,18 @@ const lowStockDisplay = computed(() => {
       <div 
         v-for="(stat, index) in stats" 
         :key="index" 
-        class="glass-card p-8 rounded-[2.5rem] hover:scale-105 transition-all duration-500 group animate-in zoom-in duration-700 hover:shadow-2xl dark:hover:shadow-white/5"
+        class="glass-card p-8 rounded-[2.5rem] hover:scale-105 transition-all duration-500 group animate-in zoom-in duration-700"
         :style="{ animationDelay: `${index * 100}ms` }"
       >
         <div class="flex items-start justify-between mb-6">
-          <div :class="`p-4 rounded-2xl ${stat.bgColor.includes('green') ? 'bg-success-bg' : stat.bgColor.includes('blue') ? 'bg-bakery-100' : stat.bgColor.includes('purple') ? 'bg-bakery-100' : 'bg-danger-bg'} transition-colors`">
-            <component :is="stat.icon" :class="`w-6 h-6 ${stat.color.includes('green') ? 'text-success-text' : stat.color.includes('blue') ? 'text-bakery-600' : stat.color.includes('purple') ? 'text-bakery-600' : 'text-danger-text'}`" />
+          <div :class="`p-4 rounded-2xl ${stat.bgColor.replace('bg-', 'bg-bakery-').replace('100', '50')} transition-colors`">
+            <component :is="stat.icon" :class="`w-6 h-6 ${stat.color.replace('text-', 'text-bakery-').replace('600', '600')}`" />
           </div>
-          <span class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">{{ stat.change }}</span>
+          <span class="text-[10px] font-black text-bakery-400 uppercase tracking-widest">{{ stat.change }}</span>
         </div>
         <div>
-          <h3 class="text-bakery-500 dark:text-bakery-400 text-sm font-bold uppercase tracking-widest mb-2">{{ stat.title }}</h3>
-          <p class="text-3xl font-black text-bakery-900 dark:text-white group-hover:text-bakery-600 dark:group-hover:text-bakery-400 transition-colors">{{ stat.value }}</p>
+          <h3 class="text-bakery-500 text-sm font-bold uppercase tracking-widest mb-2">{{ stat.title }}</h3>
+          <p class="text-3xl font-black text-bakery-900 group-hover:text-bakery-600 transition-colors">{{ stat.value }}</p>
         </div>
       </div>
     </div>
@@ -121,75 +125,75 @@ const lowStockDisplay = computed(() => {
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
       <!-- Recent Orders with Live Status -->
-      <div class="glass-card rounded-[2.5rem] border border-bakery-100 dark:border-bakery-800 overflow-hidden">
-        <div class="p-8 border-b border-bakery-50 dark:border-bakery-900 flex items-center justify-between">
-          <h3 class="font-black text-bakery-900 dark:text-white text-xl tracking-tight">Active Orders</h3>
+      <div class="glass-card rounded-[2.5rem] border border-bakery-100 overflow-hidden">
+        <div class="p-8 border-b border-bakery-50 flex items-center justify-between">
+          <h3 class="font-black text-bakery-900 text-xl tracking-tight">Active Orders</h3>
           <div class="flex items-center gap-2">
-              <div class="w-2 h-2 rounded-full bg-success-text animate-pulse"></div>
-              <span class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Live Updates</span>
+              <div class="w-2 h-2 rounded-full bg-bakery-500 animate-pulse"></div>
+              <span class="text-[10px] font-black text-bakery-400 uppercase tracking-widest">Live Updates</span>
           </div>
         </div>
         <div class="p-8 space-y-4">
-            <div v-for="order in recentOrders" :key="order.id" class="flex items-center justify-between p-5 bg-bakery-50/50 dark:bg-bakery-900/40 rounded-3xl border border-bakery-50 dark:border-bakery-800 hover:border-bakery-200 dark:hover:border-bakery-700 transition-all group">
+            <div v-for="order in recentOrders" :key="order.id" class="flex items-center justify-between p-5 bg-bakery-50/50 rounded-3xl border border-bakery-50 hover:border-bakery-200 transition-all group">
               <div class="flex-1">
                 <div class="flex items-center gap-3 mb-1">
-                  <p class="text-sm text-bakery-900 dark:text-white font-black">#{{ order.id }}</p>
+                  <p class="text-sm text-bakery-900 font-black">#{{ order.id }}</p>
                   <div 
                     class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border"
                     :class="[
                         order.status === 'Completed' 
-                        ? 'bg-bakery-900 dark:bg-bakery-100 text-white dark:text-bakery-900 border-bakery-900 dark:border-bakery-100' 
-                        : 'bg-white dark:bg-bakery-800 text-bakery-600 dark:text-bakery-400 border-bakery-100 dark:border-bakery-800 group-hover:bg-bakery-600 dark:group-hover:bg-bakery-400 group-hover:text-white dark:group-hover:text-bakery-900 group-hover:border-bakery-600 dark:group-hover:border-bakery-400 transition-all'
+                        ? 'bg-bakery-900 text-white border-bakery-900' 
+                        : 'bg-white text-bakery-600 border-bakery-100 group-hover:bg-bakery-600 group-hover:text-white group-hover:border-bakery-600 transition-all'
                     ]"
                   >
                     {{ order.status }}
                   </div>
                 </div>
-                <p class="text-sm text-bakery-500 dark:text-bakery-400 font-medium">{{ order.customerName }}</p>
+                <p class="text-sm text-bakery-500 font-medium">{{ order.customerName }}</p>
               </div>
               <div class="text-right">
-                <p class="text-lg font-black text-bakery-900 dark:text-white">${{ order.total.toFixed(2) }}</p>
-                <p class="text-[10px] text-bakery-400 dark:text-bakery-500 font-bold uppercase tracking-widest">{{ order.items.length }} items</p>
+                <p class="text-lg font-black text-bakery-900">${{ order.total.toFixed(2) }}</p>
+                <p class="text-[10px] text-bakery-400 font-bold uppercase tracking-widest">{{ order.items.length }} items</p>
               </div>
             </div>
         </div>
       </div>
 
       <!-- Low Stock Alerts with Progress Visualization -->
-      <div class="glass-card rounded-[2.5rem] border border-bakery-100 dark:border-bakery-800 overflow-hidden">
-        <div class="p-8 border-b border-bakery-50 dark:border-bakery-900">
-          <h3 class="font-black text-bakery-900 dark:text-white text-xl tracking-tight flex items-center gap-3">
-            <AlertTriangle class="w-6 h-6 text-danger-text" />
+      <div class="glass-card rounded-[2.5rem] border border-bakery-100 overflow-hidden">
+        <div class="p-8 border-b border-bakery-50">
+          <h3 class="font-black text-bakery-900 text-xl tracking-tight flex items-center gap-3">
+            <AlertTriangle class="w-6 h-6 text-red-500" />
             Inventory Alerts
           </h3>
         </div>
         <div class="p-8 space-y-6">
-            <div v-for="(item, index) in lowStockDisplay" :key="index" class="p-6 bg-danger-bg rounded-3xl border border-danger-text/20 group">
+            <div v-for="(item, index) in lowStockDisplay" :key="index" class="p-6 bg-red-50 rounded-3xl border border-red-100 group">
               <div class="flex justify-between items-start mb-4">
                 <div>
-                    <p class="text-bakery-900 dark:text-white font-black">{{ item.name }}</p>
-                    <p class="text-xs text-danger-text font-bold uppercase tracking-widest mt-1">Refill Recommended</p>
+                    <p class="text-bakery-900 font-black">{{ item.name }}</p>
+                    <p class="text-xs text-red-600 font-bold uppercase tracking-widest mt-1">Refill Recommended</p>
                 </div>
-                <div class="px-3 py-1 rounded-full bg-danger-text text-white dark:text-bakery-900 text-[10px] font-black uppercase tracking-widest">Critical</div>
+                <div class="px-3 py-1 rounded-full bg-red-600 text-white text-[10px] font-black uppercase tracking-widest">Critical</div>
               </div>
               <div class="space-y-3">
-                  <div class="flex justify-between text-xs font-bold text-bakery-500 dark:text-bakery-400">
+                  <div class="flex justify-between text-xs font-bold text-bakery-500">
                     <span>{{ item.quantity }} / {{ item.minQuantity }} {{ item.unit }}</span>
                     <span>{{ Math.round((item.quantity / item.minQuantity) * 100) }}%</span>
                   </div>
-                  <div class="w-full bg-bakery-100 dark:bg-bakery-800 rounded-full h-3 p-0.5">
+                  <div class="w-full bg-red-200 rounded-full h-3 p-0.5">
                     <div 
-                      class="bg-danger-text h-2 rounded-full shadow-sm shadow-danger-text/20 transition-all duration-1000" 
+                      class="bg-red-600 h-2 rounded-full shadow-sm shadow-red-200 transition-all duration-1000" 
                       :style="{ width: `${(item.quantity / item.minQuantity) * 100}%` }"
                     ></div>
                   </div>
               </div>
             </div>
             <div v-if="lowStockDisplay.length === 0" class="flex flex-col items-center justify-center py-12 text-center space-y-4">
-                <div class="w-16 h-16 rounded-full bg-bakery-50 dark:bg-bakery-900 flex items-center justify-center">
-                    <sparkles class="w-8 h-8 text-bakery-300 dark:text-bakery-700" />
+                <div class="w-16 h-16 rounded-full bg-bakery-50 flex items-center justify-center">
+                    <sparkles class="w-8 h-8 text-bakery-300" />
                 </div>
-                <p class="text-bakery-500 dark:text-bakery-400 font-medium tracking-tight">All inventory levels are optimal.</p>
+                <p class="text-bakery-500 font-medium tracking-tight">All inventory levels are optimal.</p>
             </div>
         </div>
       </div>

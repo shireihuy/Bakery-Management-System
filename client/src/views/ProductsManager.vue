@@ -133,285 +133,263 @@ const filteredProducts = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-8 animate-in fade-in duration-700">
-    <div class="glass-card rounded-[2.5rem] border border-bakery-100 dark:border-bakery-800 overflow-hidden">
-      <div class="p-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-          <div>
-            <h2 class="text-3xl font-black tracking-tight text-bakery-900 dark:text-white">Artisan Inventory</h2>
-            <p class="text-bakery-500 dark:text-bakery-400 font-medium mt-1">Manage and curate your bakery's finest selections.</p>
-          </div>
+  <div class="space-y-6">
+    <div class="rounded-xl border bg-card text-card-foreground shadow border-green-200 bg-white">
+      <div class="p-6">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <h2 class="text-2xl font-bold tracking-tight text-green-900">Product Management</h2>
           <button 
             @click="() => { resetForm(); isDialogOpen = true; }"
-            class="h-14 px-8 rounded-2xl bg-bakery-900 dark:bg-white text-white dark:text-bakery-900 font-black text-sm flex items-center shadow-xl hover:scale-105 transition-all active:scale-95"
+            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md"
           >
-            <Plus class="w-5 h-5 mr-3" />
-            New Creation
+            <Plus class="w-4 h-4 mr-2" />
+            Add Product
           </button>
         </div>
 
-        <div class="flex flex-col md:flex-row gap-6 mb-10">
-            <div class="relative flex-1 group">
-              <Search class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-bakery-400 group-focus-within:text-bakery-600 dark:group-focus-within:text-bakery-400 transition-colors" />
+        <div class="flex flex-col md:flex-row gap-4 mb-6">
+            <div class="relative flex-1">
+              <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
               <input
-                placeholder="Search by name, ingredients..."
+                placeholder="Search products..."
                 v-model="searchTerm"
-                class="w-full h-14 pl-12 pr-6 rounded-2xl border border-bakery-100 dark:border-bakery-800 focus:outline-none focus:ring-2 focus:ring-bakery-300 dark:focus:ring-bakery-700 bg-white/50 dark:bg-bakery-950/50 backdrop-blur-sm transition-all text-bakery-900 dark:text-white font-medium"
+                class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 border-green-200 focus:border-green-500 focus:ring-green-500"
               />
             </div>
-            <div class="relative w-full md:w-64">
-                <select 
-                    v-model="filterCategory"
-                    class="w-full h-14 px-6 rounded-2xl border border-bakery-100 dark:border-bakery-800 focus:outline-none focus:ring-2 focus:ring-bakery-300 dark:focus:ring-bakery-700 bg-white/50 dark:bg-bakery-950/50 text-sm font-black uppercase tracking-widest text-bakery-900 dark:text-white appearance-none cursor-pointer"
-                >
-                  <option value="all">All Categories</option>
-                  <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-                </select>
-                <div class="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-bakery-400">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                </div>
-            </div>
+            <select 
+                v-model="filterCategory"
+                class="flex h-10 w-full md:w-48 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 border-green-200 focus:border-green-500 focus:ring-green-500"
+            >
+              <option value="all">All Categories</option>
+              <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+            </select>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div 
                 v-for="product in filteredProducts" 
                 :key="product.id" 
-                class="group bg-white dark:bg-bakery-900 rounded-[2.5rem] border border-bakery-100 dark:border-bakery-800 overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-500"
+                class="rounded-xl border bg-card text-card-foreground shadow border-green-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-white"
             >
-                <div class="relative h-56 overflow-hidden">
+                <div class="relative h-40 overflow-hidden">
                   <img
                     :src="product.image"
                     :alt="product.name"
-                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                    class="w-full h-full object-cover"
                   />
-                  <div class="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-bakery-900/60 to-transparent"></div>
-                  <span class="absolute top-4 right-4 glass-card px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest text-bakery-700 dark:text-bakery-300 border border-white/20">{{ product.category }}</span>
+                  <span class="absolute top-2 right-2 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-600 text-white shadow-sm">{{ product.category }}</span>
                 </div>
-                <div class="p-8">
-                  <div class="space-y-6">
+                <div class="p-4 pt-4">
+                  <div class="space-y-3">
                     <div class="flex justify-between items-start">
-                      <div class="min-w-0 flex-1">
-                        <h4 class="text-xl font-black text-bakery-900 dark:text-white truncate group-hover:text-bakery-600 dark:group-hover:text-bakery-400 transition-colors">{{ product.name }}</h4>
-                        <p class="text-xs text-bakery-400 dark:text-bakery-500 font-bold uppercase tracking-widest mt-1">ID: #{{ product.id.slice(0, 8) }}</p>
+                      <div class="flex-1">
+                        <h4 class="text-green-900 font-bold">{{ product.name }}</h4>
                       </div>
-                      <div class="flex gap-2 ml-4">
+                      <div class="flex gap-2">
                         <button
                           @click="handleEdit(product)"
-                          class="w-10 h-10 rounded-xl border border-bakery-100 dark:border-bakery-800 text-bakery-600 dark:text-bakery-400 hover:bg-bakery-50 dark:hover:bg-bakery-800 transition-all flex items-center justify-center shadow-sm"
+                          class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-8 w-8 border-green-200 hover:bg-green-50 text-green-900"
                         >
                           <Edit class="w-4 h-4" />
                         </button>
                         <button
                           @click="handleDelete(product.id)"
-                           class="w-10 h-10 rounded-xl bg-danger-bg hover:bg-danger-text/20 text-danger-text border border-danger-text/10 transition-all flex items-center justify-center shadow-sm"
+                           class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-destructive text-destructive-foreground hover:bg-destructive/90 h-8 w-8 bg-red-500 hover:bg-red-600 text-white"
                         >
                           <Trash2 class="w-4 h-4" />
                         </button>
                       </div>
                     </div>
-                    
-                    <div class="grid grid-cols-2 gap-6 p-6 bg-bakery-50/50 dark:bg-bakery-950/50 rounded-3xl border border-bakery-50 dark:border-bakery-800">
+                    <div class="grid grid-cols-2 gap-2 text-sm">
                       <div>
-                        <p class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest mb-1">Bakery Price</p>
-                        <p class="text-lg font-black text-bakery-900 dark:text-white">${{ product.price.toFixed(2) }}</p>
+                        <p class="text-green-600 text-xs">Cost</p>
+                        <p class="text-green-900 font-medium">${{ product.cost?.toFixed(2) }}</p>
                       </div>
-                      <div class="text-right">
-                        <p class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest mb-1">Current Stock</p>
-                        <p :class="`text-lg font-black ${product.stock < 10 ? 'text-danger-text' : 'text-bakery-900 dark:text-white'}`">{{ product.stock }} <span class="text-xs opacity-50">{{ product.unit }}</span></p>
+                      <div>
+                        <p class="text-green-600 text-xs">Price</p>
+                        <p class="text-green-900 font-medium">${{ product.price.toFixed(2) }}</p>
                       </div>
-                      <div class="col-span-2 pt-4 border-t border-bakery-100 dark:border-bakery-800 flex justify-between items-center">
-                          <span class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Profit Margin</span>
-                          <span class="text-sm font-black text-success-text">
-                             +{{ product.cost && product.cost > 0 ? (((product.price - product.cost) / product.cost) * 100).toFixed(0) : '100' }}%
-                          </span>
+                      <div>
+                        <p class="text-green-600 text-xs">Stock</p>
+                        <p class="text-green-900 font-medium">{{ product.stock }} {{ product.unit }}</p>
+                      </div>
+                      <div>
+                        <p class="text-green-600 text-xs">Margin</p>
+                         <p class="text-green-600 font-medium">
+                          {{ product.cost && product.cost > 0 ? (((product.price - product.cost) / product.cost) * 100).toFixed(0) : '100' }}%
+                        </p>
                       </div>
                     </div>
                   </div>
                 </div>
             </div>
         </div>
-        
-         <div v-if="filteredProducts.length === 0" class="flex flex-col items-center justify-center py-20 text-center space-y-4">
-            <div class="w-20 h-20 rounded-full bg-bakery-50 dark:bg-bakery-900 flex items-center justify-center">
-                <Search class="w-10 h-10 text-bakery-200 dark:text-bakery-800" />
-            </div>
-            <p class="text-bakery-500 font-medium tracking-tight">No creations match your search criteria.</p>
+         <div v-if="filteredProducts.length === 0" class="text-center py-12 text-green-600 italic">
+            No products found. Try adjusting your filters.
          </div>
       </div>
     </div>
 
     <!-- Product Dialog (Modal) -->
-    <div v-if="isDialogOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-bakery-950/60 backdrop-blur-sm p-4 animate-in fade-in">
-        <div class="bg-white dark:bg-bakery-900 rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] border border-bakery-100 dark:border-bakery-800">
-            <div class="p-8 border-b border-bakery-50 dark:border-bakery-800 flex justify-between items-center bg-bakery-50/50 dark:bg-bakery-950/50">
+    <div v-if="isDialogOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-green-50/50">
                 <div>
-                     <h3 class="text-2xl font-black text-bakery-900 dark:text-white tracking-tight">{{ editingProduct ? 'Edit Creation' : 'New Artisan Creation' }}</h3>
-                     <p class="text-sm text-bakery-500 dark:text-bakery-400 font-medium mt-1">Refine the details of your bakery products.</p>
+                     <h3 class="font-bold text-lg text-green-900">{{ editingProduct ? 'Edit Product' : 'Add New Product' }}</h3>
+                     <p class="text-sm text-green-600">{{ editingProduct ? 'Update product information' : 'Add a new product to your bakery' }}</p>
                 </div>
-                <button @click="isDialogOpen = false" class="w-12 h-12 rounded-2xl bg-white dark:bg-bakery-800 border border-bakery-100 dark:border-bakery-700 text-bakery-400 hover:text-bakery-900 dark:hover:text-white flex items-center justify-center transition-all">
-                    <X class="w-6 h-6" />
+                <button @click="isDialogOpen = false" class="text-gray-400 hover:text-green-600">
+                    <X class="w-5 h-5" />
                 </button>
             </div>
             
-            <div class="p-8 overflow-y-auto scrollbar-hide">
-                <form @submit.prevent="handleSubmit" class="space-y-8">
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div class="space-y-3">
-                        <label class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Product Name</label>
-                        <input
-                          v-model="formData.name"
-                          required
-                          placeholder="e.g. Traditional Matcha Croissant"
-                          class="w-full h-12 px-5 rounded-2xl border border-bakery-100 dark:border-bakery-800 focus:outline-none focus:ring-2 focus:ring-bakery-300 dark:focus:ring-bakery-700 bg-bakery-50/50 dark:bg-bakery-950/50 text-sm font-medium text-bakery-900 dark:text-white"
-                        />
-                    </div>
-                    <div class="space-y-3">
-                        <label class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Category</label>
-                        <select 
-                            v-model="formData.category"
-                            class="w-full h-12 px-5 rounded-2xl border border-bakery-100 dark:border-bakery-800 focus:outline-none focus:ring-2 focus:ring-bakery-300 dark:focus:ring-bakery-700 bg-bakery-50/50 dark:bg-bakery-950/50 text-sm font-black uppercase tracking-widest text-bakery-900 dark:text-white"
-                        >
-                            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-                        </select>
-                    </div>
+            <div class="p-6 overflow-y-auto space-y-4">
+                <form @submit.prevent="handleSubmit" class="space-y-4">
+                  <!-- ... rest of form ... -->
+                  <div class="space-y-2">
+                    <label for="name" class="text-sm font-medium text-gray-700">Product Name</label>
+                    <input
+                      id="name"
+                      v-model="formData.name"
+                      required
+                      class="flex h-10 w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                    />
                   </div>
-
-                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div class="space-y-3">
-                      <label class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Cost ($)</label>
+                  <div class="space-y-2">
+                    <label for="category" class="text-sm font-medium text-gray-700">Category</label>
+                    <select 
+                        id="category"
+                        v-model="formData.category"
+                        class="flex h-10 w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all bg-white"
+                    >
+                        <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                    </select>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                      <label for="cost" class="text-sm font-medium text-gray-700">Cost ($)</label>
                       <input
+                        id="cost"
                         type="number"
                         step="0.01"
                         v-model="formData.cost"
                         required
-                        class="w-full h-12 px-5 rounded-2xl border border-bakery-100 dark:border-bakery-800 focus:outline-none focus:ring-2 focus:ring-bakery-300 dark:focus:ring-bakery-700 bg-bakery-50/50 dark:bg-bakery-950/50 text-sm font-medium text-bakery-900 dark:text-white"
+                        class="flex h-10 w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
                       />
                     </div>
-                    <div class="space-y-3">
-                      <label class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Price ($)</label>
+                    <div class="space-y-2">
+                      <label for="price" class="text-sm font-medium text-gray-700">Price ($)</label>
                       <input
+                        id="price"
                         type="number"
                         step="0.01"
                         v-model="formData.price"
                         required
-                        class="w-full h-12 px-5 rounded-2xl border border-bakery-100 dark:border-bakery-800 focus:outline-none focus:ring-2 focus:ring-bakery-300 dark:focus:ring-bakery-700 bg-bakery-50/50 dark:bg-bakery-950/50 text-sm font-medium text-bakery-900 dark:text-white"
+                        class="flex h-10 w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
                       />
                     </div>
-                    <div class="space-y-3">
-                      <label class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Stock</label>
+                  </div>
+                  <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                      <label for="stock" class="text-sm font-medium text-gray-700">Stock</label>
                       <input
+                        id="stock"
                         type="number"
                         v-model="formData.stock"
                         required
-                        class="w-full h-12 px-5 rounded-2xl border border-bakery-100 dark:border-bakery-800 focus:outline-none focus:ring-2 focus:ring-bakery-300 dark:focus:ring-bakery-700 bg-bakery-50/50 dark:bg-bakery-950/50 text-sm font-medium text-bakery-900 dark:text-white"
+                        class="flex h-10 w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
                       />
                     </div>
-                    <div class="space-y-3">
-                      <label class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Unit</label>
+                    <div class="space-y-2">
+                      <label for="unit" class="text-sm font-medium text-gray-700">Unit</label>
                       <select 
+                        id="unit"
                         v-model="formData.unit"
-                        class="w-full h-12 px-5 rounded-2xl border border-bakery-100 dark:border-bakery-800 focus:outline-none focus:ring-2 focus:ring-bakery-300 dark:focus:ring-bakery-700 bg-bakery-50/50 dark:bg-bakery-950/50 text-sm font-black uppercase tracking-widest text-bakery-900 dark:text-white"
+                        class="flex h-10 w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all bg-white"
                       >
                          <option v-for="u in units" :key="u" :value="u">{{ u }}</option>
                       </select>
                     </div>
                   </div>
-
-                  <div class="space-y-3">
-                    <label class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Visual Presentation</label>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div v-if="imagePreview" class="relative group h-48 rounded-3xl overflow-hidden border border-bakery-100 dark:border-bakery-800">
-                            <img :src="imagePreview" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
-                                <button 
-                                    @click.prevent="() => { selectedFile = null; imagePreview = ''; formData.image = ''; }"
-                                    class="w-12 h-12 rounded-2xl bg-danger-text text-white flex items-center justify-center hover:scale-110 transition-all shadow-xl"
-                                >
-                                    <Trash2 class="w-5 h-5" />
-                                </button>
-                            </div>
+                  <div class="space-y-2">
+                    <label for="image" class="text-sm font-medium text-gray-700">Product Image</label>
+                    <div class="flex flex-col gap-3">
+                        <div v-if="imagePreview" class="relative w-full h-40 rounded-lg overflow-hidden border border-gray-200">
+                            <img :src="imagePreview" class="w-full h-full object-cover" />
+                            <button 
+                                @click.prevent="() => { selectedFile = null; imagePreview = ''; formData.image = ''; }"
+                                class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 shadow-md"
+                            >
+                                <X class="w-4 h-4" />
+                            </button>
                         </div>
-                        <div v-else class="h-48 rounded-3xl border-2 border-dashed border-bakery-100 dark:border-bakery-800 bg-bakery-50/30 dark:bg-bakery-950/30 hover:bg-bakery-50/50 dark:hover:bg-bakery-900/50 transition-all">
-                            <label class="flex flex-col items-center justify-center h-full cursor-pointer space-y-3">
-                                <Plus class="w-10 h-10 text-bakery-200 dark:text-bakery-800" />
-                                <span class="text-xs font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Upload Image</span>
+                        <div v-else class="flex items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <label class="flex flex-col items-center cursor-pointer">
+                                <Plus class="w-8 h-8 text-gray-400" />
+                                <span class="mt-2 text-sm text-gray-500">Upload product image</span>
                                 <input type="file" class="hidden" accept="image/*" @change="onFileChange" />
                             </label>
                         </div>
-                        <div class="flex flex-col justify-center space-y-4">
-                            <p class="text-xs text-bakery-500 dark:text-bakery-400 font-medium">Or provide an external high-resolution URL:</p>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500">Or use URL:</span>
                             <input
+                              id="image"
                               v-model="formData.image"
-                              placeholder="https://images.unsplash.com/..."
-                              class="w-full h-12 px-5 rounded-2xl border border-bakery-100 dark:border-bakery-800 focus:outline-none focus:ring-2 focus:ring-bakery-300 dark:focus:ring-bakery-700 bg-bakery-50/50 dark:bg-bakery-950/50 text-sm font-medium text-bakery-900 dark:text-white"
+                              placeholder="https://..."
+                              class="flex-1 h-8 rounded-md border border-gray-200 bg-background px-3 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
                             />
                         </div>
                     </div>
                   </div>
-
-                   <div class="space-y-3">
-                    <label class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Artisan Description</label>
+                   <div class="space-y-2">
+                    <label for="description" class="text-sm font-medium text-gray-700">Description</label>
                      <textarea
+                      id="description"
                       v-model="formData.description"
                       required
-                      placeholder="Describe the texture, flavor notes, and inspiration..."
-                      class="w-full min-h-[120px] p-5 rounded-3xl border border-bakery-100 dark:border-bakery-800 focus:outline-none focus:ring-2 focus:ring-bakery-300 dark:focus:ring-bakery-700 bg-bakery-50/50 dark:bg-bakery-950/50 text-sm font-medium text-bakery-900 dark:text-white leading-relaxed"
+                      class="flex min-h-[80px] w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
                     />
                   </div>
-
-                   <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="space-y-3">
-                            <label class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Ingredients</label>
-                             <textarea
-                              v-model="formData.ingredients"
-                              placeholder="Wheat flour, organic matcha, sea salt..."
-                              class="w-full min-h-[100px] p-5 rounded-3xl border border-bakery-100 dark:border-bakery-800 focus:outline-none focus:ring-2 focus:ring-bakery-300 dark:focus:ring-bakery-700 bg-bakery-50/50 dark:bg-bakery-950/50 text-sm font-medium text-bakery-900 dark:text-white"
-                            />
-                        </div>
-                        <div class="space-y-3">
-                            <label class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Allergens</label>
-                             <textarea
-                              v-model="formData.allergens"
-                              placeholder="Dairy, Eggs, Gluten..."
-                              class="w-full min-h-[100px] p-5 rounded-3xl border border-bakery-100 dark:border-bakery-800 focus:outline-none focus:ring-2 focus:ring-bakery-300 dark:focus:ring-bakery-700 bg-bakery-50/50 dark:bg-bakery-950/50 text-sm font-medium text-bakery-900 dark:text-white"
-                            />
-                        </div>
-                   </div>
-
-                   <div class="flex items-center justify-between p-6 bg-bakery-50/50 dark:bg-bakery-950/50 rounded-3xl border border-bakery-50 dark:border-bakery-800">
-                        <div class="space-y-1">
-                            <p class="text-[10px] font-black text-bakery-400 dark:text-bakery-500 uppercase tracking-widest">Customer Rating</p>
-                            <p class="text-xs text-bakery-500 dark:text-bakery-400 font-medium">Initial quality score (0.0 - 5.0)</p>
-                        </div>
-                        <input
-                          v-model="formData.rating"
-                          type="number"
-                          step="0.1"
-                          max="5"
-                          class="w-24 h-12 px-5 rounded-2xl border border-bakery-100 dark:border-bakery-800 focus:outline-none focus:ring-2 focus:ring-bakery-300 dark:focus:ring-bakery-700 bg-white dark:bg-bakery-800 text-sm font-black text-bakery-900 dark:text-white text-center"
-                        />
+                   <div class="space-y-2">
+                    <label for="ingredients" class="text-sm font-medium text-gray-700">Ingredients (comma separated)</label>
+                     <textarea
+                      id="ingredients"
+                      v-model="formData.ingredients"
+                      required
+                      class="flex min-h-[60px] w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                    />
+                  </div>
+                   <div class="space-y-2">
+                    <label for="allergens" class="text-sm font-medium text-gray-700">Allergens (comma separated)</label>
+                     <textarea
+                      id="allergens"
+                      v-model="formData.allergens"
+                      required
+                      class="flex min-h-[60px] w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                    />
+                  </div>
+                   <div class="space-y-2">
+                    <label for="rating" class="text-sm font-medium text-gray-700">Rating (0-5)</label>
+                    <input
+                      id="rating"
+                      v-model="formData.rating"
+                      type="number"
+                      step="0.1"
+                      max="5"
+                      required
+                      class="flex h-10 w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                    />
                   </div>
                   
-                  <div class="flex gap-4 pt-4">
-                      <button 
-                        type="button"
-                        @click="isDialogOpen = false"
-                        class="flex-1 h-14 rounded-2xl border border-bakery-100 dark:border-bakery-800 text-bakery-900 dark:text-white font-black text-sm uppercase tracking-widest hover:bg-bakery-50 dark:hover:bg-bakery-800 transition-all"
-                      >
-                        Cancel
-                      </button>
-                      <button 
-                        type="submit" 
-                        class="flex-[2] h-14 rounded-2xl bg-bakery-900 dark:bg-white text-white dark:text-bakery-900 font-black text-sm uppercase tracking-widest shadow-xl hover:scale-[1.02] transition-all active:scale-95"
-                      >
-                        {{ editingProduct ? 'Save Changes' : 'Publish Creation' }}
-                      </button>
-                  </div>
+                  <button 
+                    type="submit" 
+                    class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg active:scale-[0.98]"
+                  >
+                    {{ editingProduct ? 'Update Product' : 'Add Product' }}
+                  </button>
                 </form>
             </div>
         </div>
     </div>
   </div>
-
 </template>
