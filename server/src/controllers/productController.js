@@ -2,7 +2,7 @@ const { query } = require('../config/db');
 
 const getProducts = async (req, res) => {
     try {
-        const result = await query('SELECT * FROM products ORDER BY id ASC');
+        const result = await query('SELECT * FROM products WHERE is_active = TRUE ORDER BY id ASC');
         const products = result.rows.map(p => ({
             id: p.id.toString(),
             name: p.name,
@@ -10,6 +10,7 @@ const getProducts = async (req, res) => {
             price: parseFloat(p.price),
             description: p.description,
             image: p.image_url,
+            is_active: p.is_active,
             // These fields are not in DB yet, keeping defaults or using DB if added
             stock: 100,
             rating: 4.5,
@@ -97,11 +98,12 @@ const updateProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
     const { id } = req.params;
     try {
-        const result = await query('DELETE FROM products WHERE id = $1 RETURNING *', [id]);
+        // Soft delete: update is_active instead of actual deletion
+        const result = await query('UPDATE products SET is_active = FALSE WHERE id = $1 RETURNING *', [id]);
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
-        res.json({ message: 'Product deleted successfully' });
+        res.json({ message: 'Product deleted from menu successfully (Soft Delete)' });
     } catch (err) {
         console.error('Error deleting product:', err);
         res.status(500).json({ message: 'Server error deleting product' });
