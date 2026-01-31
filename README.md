@@ -2,6 +2,12 @@
 
 A specialized, modern, and visually stunning management system designed for artisan bakeries. Built with a premium **Matcha Green** aesthetic, this system streamlines operations from customer ordering to real-time inventory and ingredient tracking.
 
+[![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
+[![Vite](https://img.shields.io/badge/Vite-6.0-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
+
 ---
 
 ## 📸 Project Overview
@@ -10,10 +16,19 @@ This project was developed to solve the challenges of manual management in small
 ### 🌟 Key Features
 *   **Customer Portal**: High-impact landing page, interactive product menu, and a seamless shopping cart experience.
 *   **Admin Dashboard**: Real-time business analytics including total revenue, active orders, and product performance.
-*   **Orders Management**: State-based workflow (Pending → Processing → Completed) with detailed order tracking.
-*   **Inventory 2.0**: Specialized ingredient tracking with automated low-stock alerts and "Matcha Green" themed manager.
-*   **Role-Based Access**: Secure authentication for Customers, Staff, and Administrators.
-*   **Dockerized Environment**: Ready-to-deploy containers for the entire stack.
+*   **Orders Management**: State-based workflow (Pending → Baking → Completed → Cancelled) with detailed tracking.
+*   **Inventory 2.0**: Specialized ingredient tracking with automated low-stock alerts.
+*   **Role-Based Access**: Secure authentication with specific views for Customers, Cashiers, Bakers, and Administrators.
+*   **🌍 Multi-Language Support**: Full internationalization for **English**, **Japanese**, and **Vietnamese**, including dynamic font switching.
+*   **🧪 Localization Lab**: A built-in, live translation editor for Administrators and Managers to fine-tune the shop's voice in real-time.
+
+---
+
+## 🌍 Internationalization (i18n)
+The system features a premium localization engine that goes beyond simple text replacement:
+*   **Live Switching**: Change languages instantly without page reloads.
+*   **Dynamic Typography**: Automatically switches between **Outfit** (EN), **Noto Sans JP** (JP), and **Be Vietnam Pro** (VN) for perfect readability.
+*   **Localization Lab**: A specialized UI (restricted to Managers) to edit any translation key live on the site. Search, filter by category, and save changes globally.
 
 ---
 
@@ -23,8 +38,8 @@ This project was developed to solve the challenges of manual management in small
 | :--- | :--- |
 | **Frontend** | Vue 3 (Composition API), Vite, Tailwind CSS, Lucide Icons |
 | **Backend** | Node.js, Express.js |
-| **Database** | PostgreSQL |
-| **DevOps** | Docker, Docker Compose |
+| **Database** | PostgreSQL 15 |
+| **DevOps** | Docker, Docker Compose, Nginx (Production Build) |
 | **Language** | TypeScript (Strict Mode) |
 
 ---
@@ -32,12 +47,10 @@ This project was developed to solve the challenges of manual management in small
 ## 🚀 Getting Started
 
 ### Prerequisites
-*   [Node.js](https://nodejs.org/) (v22+ recommended)
-*   [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for containerized setup)
+*   [Node.js](https://nodejs.org/) (v22+)
+*   [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Recommended)
 
 ### Option 1: Running with Docker (Recommended)
-This is the fastest way to get the database, backend, and frontend running together.
-
 1.  Clone the repository:
     ```bash
     git clone https://github.com/shireihuy/Bakery-Management-System.git
@@ -48,25 +61,29 @@ This is the fastest way to get the database, backend, and frontend running toget
     docker-compose up --build
     ```
 3.  Access the apps:
-    *   Frontend: `http://localhost:8080`
-    *   Backend API: `http://localhost:3000`
+    *   **Frontend**: `http://localhost:8080`
+    *   **Database UI (Adminer)**: `http://localhost:8085`
+    *   **Backend API**: `http://localhost:3000`
 
 ### Option 2: Local Development
-If you want to run the components individually:
-
-**Frontend (Client):**
+**Frontend:**
 ```bash
-cd client
-npm install
-npm run dev
+cd client && npm install && npm run dev
+```
+**Backend:**
+```bash
+cd server && npm install && node src/index.js
 ```
 
-**Backend (Server):**
-```bash
-cd server
-npm install
-node src/index.js
-```
+---
+
+## 🔐 Demo Credentials
+Test the system with these pre-configured roles:
+
+| Role | Email | Password |
+| :--- | :--- | :--- |
+| **Admin** | `admin@bakery.com` | `adminpassword` |
+| **Customer** | `john@example.com` | `password123` |
 
 ---
 
@@ -74,25 +91,26 @@ node src/index.js
 ```text
 ├── client/                # Vue 3 Frontend
 │   ├── src/
-│   │   ├── components/    # Reusable UI components
-│   │   ├── composables/   # Business logic (useOrders, useProducts, etc.)
-│   │   ├── views/         # Page components (Dashboard, CustomerView, etc.)
-│   │   └── router/        # Navigation logic
+│   │   ├── components/    # Reusable UI & Floating Settings
+│   │   ├── composables/   # Business logic & i18n Engine
+│   │   ├── views/         # Role-specific page components
+│   │   └── router/        # Guarded navigation logic
 │   └── Dockerfile
 ├── server/                # Node.js Express API
 │   ├── src/
+│   │   ├── controllers/   # Business logic handlers
 │   │   ├── routes/        # API Endpoints
 │   │   └── index.js       # Entry point
 │   └── Dockerfile
-└── docker-compose.yml     # Multi-container orchestration
+└── docker-compose.yml     # Infrastructure (Postgres, App, Adminer)
 ```
 
 ---
 
 ## 🎨 Visual Identity
 The system uses a custom **Matcha Twist** design language:
-*   **Primary Colors**: Emerald Green, Forest Matcha.
-*   **Aesthetics**: Glassmorphism, smooth micro-animations, and premium typography.
+*   **Primary Colors**: Emerald Green, Forest Matcha, Creamy White.
+*   **Aesthetics**: Glassmorphism, smooth micro-animations, and premium localized typography.
 
 ---
 
