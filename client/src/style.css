@@ -16,6 +16,13 @@
   --color-accent-gold: #DAA520;
   --color-accent-cream: #FDFBF7;
 
+  --color-success-bg: #ecfdf5;
+  --color-success-text: #065f46;
+  --color-danger-bg: #fef2f2;
+  --color-danger-text: #991b1b;
+  --color-warning-bg: #fffbeb;
+  --color-warning-text: #92400e;
+
   --font-sans: "Outfit", sans-serif;
 
   --animate-float: float 3s ease-in-out infinite;
@@ -33,20 +40,42 @@
   }
 }
 
-
 @layer base {
   body {
-    @apply bg-accent-cream text-bakery-900;
+    @apply bg-accent-cream text-bakery-900 transition-colors duration-500;
+  }
+
+  .dark {
+    --color-bakery-50: #1a2012;
+    --color-bakery-100: #252e1b;
+    --color-bakery-200: #323d26;
+    --color-bakery-300: #445435;
+    --color-bakery-400: #6a8251;
+    --color-bakery-500: #84a25f;
+    --color-bakery-600: #a3bc83;
+    --color-bakery-700: #c2d4ab;
+    --color-bakery-800: #dce7ce;
+    --color-bakery-900: #eef3e5;
+    --color-bakery-950: #f7f9f2;
+
+    --color-accent-cream: #0c0f08;
+
+    --color-success-bg: rgba(6, 95, 70, 0.1);
+    --color-success-text: #34d399;
+    --color-danger-bg: rgba(153, 27, 27, 0.1);
+    --color-danger-text: #f87171;
+    --color-warning-bg: rgba(146, 64, 14, 0.1);
+    --color-warning-text: #fbbf24;
   }
 }
 
 @layer utilities {
   .glass-card {
-    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+    @apply bg-white/70 dark:bg-black/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-xl;
   }
 
   .glass-header {
-    @apply bg-white/80 backdrop-blur-xl border-b border-bakery-100 sticky top-0 z-50;
+    @apply bg-white/80 dark:bg-black/60 backdrop-blur-xl border-b border-bakery-100 dark:border-bakery-800 sticky top-0 z-50;
   }
 
   .scrollbar-hide {
@@ -62,6 +91,7 @@
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
   }
 }
+
 
 /* Smooth transitions for all interactive elements */
 * {
