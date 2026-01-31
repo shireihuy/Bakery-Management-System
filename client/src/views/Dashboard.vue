@@ -71,143 +71,158 @@ const lowStockDisplay = computed(() => {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <!-- Welcome Banner -->
-    <div class="rounded-xl border bg-card text-card-foreground shadow overflow-hidden border-green-200 bg-gradient-to-r from-green-500 to-emerald-600">
-      <div class="p-6">
-        <div class="flex items-center justify-between">
-          <div class="flex-1">
-            <div class="flex items-center gap-2 mb-2">
-              <Sparkles class="w-5 h-5 text-white" />
-              <h2 class="text-white font-semibold text-xl">Welcome to Your Bakery Dashboard</h2>
+  <div class="space-y-8 p-1 sm:p-2 bg-accent-cream">
+    <!-- Sophisticated Welcome Banner -->
+    <div class="relative rounded-3xl overflow-hidden shadow-2xl premium-shadow group">
+      <div class="absolute inset-0 bg-gradient-to-r from-bakery-900 to-bakery-700 opacity-90 group-hover:scale-105 transition-transform duration-1000"></div>
+      <div class="absolute top-0 right-0 w-1/3 h-full overflow-hidden opacity-30">
+          <img
+            src="https://images.unsplash.com/photo-1679673987713-54f809ce417d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGJyZWFkJTIwYmFrZXJ5fGVufDF8fHx8MTc2MTk3NzQ4MXww&ixlib=rb-4.1.0&q=80&w=600"
+            alt="Fresh bakery"
+            class="w-full h-full object-cover"
+          />
+      </div>
+      <div class="relative p-8 sm:p-12 flex flex-col sm:flex-row items-center justify-between gap-8">
+          <div class="text-center sm:text-left space-y-4">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-bakery-500/20 border border-white/20 backdrop-blur-md">
+              <Sparkles class="w-4 h-4 text-bakery-200" />
+              <span class="text-xs font-bold text-bakery-100 uppercase tracking-widest">Management Suite</span>
             </div>
-            <p class="text-white/90 text-sm">Here's what's happening with your bakery today</p>
+            <h2 class="text-4xl sm:text-5xl font-black text-white leading-tight">Artisan Insights</h2>
+            <p class="text-bakery-100/80 text-lg max-w-md font-medium">Real-time performance metrics for your handcrafted bakery operations.</p>
           </div>
-          <div class="hidden md:block w-32 h-32 rounded-lg overflow-hidden border-2 border-white/20">
-             <img
-                src="https://images.unsplash.com/photo-1679673987713-54f809ce417d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGJyZWFkJTIwYmFrZXJ5fGVufDF8fHx8MTc2MTk3NzQ4MXww&ixlib=rb-4.1.0&q=80&w=400"
-                alt="Fresh bakery"
-                class="w-full h-full object-cover"
-              />
+          
+          <div class="flex items-center gap-6">
+              <div class="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl text-center min-w-[120px]">
+                  <p class="text-bakery-200 text-xs font-bold uppercase tracking-widest mb-1">Status</p>
+                  <p class="text-white font-black text-xl">Active</p>
+              </div>
           </div>
-        </div>
       </div>
     </div>
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <!-- Executive Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
       <div 
         v-for="(stat, index) in stats" 
         :key="index" 
-        class="rounded-xl border bg-card text-card-foreground shadow hover:shadow-lg transition-shadow duration-300 cursor-pointer border-green-200 bg-white"
+        class="glass-card p-8 rounded-[2.5rem] hover:scale-105 transition-all duration-500 group animate-in zoom-in duration-700"
+        :style="{ animationDelay: `${index * 100}ms` }"
       >
-        <div class="p-6 flex flex-row items-center justify-between space-y-0 pb-2">
-          <h3 class="tracking-tight text-sm font-medium">{{ stat.title }}</h3>
-          <div :class="`${stat.bgColor} p-2 rounded-lg`">
-            <component :is="stat.icon" :class="`w-4 h-4 ${stat.color}`" />
+        <div class="flex items-start justify-between mb-6">
+          <div :class="`p-4 rounded-2xl ${stat.bgColor.replace('bg-', 'bg-bakery-').replace('100', '50')} transition-colors`">
+            <component :is="stat.icon" :class="`w-6 h-6 ${stat.color.replace('text-', 'text-bakery-').replace('600', '600')}`" />
           </div>
+          <span class="text-[10px] font-black text-bakery-400 uppercase tracking-widest">{{ stat.change }}</span>
         </div>
-        <div class="p-6 pt-0">
-          <div class="text-2xl font-bold text-green-900">{{ stat.value }}</div>
-          <p class="text-xs text-green-600 mt-1">{{ stat.change }}</p>
+        <div>
+          <h3 class="text-bakery-500 text-sm font-bold uppercase tracking-widest mb-2">{{ stat.title }}</h3>
+          <p class="text-3xl font-black text-bakery-900 group-hover:text-bakery-600 transition-colors">{{ stat.value }}</p>
         </div>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Recent Orders -->
-      <div class="rounded-xl border bg-card text-card-foreground shadow border-green-200 bg-white">
-        <div class="flex flex-col space-y-1.5 p-6">
-          <h3 class="font-semibold leading-none tracking-tight">Recent Orders</h3>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Recent Orders with Live Status -->
+      <div class="glass-card rounded-[2.5rem] border border-bakery-100 overflow-hidden">
+        <div class="p-8 border-b border-bakery-50 flex items-center justify-between">
+          <h3 class="font-black text-bakery-900 text-xl tracking-tight">Active Orders</h3>
+          <div class="flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full bg-bakery-500 animate-pulse"></div>
+              <span class="text-[10px] font-black text-bakery-400 uppercase tracking-widest">Live Updates</span>
+          </div>
         </div>
-        <div class="p-6 pt-0">
-          <div class="space-y-4">
-            <div v-for="order in recentOrders" :key="order.id" class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+        <div class="p-8 space-y-4">
+            <div v-for="order in recentOrders" :key="order.id" class="flex items-center justify-between p-5 bg-bakery-50/50 rounded-3xl border border-bakery-50 hover:border-bakery-200 transition-all group">
               <div class="flex-1">
-                <div class="flex items-center gap-2">
-                  <p class="text-sm text-green-900 font-medium">#{{ order.id }}</p>
+                <div class="flex items-center gap-3 mb-1">
+                  <p class="text-sm text-bakery-900 font-black">#{{ order.id }}</p>
                   <div 
-                    class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border"
                     :class="[
                         order.status === 'Completed' 
-                        ? 'border-transparent bg-primary text-primary-foreground hover:bg-primary/80 bg-green-900 text-white' 
-                        : 'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 bg-green-200 text-green-800'
+                        ? 'bg-bakery-900 text-white border-bakery-900' 
+                        : 'bg-white text-bakery-600 border-bakery-100 group-hover:bg-bakery-600 group-hover:text-white group-hover:border-bakery-600 transition-all'
                     ]"
                   >
                     {{ order.status }}
                   </div>
                 </div>
-                <p class="text-sm text-green-600">{{ order.customerName }}</p>
+                <p class="text-sm text-bakery-500 font-medium">{{ order.customerName }}</p>
               </div>
               <div class="text-right">
-                <p class="text-sm text-green-900 font-bold">${{ order.total.toFixed(2) }}</p>
-                <p class="text-xs text-green-600">{{ order.items.length }} items</p>
+                <p class="text-lg font-black text-bakery-900">${{ order.total.toFixed(2) }}</p>
+                <p class="text-[10px] text-bakery-400 font-bold uppercase tracking-widest">{{ order.items.length }} items</p>
               </div>
             </div>
-          </div>
         </div>
       </div>
 
-      <!-- Low Stock Alerts -->
-      <div class="rounded-xl border bg-card text-card-foreground shadow border-green-200 bg-white">
-        <div class="flex flex-col space-y-1.5 p-6">
-          <h3 class="font-semibold leading-none tracking-tight flex items-center gap-2">
-            <AlertTriangle class="w-5 h-5 text-red-600" />
-            Low Stock Alerts
+      <!-- Low Stock Alerts with Progress Visualization -->
+      <div class="glass-card rounded-[2.5rem] border border-bakery-100 overflow-hidden">
+        <div class="p-8 border-b border-bakery-50">
+          <h3 class="font-black text-bakery-900 text-xl tracking-tight flex items-center gap-3">
+            <AlertTriangle class="w-6 h-6 text-red-500" />
+            Inventory Alerts
           </h3>
         </div>
-        <div class="p-6 pt-0">
-          <div class="space-y-4">
-            <div v-for="(item, index) in lowStockDisplay" :key="index" class="p-3 bg-red-50 rounded-lg border border-red-200">
-              <div class="flex justify-between items-start mb-2">
-                <p class="text-sm text-green-900 font-medium">{{ item.name }}</p>
-                <div class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80 bg-red-600 text-white">Low</div>
+        <div class="p-8 space-y-6">
+            <div v-for="(item, index) in lowStockDisplay" :key="index" class="p-6 bg-red-50 rounded-3xl border border-red-100 group">
+              <div class="flex justify-between items-start mb-4">
+                <div>
+                    <p class="text-bakery-900 font-black">{{ item.name }}</p>
+                    <p class="text-xs text-red-600 font-bold uppercase tracking-widest mt-1">Refill Recommended</p>
+                </div>
+                <div class="px-3 py-1 rounded-full bg-red-600 text-white text-[10px] font-black uppercase tracking-widest">Critical</div>
               </div>
-              <div class="flex justify-between text-xs text-green-600">
-                <span>Current: {{ item.quantity }} {{ item.unit }}</span>
-                <span>Min: {{ item.minQuantity }} {{ item.unit }}</span>
-              </div>
-              <div class="mt-2 w-full bg-red-200 rounded-full h-2 overflow-hidden">
-                <div 
-                  class="bg-red-600 h-2 rounded-full" 
-                  :style="{ width: `${(item.quantity / item.minQuantity) * 100}%` }"
-                ></div>
+              <div class="space-y-3">
+                  <div class="flex justify-between text-xs font-bold text-bakery-500">
+                    <span>{{ item.quantity }} / {{ item.minQuantity }} {{ item.unit }}</span>
+                    <span>{{ Math.round((item.quantity / item.minQuantity) * 100) }}%</span>
+                  </div>
+                  <div class="w-full bg-red-200 rounded-full h-3 p-0.5">
+                    <div 
+                      class="bg-red-600 h-2 rounded-full shadow-sm shadow-red-200 transition-all duration-1000" 
+                      :style="{ width: `${(item.quantity / item.minQuantity) * 100}%` }"
+                    ></div>
+                  </div>
               </div>
             </div>
-            <div v-if="lowStockDisplay.length === 0" class="text-center py-4 text-green-600 text-sm italic">
-                All inventory levels are healthy.
+            <div v-if="lowStockDisplay.length === 0" class="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                <div class="w-16 h-16 rounded-full bg-bakery-50 flex items-center justify-center">
+                    <sparkles class="w-8 h-8 text-bakery-300" />
+                </div>
+                <p class="text-bakery-500 font-medium tracking-tight">All inventory levels are optimal.</p>
             </div>
-          </div>
         </div>
       </div>
     </div>
 
-    <!-- Best Selling Products (Simplified) -->
-    <div class="rounded-xl border bg-card text-card-foreground shadow border-green-200 bg-white">
-        <div class="flex flex-col space-y-1.5 p-6">
-            <h3 class="font-semibold leading-none tracking-tight">Featured Products</h3>
+    <!-- Featured Products Modern Display -->
+    <div class="glass-card rounded-[2.5rem] border border-bakery-100 overflow-hidden">
+        <div class="p-8 border-b border-bakery-50">
+            <h3 class="font-black text-bakery-900 text-xl tracking-tight">Signature Catalog</h3>
         </div>
-        <div class="p-6 pt-0">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div v-for="(product, idx) in products.slice(0, 3)" :key="product.id" class="flex-1 rounded-lg overflow-hidden hover:shadow-lg transition-shadow duration-300 cursor-pointer border border-green-100">
-                    <div class="h-32 relative overflow-hidden group">
+        <div class="p-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div v-for="(product, idx) in products.slice(0, 4)" :key="product.id" class="group relative rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-500">
+                    <div class="h-48 relative overflow-hidden">
                          <img
                             :src="product.image"
                             :alt="product.name"
-                            class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000"
                             />
-                        <div class="absolute top-2 right-2 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-primary text-primary-foreground hover:bg-primary/80 bg-gradient-to-r from-green-600 to-emerald-600 text-white">{{ idx + 1 }}</div>
-                    </div>
-                     <div class="p-4 bg-gradient-to-br from-green-50 to-emerald-50">
-                        <h4 class="text-green-900 mb-2 font-medium">{{ product.name }}</h4>
-                        <div class="flex justify-between text-sm text-green-700">
-                            <span>${{ product.price.toFixed(2) }}</span>
-                            <span class="font-bold">{{ product.category }}</span>
+                        <div class="absolute inset-0 bg-gradient-to-t from-bakery-900/80 to-transparent p-6 flex flex-col justify-end">
+                            <span class="text-[10px] font-black text-bakery-200 uppercase tracking-widest mb-1">{{ product.category }}</span>
+                            <h4 class="text-white font-bold">{{ product.name }}</h4>
                         </div>
+                        <div class="absolute top-4 left-4 w-8 h-8 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white text-xs font-black">#{{ idx + 1 }}</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
   </div>
 </template>

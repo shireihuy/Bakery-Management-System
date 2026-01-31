@@ -37,41 +37,46 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center p-4 relative overflow-hidden">
-      <div class="absolute inset-0 opacity-10 pointer-events-none">
-        <div class="absolute top-0 left-0 w-96 h-96 bg-green-400 rounded-full blur-3xl"></div>
-        <div class="absolute bottom-0 right-0 w-96 h-96 bg-emerald-400 rounded-full blur-3xl"></div>
+    <div class="min-h-screen bg-accent-cream flex items-center justify-center p-4 relative overflow-hidden">
+      <!-- Decorative Elements -->
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute -top-24 -left-24 w-96 h-96 bg-bakery-200/20 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-bakery-300/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s"></div>
       </div>
       
-      <!-- Back to Home Button -->
+      <!-- Back to Home -->
       <button
         @click="onBackToHome"
-        class="absolute top-6 left-6 z-20 text-green-700 hover:text-green-900 hover:bg-green-100 bg-transparent flex items-center px-4 py-2 rounded-md transition-colors"
+        class="absolute top-8 left-8 z-20 text-bakery-900 font-bold flex items-center gap-2 px-6 py-3 rounded-2xl glass-card transition-all active:scale-95"
       >
-        <ArrowLeft class="w-4 h-4 mr-2" />
-        Back to Home
+        <ArrowLeft class="w-4 h-4" />
+        <span class="text-sm uppercase tracking-widest">Back to Home</span>
       </button>
       
-      <div class="w-full max-w-md relative z-10 backdrop-blur-sm bg-white/95 rounded-xl border border-gray-200 shadow-sm">
-        <div class="flex flex-col space-y-1.5 p-6">
-          <div class="flex justify-center mb-4">
-            <div class="w-16 h-16 rounded-xl overflow-hidden border-2 border-green-200 shadow-md">
-              <img src="/matcha-cake-logo.png" alt="Matcha Bakery Logo" class="w-full h-full object-cover" />
+      <div class="w-full max-w-md relative z-10 glass-card rounded-[3rem] p-4 animate-in zoom-in duration-500">
+        <div class="p-8 sm:p-10 space-y-10">
+          <div class="text-center space-y-4">
+            <div class="inline-block relative">
+                <div class="w-24 h-24 mx-auto rounded-3xl overflow-hidden border-4 border-white shadow-2xl transform -rotate-6 transition-transform hover:rotate-0 duration-500">
+                  <img src="/matcha-cake-logo.png" alt="Matcha Bakery Logo" class="w-full h-full object-cover" />
+                </div>
+                <div class="absolute -bottom-2 -right-2 w-8 h-8 bg-bakery-500 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
+                    <Sparkles class="w-4 h-4 text-white" />
+                </div>
+            </div>
+            <div>
+                <h3 class="font-black text-3xl text-bakery-900 tracking-tight">Welcome Back</h3>
+                <p class="text-bakery-500 font-medium">Please sign in to your dashboard</p>
             </div>
           </div>
-          <div class="text-center">
-            <h3 class="font-semibold tracking-tight text-2xl">Welcome Back</h3>
-            <p class="text-sm text-muted-foreground text-gray-500">Sign in to your Matcha Bakery account</p>
-          </div>
-        </div>
-        <div class="p-6 pt-0">
-          <form @submit.prevent="handleSubmit" class="space-y-4">
-            <div v-if="error" class="bg-red-50 text-red-900 border border-red-200 p-3 rounded-md text-sm">
+
+          <form @submit.prevent="handleSubmit" class="space-y-6">
+            <div v-if="error" class="bg-red-50 text-red-900 border border-red-100 p-4 rounded-2xl text-sm font-medium animate-in slide-in-from-top-2">
                 {{ error }}
             </div>
 
             <div class="space-y-2">
-              <label for="email" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Email</label>
+              <label for="email" class="text-xs font-black text-bakery-400 uppercase tracking-widest ml-1">Email Address</label>
               <input
                 id="email"
                 type="email"
@@ -79,12 +84,12 @@ const handleSubmit = async () => {
                 v-model="email"
                 required
                 :disabled="isLoading"
-                class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 border-gray-200 focus:border-green-500 focus:ring-green-500"
+                class="flex h-14 w-full rounded-2xl border border-bakery-100 bg-white/50 px-5 py-2 text-base font-medium shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-bakery-500/10 focus:border-bakery-500 disabled:opacity-50"
               />
             </div>
 
             <div class="space-y-2">
-              <label for="password" class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Password</label>
+              <label for="password" class="text-xs font-black text-bakery-400 uppercase tracking-widest ml-1">Password</label>
               <input
                 id="password"
                 type="password"
@@ -92,47 +97,46 @@ const handleSubmit = async () => {
                 v-model="password"
                 required
                 :disabled="isLoading"
-                 class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 border-gray-200 focus:border-green-500 focus:ring-green-500"
+                 class="flex h-14 w-full rounded-2xl border border-bakery-100 bg-white/50 px-5 py-2 text-base font-medium shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-bakery-500/10 focus:border-bakery-500 disabled:opacity-50"
               />
             </div>
 
             <button
               type="submit"
-              class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 shadow h-9 px-4 py-2 w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
+              class="h-14 w-full rounded-2xl bg-bakery-900 hover:bg-bakery-800 text-white font-black text-lg transition-all active:scale-[0.98] shadow-xl shadow-bakery-900/10 flex items-center justify-center gap-3"
               :disabled="isLoading"
             >
-              <span v-if="isLoading" class="flex items-center">
-                   <Loader2 class="w-4 h-4 mr-2 animate-spin" />
-                   Signing in...
-              </span>
-              <span v-else>
-                Sign In
-              </span>
+              <Loader2 v-if="isLoading" class="w-5 h-5 animate-spin" />
+              <span>{{ isLoading ? 'Entering...' : 'Sign In' }}</span>
             </button>
 
-            <div class="text-center text-sm">
-              <span class="text-green-600">Don't have an account? </span>
+            <div class="text-center pt-2">
+              <span class="text-bakery-500 font-medium tracking-tight">New to the family? </span>
               <button
                 type="button"
                 @click="onToggleMode"
-                class="text-green-900 hover:underline bg-transparent font-medium"
+                class="text-bakery-900 hover:text-bakery-600 font-black tracking-tight"
               >
-                Register
+                Create Account
               </button>
             </div>
           </form>
 
-          <div class="mt-6 pt-6 border-t border-green-200">
-            <p class="text-sm text-green-600 mb-3">Demo accounts:</p>
-            <div class="space-y-1 text-xs text-green-700">
-              <p>Admin: admin@bakery.com / adminpassword</p>
-              <p>Manager: manager@bakery.com / managerpassword</p>
-              <p>Baker: baker@bakery.com / bakerpassword</p>
-              <p>Cashier: cashier@bakery.com / cashierpassword</p>
-              <p>Customer: john@example.com / password123</p>
+          <div class="pt-8 border-t border-bakery-50">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="h-px flex-1 bg-bakery-50"></div>
+                <p class="text-[10px] font-black text-bakery-300 uppercase tracking-widest">Demo Credentials</p>
+                <div class="h-px flex-1 bg-bakery-50"></div>
+            </div>
+            <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-[10px] text-bakery-400 font-bold">
+              <p>Admin: admin@bakery.com</p>
+              <p>Pass: adminpassword</p>
+              <p>User: john@example.com</p>
+              <p>Pass: password123</p>
             </div>
           </div>
         </div>
       </div>
     </div>
+
 </template>

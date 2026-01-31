@@ -1,12 +1,74 @@
 @import "tailwindcss";
 
-/* Custom scrollbar hiding utility */
+@theme {
+  --color-bakery-50: #f7f9f2;
+  --color-bakery-100: #eef3e5;
+  --color-bakery-200: #dce7ce;
+  --color-bakery-300: #c2d4ab;
+  --color-bakery-400: #a3bc83;
+  --color-bakery-500: #84a25f;
+  --color-bakery-600: #688349;
+  --color-bakery-700: #51663b;
+  --color-bakery-800: #425333;
+  --color-bakery-900: #3a472e;
+  --color-bakery-950: #1e2617;
+
+  --color-accent-gold: #DAA520;
+  --color-accent-cream: #FDFBF7;
+
+  --font-sans: "Outfit", sans-serif;
+
+  --animate-float: float 3s ease-in-out infinite;
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+}
+
+
+@layer base {
+  body {
+    @apply bg-accent-cream text-bakery-900;
+  }
+}
+
 @layer utilities {
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+  }
+
+  .glass-header {
+    @apply bg-white/80 backdrop-blur-xl border-b border-bakery-100 sticky top-0 z-50;
+  }
+
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  .premium-shadow {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  }
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+/* Prevent layout shift during transitions */
+.no-transition-all {
+  transition: none !important;
 }

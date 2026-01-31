@@ -189,145 +189,170 @@ const getStatusColor = (status: string) => {
 </script>
 
 <template>
-<div class="space-y-4 sm:space-y-6">
-    <!-- Header with Cart -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+<div class="space-y-6 sm:space-y-8 p-4 sm:p-8 bg-accent-cream min-h-screen">
+    <!-- Premium Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
         <div class="min-w-0 flex-1">
-            <h2 v-if="isCashier" class="text-xl sm:text-2xl font-bold text-green-900 truncate">Cashier Mode: {{ user?.name }}</h2>
-            <h2 v-else class="text-xl sm:text-2xl font-bold text-green-900 truncate">Welcome, {{ user ? user.name : 'Guest' }}!</h2>
-            <p class="text-xs sm:text-sm text-green-600">{{ isCashier ? 'Place "Order at Shop" orders for customers' : 'Browse our menu or check your order history' }}</p>
+            <h1 class="text-3xl sm:text-4xl font-bold text-bakery-900 tracking-tight">
+                Our <span class="text-bakery-600">Selection</span>
+            </h1>
+            <p class="text-bakery-500 mt-2 font-medium">Handcrafted treats, baked with precision and passion.</p>
         </div>
-        <button 
+
+        <button
             @click="isCartOpen = true"
-            class="relative inline-flex items-center justify-center rounded-md text-sm font-medium h-9 sm:h-10 px-3 sm:px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition-all flex-shrink-0"
+            class="relative group flex items-center gap-3 px-6 py-3 bg-white border border-bakery-100 rounded-2xl shadow-sm hover:shadow-xl hover:border-bakery-200 transition-all duration-300"
         >
-            <ShoppingCart class="w-4 h-4" />
-            <span class="hidden sm:inline ml-2">Cart</span>
-            <span v-if="totalItems > 0" class="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-red-500 text-white text-[10px] sm:text-xs font-bold w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center rounded-full border-2 border-white">
+            <div class="w-10 h-10 rounded-xl bg-bakery-50 flex items-center justify-center group-hover:bg-bakery-100 transition-colors">
+                <ShoppingCart class="w-5 h-5 text-bakery-600" />
+            </div>
+            <div class="text-left">
+                <p class="text-xs font-bold text-bakery-400 uppercase tracking-widest leading-none mb-1">Your Basket</p>
+                <p class="text-sm font-bold text-bakery-900">${{ totalPrice.toFixed(2) }}</p>
+            </div>
+            <span v-if="totalItems > 0" class="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-bakery-600 text-[10px] font-bold text-white shadow-lg animate-in zoom-in">
                 {{ totalItems }}
             </span>
         </button>
     </div>
 
-    <!-- Tabs -->
-    <div class="flex space-x-1 rounded-lg bg-green-100/50 p-1 mb-4 sm:mb-6 max-w-full sm:max-w-md">
-        <button 
-            class="flex-1 flex items-center justify-center px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200"
-            :class="activeTab === 'menu' ? 'bg-white text-green-900 shadow-sm' : 'text-green-700 hover:text-green-900 hover:bg-green-200/50'"
+    <!-- Modern Tabs -->
+    <div class="flex space-x-2 rounded-2xl bg-bakery-100/50 p-1.5 mb-8 max-w-full sm:max-w-md border border-bakery-100">
+        <button
             @click="activeTab = 'menu'"
+            :class="[
+                activeTab === 'menu'
+                ? 'bg-white text-bakery-900 shadow-md'
+                : 'text-bakery-500 hover:text-bakery-700 hover:bg-bakery-100'
+            ]"
+            class="flex-1 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200"
         >
-            <ShoppingCart class="w-4 h-4 flex-shrink-0" />
-            <span class="hidden sm:inline ml-2">Menu</span>
+            <Coffee class="w-4 h-4 mr-2" />
+            Menu
         </button>
-        <button 
-            v-if="user"
-            class="flex-1 flex items-center justify-center px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-md transition-all duration-200"
-            :class="activeTab === 'orders' ? 'bg-white text-green-900 shadow-sm' : 'text-green-700 hover:text-green-900 hover:bg-green-200/50'"
+        <button
             @click="activeTab = 'orders'"
+            :class="[
+                activeTab === 'orders'
+                ? 'bg-white text-bakery-900 shadow-md'
+                : 'text-bakery-500 hover:text-bakery-700 hover:bg-bakery-100'
+            ]"
+            class="flex-1 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200"
         >
-            <History class="w-4 h-4 flex-shrink-0" />
-            <span class="hidden sm:inline ml-2">Order History</span>
-            <span class="sm:hidden ml-1">({{ customerOrders.length }})</span>
-            <span class="hidden sm:inline ml-1">({{ customerOrders.length }})</span>
+            <History class="w-4 h-4 mr-2" />
+            {{ isCashier ? 'Shop Orders' : 'My Orders' }}
+            <span class="ml-1 opacity-60">({{ customerOrders.length }})</span>
         </button>
     </div>
+
 
     <!-- Menu Content -->
     <div v-if="activeTab === 'menu'" class="space-y-6">
         <!-- Filters -->
-        <div class="bg-white p-3 sm:p-4 rounded-xl border border-green-200 shadow-sm">
-            <div class="flex flex-col gap-3 sm:gap-4">
-                <div class="flex-1 relative">
-                    <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-600" />
-                    <input 
-                        v-model="searchQuery" 
-                        type="text" 
-                        placeholder="Search products..." 
-                        class="w-full pl-10 h-9 sm:h-10 rounded-md border border-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+        <div class="glass-card p-4 sm:p-6 rounded-3xl border border-bakery-100 mb-8 premium-shadow">
+            <div class="flex flex-col lg:flex-row gap-6">
+                <!-- Search -->
+                <div class="flex-1 relative group">
+                    <Search class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-bakery-400 group-focus-within:text-bakery-600 transition-colors" />
+                    <input
+                        v-model="searchQuery"
+                        type="text"
+                        placeholder="Search for croissants, cakes, or breads..."
+                        class="w-full pl-12 pr-4 h-12 rounded-2xl border border-bakery-100 focus:outline-none focus:ring-2 focus:ring-bakery-300 focus:border-transparent text-sm bg-white/50 backdrop-blur-sm transition-all"
                     >
                 </div>
-                <div class="grid grid-cols-2 gap-3 sm:flex sm:gap-4">
-                    <div class="flex items-center gap-2">
-                        <Filter class="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <select v-model="selectedCategory" class="h-9 sm:h-10 w-full rounded-md border border-green-200 text-xs sm:text-sm px-2 sm:px-3 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
+
+                <div class="flex flex-wrap items-center gap-4">
+                    <!-- Category -->
+                    <div class="flex items-center gap-3">
+                        <Filter class="w-4 h-4 text-bakery-500" />
+                        <select
+                            v-model="selectedCategory"
+                            class="h-12 px-4 rounded-2xl border border-bakery-100 focus:outline-none focus:ring-2 focus:ring-bakery-300 bg-white/50 text-sm font-semibold"
+                        >
                             <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
                         </select>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <SlidersHorizontal class="w-4 h-4 text-green-600 flex-shrink-0" />
-                        <select v-model="sortBy" class="h-9 sm:h-10 w-full rounded-md border border-green-200 text-xs sm:text-sm px-2 sm:px-3 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white">
-                            <option value="name">Name</option>
+
+                    <!-- Sort -->
+                    <div class="flex items-center gap-3">
+                        <SlidersHorizontal class="w-4 h-4 text-bakery-500" />
+                        <select
+                            v-model="sortBy"
+                            class="h-12 px-4 rounded-2xl border border-bakery-100 focus:outline-none focus:ring-2 focus:ring-bakery-300 bg-white/50 text-sm font-semibold"
+                        >
+                            <option value="name">Name: A to Z</option>
                             <option value="price-low">Price: Low to High</option>
                             <option value="price-high">Price: High to Low</option>
-                            <option value="rating">Rating</option>
+                            <option value="rating">Top Rated</option>
                         </select>
                     </div>
                 </div>
             </div>
-            <div class="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs sm:text-sm">
-                 <p class="text-green-600">
-                  Showing {{ filteredAndSortedProducts.length }} of {{ products.length }} products
-                </p>
-                <button 
-                    v-if="searchQuery || selectedCategory !== 'All'"
-                    @click="searchQuery = ''; selectedCategory = 'All'"
-                    class="text-green-600 hover:text-green-800 hover:underline text-xs sm:text-sm"
-                >
-                    Clear filters
-                </button>
+        </div>
+
+
+        <!-- Products Grid -->
+        <div v-if="filteredAndSortedProducts.length === 0" class="text-center py-12 glass-card rounded-3xl border border-bakery-100 premium-shadow">
+            <div class="flex flex-col items-center gap-4">
+                 <div class="w-16 h-16 rounded-full bg-bakery-50 flex items-center justify-center">
+                    <Search class="w-8 h-8 text-bakery-600" />
+                  </div>
+                <h3 class="text-lg font-medium text-bakery-900">No products found</h3>
+                <p class="text-bakery-600">Try adjusting your filters.</p>
+                <button @click="searchQuery = ''; selectedCategory = 'All'" class="text-sm text-bakery-700 hover:underline">Clear all filters</button>
+            </div>
+        </div>
+        <!-- Product Grid -->
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div
+                v-for="product in filteredAndSortedProducts"
+                :key="product.id"
+                class="group flex flex-col bg-white rounded-[2.5rem] overflow-hidden border border-bakery-100 hover:border-bakery-300 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 animate-in fade-in zoom-in duration-700"
+            >
+                <div class="relative h-64 overflow-hidden">
+                    <img :src="product.image" :alt="product.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6">
+                        <p class="text-white text-sm font-medium line-clamp-2">{{ product.description }}</p>
+                    </div>
+                    <div class="absolute top-4 right-4 glass-card px-3 py-1.5 rounded-xl text-bakery-700 text-xs font-bold uppercase tracking-widest">
+                        {{ product.category }}
+                    </div>
+                </div>
+
+                <div class="p-6 flex-1 flex flex-col">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-bold text-bakery-900 group-hover:text-bakery-600 transition-colors">{{ product.name }}</h3>
+                        <div v-if="product.rating" class="flex items-center gap-1.5 bg-bakery-50 text-bakery-700 px-2 py-1 rounded-lg">
+                             <Star class="w-4 h-4 fill-bakery-600 text-bakery-600" />
+                             <span class="text-sm font-bold">{{ product.rating }}</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-auto space-y-5">
+                          <div class="flex justify-between items-center">
+                             <div class="flex flex-col">
+                                <span class="text-2xl font-black text-bakery-900">${{ product.price.toFixed(2) }}</span>
+                                <span class="text-xs text-bakery-400 font-bold uppercase tracking-widest">{{ product.stock }} left</span>
+                             </div>
+                             <div class="flex gap-2">
+                                <button @click="openProductDetails(product)" class="w-12 h-12 rounded-2xl border border-bakery-100 text-bakery-600 hover:bg-bakery-50 transition-all flex items-center justify-center shadow-sm">
+                                    <Info class="w-5 h-5" />
+                                </button>
+                                <button
+                                    @click="addToCart(product)"
+                                    :disabled="product.stock === 0"
+                                    class="h-12 px-6 rounded-2xl bg-bakery-600 text-white text-sm font-bold hover:bg-bakery-700 transition-all disabled:opacity-30 flex items-center shadow-lg shadow-bakery-100 active:scale-95"
+                                >
+                                    <Plus class="w-5 h-5 mr-2" /> Add
+                                </button>
+                             </div>
+                          </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Products Grid -->
-        <div v-if="filteredAndSortedProducts.length === 0" class="text-center py-12 bg-white rounded-xl border border-green-200">
-            <div class="flex flex-col items-center gap-4">
-                 <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-                    <Search class="w-8 h-8 text-green-600" />
-                  </div>
-                <h3 class="text-lg font-medium text-green-900">No products found</h3>
-                <p class="text-green-600">Try adjusting your filters.</p>
-                <button @click="searchQuery = ''; selectedCategory = 'All'" class="text-sm text-green-700 hover:underline">Clear all filters</button>
-            </div>
-        </div>
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            <div 
-                v-for="product in filteredAndSortedProducts" 
-                :key="product.id"
-                class="group bg-white rounded-xl border border-green-200 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
-            >
-                <div class="relative h-48 overflow-hidden cursor-pointer" @click="openProductDetails(product)">
-                    <img :src="product.image" :alt="product.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                    <span class="absolute top-2 right-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xs px-2 py-1 rounded-full shadow-sm">{{ product.category }}</span>
-                </div>
-                <div class="p-4 flex-1 flex flex-col">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="font-bold text-green-900 group-hover:text-green-700 transition-colors">{{ product.name }}</h3>
-                        <div v-if="product.rating" class="flex items-center gap-1 text-xs font-medium text-green-900 bg-green-50 px-1.5 py-0.5 rounded">
-                             <Star class="w-3 h-3 fill-green-500 text-green-500" />
-                             {{ product.rating }}
-                        </div>
-                    </div>
-                    <div class="mt-auto pt-4 space-y-3">
-                         <div class="flex justify-between items-center text-sm">
-                            <span class="font-bold text-lg text-green-900">${{ product.price.toFixed(2) }}</span>
-                            <span class="text-green-600 text-xs">{{ product.stock }} available</span>
-                          </div>
-                          <div class="flex gap-2">
-                             <button @click="openProductDetails(product)" class="flex-1 h-9 rounded-md border border-green-200 text-green-700 text-sm hover:bg-green-50 transition-colors flex items-center justify-center">
-                                <Info class="w-4 h-4 mr-1" /> Details
-                             </button>
-                             <button 
-                                @click="addToCart(product)" 
-                                :disabled="product.stock === 0"
-                                class="flex-1 h-9 rounded-md bg-gradient-to-r from-green-600 to-emerald-600 text-white text-sm hover:from-green-700 hover:to-emerald-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                            >
-                                <Plus class="w-4 h-4 mr-1" /> Add
-                             </button>
-                          </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Orders Content -->
@@ -379,60 +404,109 @@ const getStatusColor = (status: string) => {
         </div>
     </div>
 
-    <!-- Cart Modal (Simple overlay for now) -->
-    <div v-if="isCartOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
-            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h3 class="font-bold text-lg text-gray-900">Shopping Cart</h3>
-                <button @click="isCartOpen = false" class="text-gray-500 hover:text-gray-700">
-                    <XCircle class="w-5 h-5" />
-                </button>
-            </div>
-            
-            <div class="p-4 overflow-y-auto flex-1 space-y-4">
-                <div v-if="cart.length === 0" class="text-center py-8 text-gray-500">
-                    Your cart is empty
-                </div>
-                <div v-else class="space-y-3">
-                    <div v-for="item in cart" :key="item.id" class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                        <div class="flex-1">
-                             <p class="text-sm font-medium text-gray-900">{{ item.name }}</p>
-                             <p class="text-xs text-gray-500">${{ item.price.toFixed(2) }} each</p>
+    <!-- Global Cart Side Drawer -->
+    <div 
+        v-if="isCartOpen" 
+        class="fixed inset-0 z-[100] overflow-hidden"
+    >
+        <!-- Overlay -->
+        <div 
+            class="absolute inset-0 bg-bakery-950/40 backdrop-blur-sm transition-opacity duration-500 animate-in fade-in" 
+            @click="isCartOpen = false"
+        ></div>
+        
+        <div class="fixed inset-y-0 right-0 max-w-full flex">
+            <div 
+                class="relative w-screen max-w-md transform transition-transform duration-500 ease-in-out animate-in slide-in-from-right h-full"
+            >
+                <div class="h-full flex flex-col bg-white shadow-2xl border-l border-bakery-100">
+                    <div class="p-8 border-b border-bakery-50 flex justify-between items-center bg-bakery-50/50">
+                        <div>
+                            <h3 class="font-black text-2xl text-bakery-900">Your Basket</h3>
+                            <p class="text-bakery-500 text-sm font-medium">{{ totalItems }} items selected</p>
                         </div>
-                        <div class="flex items-center gap-2">
-                             <button @click="updateQuantity(item.id, -1)" class="w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100"><Minus class="w-3 h-3" /></button>
-                             <span class="text-sm w-6 text-center font-medium">{{ item.quantity }}</span>
-                             <button @click="updateQuantity(item.id, 1)" class="w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100"><Plus class="w-3 h-3" /></button>
+                        <button 
+                            @click="isCartOpen = false" 
+                            class="w-12 h-12 rounded-2xl bg-white border border-bakery-100 text-bakery-400 hover:text-bakery-900 hover:rotate-90 transition-all flex items-center justify-center shadow-sm"
+                        >
+                            <XCircle class="w-6 h-6" />
+                        </button>
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto p-8 scrollbar-hide">
+                        <div v-if="cart.length === 0" class="h-full flex flex-col items-center justify-center text-center space-y-6">
+                            <div class="w-24 h-24 bg-bakery-50 rounded-full flex items-center justify-center">
+                                <ShoppingCart class="w-10 h-10 text-bakery-200" />
+                            </div>
+                            <div>
+                                <h4 class="text-xl font-bold text-bakery-900">Your basket is empty</h4>
+                                <p class="text-bakery-500 mt-2">Looks like you haven't added any treats yet.</p>
+                            </div>
+                            <button @click="isCartOpen = false" class="px-8 py-3 rounded-xl bg-bakery-600 text-white font-bold hover:bg-bakery-700 shadow-lg transition-all">
+                                Start Shopping
+                            </button>
                         </div>
-                        <button @click="removeFromCart(item.id)" class="text-red-500 hover:text-red-700 ml-2"><Trash2 class="w-4 h-4" /></button>
+                        <div v-else class="space-y-6">
+                            <div v-for="item in cart" :key="item.id" class="flex gap-4 group">
+                                <div class="w-20 h-20 rounded-2xl overflow-hidden border border-bakery-100 flex-shrink-0">
+                                    <img :src="item.image" :alt="item.name" class="w-full h-full object-cover">
+                                </div>
+                                <div class="flex-1 flex flex-col justify-between py-1">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="font-bold text-bakery-900 leading-tight">{{ item.name }}</h4>
+                                        <button @click="removeFromCart(item.id)" class="text-bakery-200 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                                            <Trash2 class="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-bakery-600 font-bold">${{ (item.price * item.quantity).toFixed(2) }}</p>
+                                        <div class="flex items-center gap-3 bg-bakery-50 p-1 rounded-xl">
+                                             <button @click="updateQuantity(item.id, -1)" class="w-7 h-7 rounded-lg bg-white border border-bakery-100 flex items-center justify-center hover:bg-bakery-100 transition-colors"><Minus class="w-3 h-3" /></button>
+                                             <span class="text-sm w-4 text-center font-bold text-bakery-900">{{ item.quantity }}</span>
+                                             <button @click="updateQuantity(item.id, 1)" class="w-7 h-7 rounded-lg bg-white border border-bakery-100 flex items-center justify-center hover:bg-bakery-100 transition-colors"><Plus class="w-3 h-3" /></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="cart.length > 0" class="p-8 border-t border-bakery-100 bg-white space-y-6">
+                         <!-- Cashier specific input -->
+                         <div v-if="isCashier" class="space-y-3">
+                              <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">Customer Information</label>
+                              <input 
+                                v-model="orderCustomerName" 
+                                type="text" 
+                                placeholder="Enter customer name..." 
+                                class="w-full h-12 rounded-2xl border border-bakery-100 px-4 focus:outline-none focus:ring-2 focus:ring-bakery-300 text-sm bg-bakery-50/50 transition-all font-medium"
+                              >
+                         </div>
+                         
+                         <div class="space-y-3">
+                             <div class="flex justify-between items-center text-bakery-500 font-medium">
+                                  <span>Subtotal</span>
+                                  <span>${{ totalPrice.toFixed(2) }}</span>
+                             </div>
+                             <div class="flex justify-between items-center text-2xl font-black text-bakery-900">
+                                  <span>Total</span>
+                                  <span>${{ totalPrice.toFixed(2) }}</span>
+                             </div>
+                         </div>
+
+                         <button 
+                            @click="handleCheckout"
+                            class="w-full h-14 rounded-2xl bg-bakery-600 text-white font-bold text-lg hover:bg-bakery-700 shadow-2xl shadow-bakery-100 transition-all active:scale-95 flex items-center justify-center gap-3"
+                        >
+                            Complete Order
+                            <ArrowRight class="w-5 h-5" />
+                        </button>
                     </div>
                 </div>
             </div>
-
-            <div v-if="cart.length > 0" class="p-4 border-t border-gray-100 bg-gray-50">
-                 <!-- Cashier specific input -->
-                 <div v-if="isCashier" class="mb-4 space-y-2">
-                      <label class="text-xs font-bold text-green-700 uppercase tracking-wider">Customer Name (Order at Shop)</label>
-                      <input 
-                        v-model="orderCustomerName" 
-                        type="text" 
-                        placeholder="Enter customer name..." 
-                        class="w-full h-10 rounded-md border border-green-200 px-3 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm bg-white"
-                      >
-                 </div>
-                 <div class="flex justify-between items-center mb-4">
-                      <span class="font-bold text-gray-900">Total</span>
-                      <span class="font-bold text-xl text-green-700">${{ totalPrice.toFixed(2) }}</span>
-                 </div>
-                 <button 
-                    @click="handleCheckout"
-                    class="w-full h-11 rounded-md bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium hover:from-green-700 hover:to-emerald-700 shadow-lg transition-transform active:scale-95"
-                >
-                    Checkout
-                 </button>
-            </div>
         </div>
     </div>
+
     
     <!-- Product Details Modal -->
     <div v-if="isProductDialogOpen && selectedProduct" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4">

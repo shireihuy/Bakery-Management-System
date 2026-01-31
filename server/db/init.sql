@@ -83,12 +83,20 @@ CREATE TABLE IF NOT EXISTS payments (
 
 -- Initial Products
 INSERT INTO products (id, name, category, price, description, image_url) VALUES
-(1, 'Croissant', 'Pastries', 5.00, 'Buttery, flaky French pastry with a golden, crisp exterior and soft, layered interior.', 'https://images.unsplash.com/photo-1733754348873-feeb45df3bab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcm9pc3NhbnQlMjBwYXN0cnl8ZW58MXx8fHwxNzYxOTE5MTc0fDA&ixlib=rb-4.1.0&q=80&w=400'),
+(1, 'Matcha Croissant', 'Pastries', 5.00, 'Buttery, flaky French pastry with a golden, crisp exterior and soft, layered interior.', 'https://images.unsplash.com/photo-1733754348873-feeb45df3bab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcm9pc3NhbnQlMjBwYXN0cnl8ZW58MXx8fHwxNzYxOTE5MTc0fDA&ixlib=rb-4.1.0&q=80&w=400'),
 (2, 'Sourdough Bread', 'Bread', 6.00, 'Traditional sourdough with a crispy crust and tangy flavor.', 'https://images.unsplash.com/photo-1597604391235-a7429b4b350c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzb3VyZG91Z2glMjBicmVhZHxlbnwxfHx8fDE3NjE4NTc4ODR8MA&ixlib=rb-4.1.0&q=80&w=400'),
 (3, 'Chocolate Chip Cookies', 'Cookies', 3.00, 'Classic chewy cookies loaded with semi-sweet chocolate chips.', 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjaG9jb2xhdGUlMjBjaGlwJTIwY29va2llc3xlbnwxfHx8fDE3NjE4NjYwMjV8MA&ixlib=rb-4.1.0&q=80&w=400'),
+(4, 'Matcha Mochi Donut', 'Donuts', 3.50, 'Chewy, pull-apart mochi donuts with a vibrant matcha glaze.', 'https://images.unsplash.com/photo-1549590143-d5855148a9d5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2NoaSUyMGRvbnV0fGVufDF8fHx8MTc2NDkzOTgwNHww&ixlib=rb-4.1.0&q=80&w=400'),
+(5, 'Green Tea Macarons', 'Pastries', 12.00, 'Elegant French macarons filled with rich matcha ganache.', 'https://images.unsplash.com/photo-1551024601-bec78aea704b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYWNhcm9uc3xlbnwxfHx8fDE3NjQ5Mzk4NTB8MA&ixlib=rb-4.1.0&q=80&w=400'),
+(6, 'Matcha Cheesecake', 'Cakes', 7.50, 'Velvety smooth cheesecake with a hint of matcha and a graham cracker crust.', 'https://images.unsplash.com/photo-1622374149938-1c0b1a08ad11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBjYWtlfGVufDF8fHx8MTc2NDkzOTc1OHww&ixlib=rb-4.1.0&q=80&w=400'),
 (7, 'Matcha Cake', 'Cakes', 22.00, 'Delicate layers of premium Japanese matcha cake with white chocolate cream frosting.', 'https://images.unsplash.com/photo-1622374149938-1c0b1a08ad11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBjYWtlJTIwZ3JlZW4lMjB0ZWF8ZW58MXx8fHwxNzY0OTM5NzU4fDA&ixlib=rb-4.1.0&q=80&w=1080'),
 (10, 'Matcha Latte', 'Beverages', 5.50, 'Creamy matcha latte made with ceremonial grade matcha and steamed milk.', 'https://images.unsplash.com/photo-1725799957338-51f677c0ffa3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBsYXR0ZSUyMGRyaW5rfGVufDF8fHx8MTc2NDkxNzk0Nnww&ixlib=rb-4.1.0&q=80&w=1080')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+    name = EXCLUDED.name,
+    category = EXCLUDED.category,
+    price = EXCLUDED.price,
+    description = EXCLUDED.description,
+    image_url = EXCLUDED.image_url;
 
 -- Reset serial sequence
 SELECT setval('products_id_seq', (SELECT MAX(id) FROM products));

@@ -9,9 +9,6 @@ import {
   Clock, 
   Award,
   MapPin,
-  Phone,
-  Mail,
-  CheckCircle2,
   ArrowRight,
   Sparkles,
   Star,
@@ -20,6 +17,7 @@ import {
 } from "lucide-vue-next";
 
 import { useAuth } from '../composables/useAuth';
+import { useProducts } from '../composables/useProducts';
 
 const router = useRouter();
 const { user } = useAuth();
@@ -53,72 +51,14 @@ const onViewMenu = () => {
     }
 };
 
-// Mock Products Data (since we are migrating without full backend yet)
-const menuProducts = ref([
-  {
-    id: "1",
-    name: "Matcha Croissant",
-    category: "Pastries",
-    price: 5.00,
-    image: "https://images.unsplash.com/photo-1733754348873-feeb45df3bab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcm9pc3NhbnQlMjBwYXN0cnl8ZW58MXx8fHwxNzYxOTE5MTc0fDA&ixlib=rb-4.1.0&q=80&w=400",
-    description: "Buttery, flaky French pastry with a golden, crisp exterior and soft, layered interior.",
-    rating: 4.8
-  },
-  {
-    id: "2",
-    name: "Sourdough Bread",
-    category: "Bread",
-    price: 6.00,
-    image: "https://images.unsplash.com/photo-1597604391235-a7429b4b350c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzb3VyZG91Z2glMjBicmVhZHxlbnwxfHx8fDE3NjE4NTc4ODR8MA&ixlib=rb-4.1.0&q=80&w=400",
-    description: "Traditional sourdough with a crispy crust and tangy flavor.",
-    rating: 4.9
-  },
-   { 
-    id: "7", 
-    name: "Matcha Cake", 
-    category: "Cakes", 
-    price: 22.00, 
-    image: "https://images.unsplash.com/photo-1622374149938-1c0b1a08ad11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBjYWtlJTIwZ3JlZW4lMjB0ZWF8ZW58MXx8fHwxNzY0OTM5NzU4fDA&ixlib=rb-4.1.0&q=80&w=1080",
-    description: "Delicate layers of premium Japanese matcha cake with white chocolate cream frosting.",
-    rating: 5.0
-  },
-  { 
-    id: "10", 
-    name: "Matcha Latte", 
-    category: "Beverages", 
-    price: 5.50, 
-    image: "https://images.unsplash.com/photo-1725799957338-51f677c0ffa3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBsYXR0ZSUyMGRyaW5rfGVufDF8fHx8MTc2NDkxNzk0Nnww&ixlib=rb-4.1.0&q=80&w=1080",
-    description: "Creamy matcha latte made with ceremonial grade matcha and steamed milk.",
-    rating: 4.7
-  },
-  {
-    id: "4",
-    name: "Matcha Mochi Donut",
-    category: "Donuts",
-    price: 3.50,
-    image: "https://images.unsplash.com/photo-1549590143-d5855148a9d5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb2NoaSUyMGRvbnV0fGVufDF8fHx8MTc2NDkzOTgwNHww&ixlib=rb-4.1.0&q=80&w=400",
-    description: "Chewy, pull-apart mochi donuts with a vibrant matcha glaze.",
-    rating: 4.9
-  },
-  {
-    id: "5",
-    name: "Green Tea Macarons",
-    category: "Pastries",
-    price: 12.00,
-    image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYWNhcm9uc3xlbnwxfHx8fDE3NjQ5Mzk4NTB8MA&ixlib=rb-4.1.0&q=80&w=400",
-    description: "Elegant French macarons filled with rich matcha ganache.",
-    rating: 4.6
-  },
-  {
-    id: "6",
-    name: "Matcha Cheesecake",
-    category: "Cakes",
-    price: 7.50,
-    image: "https://images.unsplash.com/photo-1622374149938-1c0b1a08ad11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBjYWtlfGVufDF8fHx8MTc2NDkzOTc1OHww&ixlib=rb-4.1.0&q=80&w=400",
-    description: "Velvety smooth cheesecake with a hint of matcha and a graham cracker crust.",
-    rating: 4.8
-  }
-]);
+const { products: dbProducts, fetchProducts } = useProducts();
+
+const menuProducts = computed(() => {
+    // We want to show a selection of products, maybe filter for specific ones or just take first 8
+    // If db is empty, return empty array (or fallback to empty)
+    return dbProducts.value.length > 0 ? dbProducts.value : [];
+});
+
 
 const currentSlide = ref(0);
 const slidesToShow = ref(4);
@@ -139,6 +79,7 @@ const handleResize = () => {
 onMounted(() => {
     handleResize();
     window.addEventListener('resize', handleResize);
+    fetchProducts();
 });
 
 onUnmounted(() => {
@@ -270,24 +211,24 @@ const products = [
 </script>
 
 <template>
-    <div class="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+    <div class="min-h-screen bg-accent-cream">
       <!-- Header -->
-      <header class="bg-white/80 backdrop-blur-md border-b border-green-200 sticky top-0 z-50 shadow-sm">
+      <header class="glass-header">
         <div class="container mx-auto px-6 py-4">
           <div class="flex items-center justify-between">
-            <router-link to="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div class="w-10 h-10 rounded-lg overflow-hidden border border-green-200 shadow-sm">
+            <router-link to="/" class="flex items-center gap-4 group no-transition-all">
+              <div class="w-12 h-12 rounded-xl overflow-hidden border-2 border-bakery-200 shadow-md transform group-hover:rotate-6 group-hover:scale-110 transition-transform duration-500">
                 <img src="/matcha-cake-logo.png" alt="Matcha Bakery Logo" class="w-full h-full object-cover" />
               </div>
               <div>
-                <h1 class="text-green-900 font-bold text-lg">Matcha Bakery</h1>
-                <p class="text-sm text-green-600">Fresh Daily Since 2020</p>
+                <h1 class="text-bakery-900 font-bold text-xl tracking-tight">The Artisan <span class="text-bakery-600">Bakery</span></h1>
+                <p class="text-xs text-bakery-500 uppercase tracking-widest font-semibold">Fresh • Organic • Daily</p>
               </div>
             </router-link>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-4">
               <button 
                 @click="onGetStarted"
-                class="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition-all"
+                class="inline-flex items-center justify-center rounded-xl text-sm font-semibold h-11 px-6 bg-bakery-600 hover:bg-bakery-700 text-white shadow-lg hover:shadow-bakery-200 transition-all active:scale-95"
               >
                 {{ user ? 'Enter Shop' : 'Order Online' }}
                 <ArrowRight class="w-4 h-4 ml-2" />
@@ -296,6 +237,7 @@ const products = [
           </div>
         </div>
       </header>
+
 
       <!-- Carousel Section (Simplified for Migration Proof of Concept) -->
        <section class="bg-white border-b border-green-200 py-12">
@@ -388,226 +330,180 @@ const products = [
        </section>
       
       <!-- Hero Section -->
-      <section class="container mx-auto px-6 py-20">
-        <div class="grid lg:grid-cols-2 gap-12 items-center">
-          <div class="space-y-6">
+      <section class="container mx-auto px-6 py-24 lg:py-32">
+        <div class="grid lg:grid-cols-2 gap-16 items-center">
+          <div class="space-y-8 animate-in slide-in-from-left duration-1000">
             <div class="inline-block">
-              <span class="bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-4 py-2 rounded-full border border-green-200 text-sm font-medium">
-                🍃 Organic • Fresh • Delicious
+              <span class="bg-bakery-100 text-bakery-700 px-4 py-2 rounded-full border border-bakery-200 text-sm font-bold uppercase tracking-widest shadow-sm">
+                🍃 Artisanal Selection
               </span>
             </div>
-            <h1 class="text-5xl lg:text-6xl text-green-900 leading-tight font-bold">
-              Artisan Bakery with a <span class="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">Matcha Twist</span>
+            <h1 class="text-6xl lg:text-7xl text-bakery-900 leading-[1.1] font-bold">
+              Pure Matcha <br/>
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-bakery-600 to-bakery-400">Crafted with Love</span>
             </h1>
-            <p class="text-xl text-green-700">
-              Welcome to Matcha Bakery, where traditional baking meets Japanese-inspired flavors. Every morning, we bake fresh breads, pastries, and our signature matcha treats using premium ingredients and time-honored techniques.
+            <p class="text-xl text-bakery-700 leading-relaxed max-w-xl">
+              Discover the perfect harmony of traditional French pastry and premium Japanese matcha. Our artisan bakers craft fresh delights every sunrise, just for you.
             </p>
-            <div class="flex flex-wrap gap-4 pt-4">
+            <div class="flex flex-wrap gap-6 pt-4">
               <button 
                 @click="onGetStarted"
-                class="inline-flex items-center justify-center rounded-md text-sm font-medium h-11 px-8 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg hover:shadow-xl transition-all"
+                class="inline-flex items-center justify-center rounded-2xl text-lg font-bold h-14 px-10 bg-bakery-600 hover:bg-bakery-700 text-white shadow-2xl shadow-bakery-200 hover:-translate-y-1 transition-all active:scale-95"
               >
-                {{ user ? 'Access Store' : 'Order Now' }}
-                <ShoppingCart class="w-5 h-5 ml-2" />
+                {{ user ? 'Go to Store' : 'Order Now' }}
+                <ShoppingCart class="w-6 h-6 ml-3" />
               </button>
               <button 
                 @click="onViewMenu"
-                class="inline-flex items-center justify-center rounded-md text-sm font-medium h-11 px-8 border-2 border-green-600 text-green-700 hover:bg-green-50 bg-transparent"
+                class="inline-flex items-center justify-center rounded-2xl text-lg font-bold h-14 px-10 border-2 border-bakery-200 text-bakery-800 hover:bg-bakery-50 transition-all"
               >
-                View Menu
+                Explore Menu
               </button>
             </div>
-            <div class="flex items-center gap-8 pt-4">
-              <div class="flex items-center gap-2">
-                <CheckCircle2 class="w-5 h-5 text-green-600" />
-                <span class="text-green-700">Daily Fresh</span>
+            <div class="flex items-center gap-10 pt-8 border-t border-bakery-100">
+              <div class="flex flex-col">
+                <span class="text-2xl font-bold text-bakery-900">100%</span>
+                <span class="text-sm text-bakery-500 font-medium">Organic Flour</span>
               </div>
-              <div class="flex items-center gap-2">
-                <CheckCircle2 class="w-5 h-5 text-green-600" />
-                <span class="text-green-700">Organic Ingredients</span>
+              <div class="flex flex-col">
+                <span class="text-2xl font-bold text-bakery-900">Daily</span>
+                <span class="text-sm text-bakery-500 font-medium">Fresh Baked</span>
               </div>
-              <div class="flex items-center gap-2">
-                <CheckCircle2 class="w-5 h-5 text-green-600" />
-                <span class="text-green-700">Handcrafted</span>
+              <div class="flex flex-col">
+                <span class="text-2xl font-bold text-bakery-900">Premium</span>
+                <span class="text-sm text-bakery-500 font-medium">Grade Matcha</span>
               </div>
             </div>
           </div>
-          <div class="relative">
-            <div class="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-400 rounded-3xl blur-3xl opacity-20"></div>
-            <div class="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+          <div class="relative animate-in zoom-in duration-1000 delay-300">
+            <div class="absolute -inset-4 bg-bakery-400/20 rounded-[3rem] blur-3xl animate-pulse-slow"></div>
+            <div class="relative rounded-[2.5rem] overflow-hidden shadow-2xl border-8 border-white group">
               <img 
-                src="https://images.unsplash.com/photo-1592637970552-6c27432e7913?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBiYWtlcnklMjBjYWZlfGVufDF8fHx8MTc2NDg1MzcyNHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                src="https://images.unsplash.com/photo-1592637970552-6c27432e7913?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBiYWtlcnklMjBjYWZlfGVufDF8fHx8MTc2NDg1MzcyNHww&ixlib=rb-4.1.0&q=80&w=1080"
                 alt="Matcha Bakery Interior"
-                class="w-full h-[500px] object-cover"
+                class="w-full h-[600px] object-cover transition-transform duration-1000 group-hover:scale-110"
               />
+              <div class="absolute bottom-8 left-8 right-8 glass-card p-6 rounded-2xl animate-float">
+                <div class="flex items-center gap-4">
+                  <div class="w-12 h-12 bg-bakery-100 rounded-full flex items-center justify-center">
+                    <Star class="w-6 h-6 text-bakery-600 fill-bakery-600" />
+                  </div>
+                  <div>
+                    <p class="text-bakery-900 font-bold text-lg">4.9/5 Rating</p>
+                    <p class="text-bakery-600 text-sm">Loved by 2k+ daily customers</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Features Section -->
-      <section class="bg-white py-20">
+
+      <section class="bg-white py-32 border-y border-bakery-50">
+        <div class="container mx-auto px-6 text-center mb-16 space-y-4">
+            <h2 class="text-4xl lg:text-5xl font-black text-bakery-900 tracking-tight">Our Signature <span class="text-bakery-600">Selection</span></h2>
+            <p class="text-bakery-500 max-w-2xl mx-auto text-lg font-medium">Experience our most celebrated creations, handcrafted with 100% organic Japanese matcha and French techniques.</p>
+        </div>
         <div class="container mx-auto px-6">
-          <div class="text-center mb-16">
-            <h2 class="text-4xl text-green-900 mb-4 font-bold">
-              Why Choose Matcha Bakery?
-            </h2>
-            <p class="text-xl text-green-600 max-w-2xl mx-auto">
-              Experience the perfect blend of tradition and innovation in every bite
-            </p>
-          </div>
-          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div 
-                v-for="(feature, index) in features"
-                :key="index"
-                class="group bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-100 hover:border-green-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-            >
-                <div class="bg-gradient-to-br from-green-500 to-emerald-600 w-12 h-12 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                <component :is="feature.icon" class="w-6 h-6 text-white" />
+            <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-8">
+                <div v-for="(signatureProduct, index) in products" :key="index" class="glass-card p-8 rounded-[2.5rem] text-center hover:-translate-y-2 transition-all duration-500 group border border-bakery-50">
+                    <div :class="[`bg-gradient-to-br w-20 h-20 rounded-3xl flex items-center justify-center mb-6 mx-auto shadow-lg transform group-hover:rotate-12 transition-transform`, signatureProduct.color]">
+                        <Coffee class="w-10 h-10 text-white" />
+                    </div>
+                    <h3 class="text-bakery-900 font-black text-lg mb-2">{{ signatureProduct.name }}</h3>
+                    <p class="text-bakery-500 text-sm font-medium leading-relaxed">{{ signatureProduct.description }}</p>
                 </div>
-                <h3 class="text-green-900 mb-2 font-bold">{{feature.title}}</h3>
-                <p class="text-green-600">{{feature.description}}</p>
             </div>
-          </div>
         </div>
       </section>
 
-      <!-- Products Section -->
-      <section class="bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 py-20">
+
+
+      <!-- Why Us - Features Modern Grid -->
+      <section class="bg-accent-cream py-32">
         <div class="container mx-auto px-6">
-          <div class="text-center mb-16">
-            <h2 class="text-4xl text-green-900 mb-4 font-bold">
-              Our Signature Selection
-            </h2>
-            <p class="text-xl text-green-600 max-w-2xl mx-auto">
-              Discover our most popular items, loved by the community
-            </p>
-          </div>
-          <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
-            <div 
-                v-for="(product, index) in products"
-                :key="index"
-                class="bg-white p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 border-green-100"
-            >
-                <div :class="`bg-gradient-to-br ${product.color} w-16 h-16 rounded-2xl flex items-center justify-center mb-4 mx-auto`">
-                    <Coffee class="w-8 h-8 text-white" />
+          <div class="grid lg:grid-cols-3 gap-12">
+            <div class="lg:col-span-1 space-y-6">
+                <span class="text-bakery-600 font-black uppercase tracking-widest text-sm">Our Philosophy</span>
+                <h2 class="text-4xl font-black text-bakery-900 leading-tight">Better Ingredients,<br/>Better Baking.</h2>
+                <p class="text-bakery-500 text-lg font-medium">We believe that the best pastries start with the best ingredients. That's why we source everything sustainably and organically.</p>
+                <button @click="onViewMenu" class="inline-flex items-center text-bakery-900 font-black group">
+                    Explore the full menu
+                    <ArrowRight class="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
+                </button>
+            </div>
+            <div class="lg:col-span-2 grid md:grid-cols-2 gap-8">
+                <div 
+                    v-for="(feature, index) in features.slice(0, 4)"
+                    :key="index"
+                    class="p-8 rounded-[2rem] bg-white border border-bakery-50 hover:border-bakery-200 transition-all hover:shadow-2xl hover:shadow-bakery-100 group"
+                >
+                    <div class="w-14 h-14 rounded-2xl bg-bakery-50 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:bg-bakery-100 transition-all">
+                        <component :is="feature.icon" class="w-6 h-6 text-bakery-600" />
+                    </div>
+                    <h3 class="text-bakery-900 font-bold text-xl mb-3">{{ feature.title }}</h3>
+                    <p class="text-bakery-500 font-medium leading-relaxed">{{ feature.description }}</p>
                 </div>
-                <h3 class="text-green-900 text-center mb-2 font-bold">{{product.name}}</h3>
-                <p class="text-green-600 text-center text-sm">{{product.description}}</p>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Gallery Section -->
-      <section class="bg-white py-20">
-        <div class="container mx-auto px-6">
-          <div class="grid md:grid-cols-2 gap-12 items-center">
-            <div class="space-y-8">
-              <div>
-                <h2 class="text-4xl text-green-900 mb-4 font-bold">
-                  Baked Fresh Every Morning
-                </h2>
-                <p class="text-xl text-green-600">
-                  Step into our bakery and experience the aroma of freshly baked bread, the warmth of our ovens, and the smiles of our dedicated team.
-                </p>
-              </div>
-              <div class="grid grid-cols-2 gap-6">
-                <!-- Info cards... -->
-                 <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-100">
-                  <div class="flex items-center gap-2 mb-2">
-                    <Clock class="w-5 h-5 text-green-600" />
-                    <h4 class="text-green-900 font-bold">Open Daily</h4>
-                  </div>
-                  <p class="text-green-600 text-sm">6 AM - 8 PM</p>
-                </div>
-                 <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-100">
-                  <div class="flex items-center gap-2 mb-2">
-                    <MapPin class="w-5 h-5 text-green-600" />
-                    <h4 class="text-green-900 font-bold">Location</h4>
-                  </div>
-                  <p class="text-green-600 text-sm">Downtown District</p>
-                </div>
-                 <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-100">
-                  <div class="flex items-center gap-2 mb-2">
-                    <Phone class="w-5 h-5 text-green-600" />
-                    <h4 class="text-green-900 font-bold">Call Us</h4>
-                  </div>
-                  <p class="text-green-600 text-sm">(555) 123-4567</p>
-                </div>
-                 <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-2xl border-2 border-green-100">
-                  <div class="flex items-center gap-2 mb-2">
-                    <Mail class="w-5 h-5 text-green-600" />
-                    <h4 class="text-green-900 font-bold">Email</h4>
-                  </div>
-                  <p class="text-green-600 text-sm">hello@matcha.cafe</p>
-                </div>
-              </div>
-            </div>
-            <div class="space-y-6">
-              <div class="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-green-100">
-                 <img 
-                  src="https://images.unsplash.com/photo-1555932450-31a8aec2adf1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGJyZWFkJTIwYmFrZXJ5fGVufDF8fHx8MTc2NDc1NTk0M3ww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                  alt="Fresh Bread"
-                  class="w-full h-[250px] object-cover"
-                />
-              </div>
-              <div class="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-green-100">
-                 <img 
-                  src="https://images.unsplash.com/photo-1741092966238-4302f0d98576?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhcnRpc2FuJTIwcGFzdHJpZXN8ZW58MXx8fHwxNzY0ODU0MDA0fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                  alt="Artisan Pastries"
-                  class="w-full h-[250px] object-cover"
-                />
-              </div>
-            </div>
-          </div>
+      <!-- CTA Modern Section -->
+      <section class="bg-bakery-900 py-24 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10">
+            <img src="https://images.unsplash.com/photo-1555932450-31a8aec2adf1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGJyZWFkJTIwYmFrZXJ5fGVufDF8fHx8MTc2NDc1NTk0M3ww&ixlib=rb-4.1.0&q=80&w=1080" class="w-full h-full object-cover">
         </div>
-      </section>
-
-      <!-- CTA Section -->
-      <section class="bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 py-20">
-        <div class="container mx-auto px-6 text-center">
+        <div class="container mx-auto px-6 text-center relative z-10 space-y-10">
           <div class="max-w-3xl mx-auto space-y-6">
-            <h2 class="text-4xl lg:text-5xl text-white font-bold">
-              Ready to Taste the Difference?
+            <h2 class="text-5xl lg:text-7xl text-white font-black tracking-tight leading-tight">
+              Ready to Taste <br/>
+              <span class="text-bakery-400">Handcrafted Excellence?</span>
             </h2>
-            <p class="text-xl text-green-100">
-              Visit us today or order online for pickup. Your taste buds will thank you!
+            <p class="text-xl text-bakery-200/80 font-medium tracking-tight">
+              Visit us today or order online for premium pickup. Your journey to matcha heaven starts here.
             </p>
-            <div class="pt-4">
+          </div>
+          <div class="pt-4 flex flex-col sm:flex-row items-center justify-center gap-6">
               <button 
                 @click="onGetStarted"
-                 class="inline-flex items-center justify-center rounded-md text-sm font-medium h-12 px-8 bg-white text-green-700 hover:bg-green-50 shadow-2xl hover:shadow-3xl transition-all text-lg"
+                 class="h-16 px-12 rounded-2xl bg-white text-bakery-900 font-black text-xl hover:bg-bakery-50 shadow-2xl transition-all active:scale-95 flex items-center gap-3"
               >
                 Order Online Now
-                <ShoppingCart class="w-5 h-5 ml-2" />
+                <ArrowRight class="w-6 h-6" />
               </button>
-            </div>
-            <p class="text-green-100 text-sm">
-              Open Daily 6 AM - 8 PM • Downtown District • Free Parking Available
-            </p>
+              <div class="flex items-center gap-10 text-white/60 font-bold uppercase tracking-widest text-xs">
+                  <div class="flex items-center gap-2">
+                       <Clock class="w-4 h-4" /> 6 AM - 8 PM
+                  </div>
+                   <div class="flex items-center gap-2">
+                       <MapPin class="w-4 h-4" /> Downtown
+                  </div>
+              </div>
           </div>
         </div>
       </section>
 
       <!-- Footer -->
-       <footer class="bg-green-900 py-12">
+       <footer class="bg-accent-cream py-16 border-t border-bakery-100">
         <div class="container mx-auto px-6">
-          <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-            <router-link to="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
-              <div class="w-10 h-10 rounded-lg overflow-hidden border border-green-200 shadow-sm">
+          <div class="flex flex-col md:flex-row justify-between items-center gap-10">
+            <router-link to="/" class="flex items-center gap-4 group no-transition-all">
+              <div class="w-12 h-12 rounded-xl overflow-hidden border-2 border-bakery-200 shadow-md transform group-hover:rotate-6 transition-transform">
                 <img src="/matcha-cake-logo.png" alt="Matcha Bakery Logo" class="w-full h-full object-cover" />
               </div>
               <div>
-                <h3 class="text-white font-bold">Matcha Bakery</h3>
-                <p class="text-sm text-green-300">Fresh Daily Since 2020</p>
+                <h3 class="text-bakery-900 font-black text-xl tracking-tight">The Artisan Bakery</h3>
+                <p class="text-xs text-bakery-500 font-bold uppercase tracking-widest">Est. 2020</p>
               </div>
             </router-link>
-            <div class="text-green-300 text-sm">
-              © 2025 Matcha Bakery. All rights reserved.
+            <div class="text-bakery-400 text-sm font-bold tracking-widest uppercase">
+              © 2025 Matcha Bakery. Crafted with passion.
             </div>
           </div>
         </div>
       </footer>
+
     </div>
 </template>
