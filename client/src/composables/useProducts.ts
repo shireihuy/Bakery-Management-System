@@ -24,25 +24,89 @@ export function useProducts() {
             const response = await fetch(`${API_URL}/products`);
             if (!response.ok) throw new Error('Failed to fetch products');
             const data = await response.json();
-            products.value = data;
+
+            // Map image path to full URL if it's a relative path from the server
+            const productsWithFullUrls = data.map((p: any) => ({
+                ...p,
+                image: p.image?.startsWith('/') ? `${API_URL.replace('/api', '')}${p.image}` : p.image
+            }));
+
+            products.value = productsWithFullUrls;
         } catch (err) {
             console.error('Error fetching products:', err);
         }
     };
 
-    const addProduct = (product: Product) => {
-        products.value.push(product);
+    const getAuthHeader = (): Record<string, string> => {
+        const token = localStorage.getItem('token');
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
     };
 
-    const updateProduct = (id: string, updatedProduct: Product) => {
-        const index = products.value.findIndex(p => p.id === id);
-        if (index !== -1) {
-            products.value[index] = updatedProduct;
+    const addProduct = async (productData: any) => {
+        try {
+            const formData = new FormData();
+            Object.keys(productData).forEach(key => {
+                const value = productData[key];
+                if (key === 'image' && value instanceof File) {
+                    formData.append('image', value);
+                } else if (value !== undefined && value !== null) {
+                    formData.append(key, value.toString());
+                }
+            });
+
+            const response = await fetch(`${API_URL}/products`, {
+                method: 'POST',
+                headers: getAuthHeader(),
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Failed to add product');
+            await fetchProducts();
+        } catch (err) {
+            console.error('Error adding product:', err);
+            throw err;
         }
     };
 
-    const deleteProduct = (id: string) => {
-        products.value = products.value.filter(p => p.id !== id);
+    const updateProduct = async (id: string, productData: any) => {
+        try {
+            const formData = new FormData();
+            Object.keys(productData).forEach(key => {
+                const value = productData[key];
+                if (key === 'image' && value instanceof File) {
+                    formData.append('image', value);
+                } else if (value !== undefined && value !== null) {
+                    formData.append(key, value.toString());
+                }
+            });
+
+            const response = await fetch(`${API_URL}/products/${id}`, {
+                method: 'PUT',
+                headers: getAuthHeader(),
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Failed to update product');
+            await fetchProducts();
+        } catch (err) {
+            console.error('Error updating product:', err);
+            throw err;
+        }
+    };
+
+    const deleteProduct = async (id: string) => {
+        try {
+            const response = await fetch(`${API_URL}/products/${id}`, {
+                method: 'DELETE',
+                headers: getAuthHeader()
+            });
+
+            if (!response.ok) throw new Error('Failed to delete product');
+            await fetchProducts();
+        } catch (err) {
+            console.error('Error deleting product:', err);
+            throw err;
+        }
     };
 
     return {

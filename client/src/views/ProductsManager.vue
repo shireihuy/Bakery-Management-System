@@ -36,6 +36,17 @@ const formData = ref({
     rating: ''
 });
 
+const selectedFile = ref<File | null>(null);
+const imagePreview = ref('');
+
+const onFileChange = (e: Event) => {
+    const target = e.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
+        selectedFile.value = target.files[0];
+        imagePreview.value = URL.createObjectURL(target.files[0]);
+    }
+};
+
 const categories = ['Bread', 'Pastries', 'Cookies', 'Muffins', 'Pies', 'Cakes', 'Beverages'];
 const units = ['pcs', 'loaf', 'whole', 'dozen', 'cup'];
 
@@ -54,6 +65,8 @@ const resetForm = () => {
         rating: '' 
     };
     editingProduct.value = null;
+    selectedFile.value = null;
+    imagePreview.value = '';
 };
 
 const handleEdit = (product: Product) => {
@@ -71,6 +84,7 @@ const handleEdit = (product: Product) => {
         allergens: product.allergens?.join(', ') || '',
         rating: product.rating?.toString() || ''
     };
+    imagePreview.value = product.image;
     isDialogOpen.value = true;
 };
 
@@ -80,30 +94,33 @@ const handleDelete = (id: string) => {
     }
 };
 
-const handleSubmit = () => {
-    const productData: Product = {
-        id: editingProduct.value ? editingProduct.value.id : Date.now().toString(),
+const handleSubmit = async () => {
+    const productData = {
         name: formData.value.name,
         category: formData.value.category,
-        price: parseFloat(formData.value.price),
-        cost: parseFloat(formData.value.cost),
-        stock: parseInt(formData.value.stock),
+        price: formData.value.price,
+        cost: formData.value.cost,
+        stock: formData.value.stock,
         unit: formData.value.unit,
-        image: formData.value.image,
         description: formData.value.description,
-        ingredients: formData.value.ingredients.split(',').map(i => i.trim()).filter(i => i),
-        allergens: formData.value.allergens.split(',').map(a => a.trim()).filter(a => a),
-        rating: formData.value.rating ? parseFloat(formData.value.rating) : undefined
+        // Send file if selected, otherwise send existing image URL string
+        image: selectedFile.value || formData.value.image,
+        ingredients: formData.value.ingredients,
+        allergens: formData.value.allergens,
+        rating: formData.value.rating
     };
 
-    if (editingProduct.value) {
-        updateProduct(editingProduct.value.id, productData);
-    } else {
-        addProduct(productData);
+    try {
+        if (editingProduct.value) {
+            await updateProduct(editingProduct.value.id, productData);
+        } else {
+            await addProduct(productData);
+        }
+        isDialogOpen.value = false;
+        resetForm();
+    } catch (err) {
+        alert('Error saving product');
     }
-    
-    isDialogOpen.value = false;
-    resetForm();
 };
 
 const filteredProducts = computed(() => {
@@ -295,13 +312,34 @@ const filteredProducts = computed(() => {
                     </div>
                   </div>
                   <div class="space-y-2">
-                    <label for="image" class="text-sm font-medium text-gray-700">Image URL</label>
-                    <input
-                      id="image"
-                      v-model="formData.image"
-                      required
-                      class="flex h-10 w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
-                    />
+                    <label for="image" class="text-sm font-medium text-gray-700">Product Image</label>
+                    <div class="flex flex-col gap-3">
+                        <div v-if="imagePreview" class="relative w-full h-40 rounded-lg overflow-hidden border border-gray-200">
+                            <img :src="imagePreview" class="w-full h-full object-cover" />
+                            <button 
+                                @click.prevent="() => { selectedFile = null; imagePreview = ''; formData.image = ''; }"
+                                class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 shadow-md"
+                            >
+                                <X class="w-4 h-4" />
+                            </button>
+                        </div>
+                        <div v-else class="flex items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                            <label class="flex flex-col items-center cursor-pointer">
+                                <Plus class="w-8 h-8 text-gray-400" />
+                                <span class="mt-2 text-sm text-gray-500">Upload product image</span>
+                                <input type="file" class="hidden" accept="image/*" @change="onFileChange" />
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500">Or use URL:</span>
+                            <input
+                              id="image"
+                              v-model="formData.image"
+                              placeholder="https://..."
+                              class="flex-1 h-8 rounded-md border border-gray-200 bg-background px-3 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
+                            />
+                        </div>
+                    </div>
                   </div>
                    <div class="space-y-2">
                     <label for="description" class="text-sm font-medium text-gray-700">Description</label>
