@@ -16,7 +16,7 @@
   --color-accent-gold: #DAA520;
   --color-accent-cream: #FDFBF7;
 
-  --font-sans: "Outfit", sans-serif;
+  --font-sans: var(--current-font, "Outfit", sans-serif);
 
   --animate-float: float 3s ease-in-out infinite;
 
@@ -33,10 +33,31 @@
   }
 }
 
-
 @layer base {
+  :root {
+    --current-font: "Outfit", sans-serif;
+    --line-height-factor: 1.5;
+  }
+
+  body.lang-en {
+    --current-font: "Outfit", sans-serif;
+    --line-height-factor: 1.5;
+  }
+
+  body.lang-jp {
+    --current-font: "Noto Sans JP", sans-serif;
+    --line-height-factor: 1.8;
+  }
+
+  body.lang-vn {
+    --current-font: "Be Vietnam Pro", sans-serif;
+    --line-height-factor: 1.6;
+  }
+
   body {
     @apply bg-accent-cream text-bakery-900;
+    font-family: var(--current-font);
+    line-height: var(--line-height-factor);
   }
 }
 

@@ -3,9 +3,11 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Loader2, ArrowLeft } from 'lucide-vue-next';
 import { useAuth } from '../composables/useAuth';
+import { useI18n } from '../composables/useI18n';
 
 const router = useRouter();
 const { login } = useAuth();
+const { t } = useI18n();
 
 const email = ref('');
 const password = ref('');
@@ -50,7 +52,7 @@ const handleSubmit = async () => {
         class="absolute top-8 left-8 z-20 text-bakery-900 font-bold flex items-center gap-2 px-6 py-3 rounded-2xl glass-card transition-all active:scale-95"
       >
         <ArrowLeft class="w-4 h-4" />
-        <span class="text-sm uppercase tracking-widest">Back to Home</span>
+        <span class="text-sm uppercase tracking-widest">{{ t('common.back') }}</span>
       </button>
       
       <div class="w-full max-w-md relative z-10 glass-card rounded-[3rem] p-4 animate-in zoom-in duration-500">
@@ -65,7 +67,7 @@ const handleSubmit = async () => {
                 </div>
             </div>
             <div>
-                <h3 class="font-black text-3xl text-bakery-900 tracking-tight">Welcome Back</h3>
+                <h3 class="font-black text-3xl text-bakery-900 tracking-tight">{{ t('auth.welcomeBack') }}</h3>
                 <p class="text-bakery-500 font-medium">Please sign in to your dashboard</p>
             </div>
           </div>
@@ -76,7 +78,7 @@ const handleSubmit = async () => {
             </div>
 
             <div class="space-y-2">
-              <label for="email" class="text-xs font-black text-bakery-400 uppercase tracking-widest ml-1">Email Address</label>
+              <label for="email" class="text-xs font-black text-bakery-400 uppercase tracking-widest ml-1">{{ t('auth.email') }}</label>
               <input
                 id="email"
                 type="email"
@@ -89,7 +91,7 @@ const handleSubmit = async () => {
             </div>
 
             <div class="space-y-2">
-              <label for="password" class="text-xs font-black text-bakery-400 uppercase tracking-widest ml-1">Password</label>
+              <label for="password" class="text-xs font-black text-bakery-400 uppercase tracking-widest ml-1">{{ t('auth.password') }}</label>
               <input
                 id="password"
                 type="password"
@@ -107,17 +109,17 @@ const handleSubmit = async () => {
               :disabled="isLoading"
             >
               <Loader2 v-if="isLoading" class="w-5 h-5 animate-spin" />
-              <span>{{ isLoading ? 'Entering...' : 'Sign In' }}</span>
+              <span>{{ isLoading ? t('common.loading') : t('auth.signIn') }}</span>
             </button>
 
             <div class="text-center pt-2">
-              <span class="text-bakery-500 font-medium tracking-tight">New to the family? </span>
+              <span class="text-bakery-500 font-medium tracking-tight">{{ t('auth.noAccount') }} </span>
               <button
                 type="button"
                 @click="onToggleMode"
                 class="text-bakery-900 hover:text-bakery-600 font-black tracking-tight"
               >
-                Create Account
+                {{ t('auth.signUp') }}
               </button>
             </div>
           </form>

@@ -19,11 +19,13 @@ import {
 import { useProducts, type Product } from '../composables/useProducts';
 import { useOrders, type Order } from '../composables/useOrders';
 import { useAuth } from '../composables/useAuth';
+import { useI18n } from '../composables/useI18n';
 
 // State
 const { products, fetchProducts } = useProducts();
 const { addOrder, orders, fetchMyOrders, fetchOrders } = useOrders();
 const { user } = useAuth();
+const { t } = useI18n();
 const router = useRouter();
 
 import { onMounted } from 'vue';
@@ -194,9 +196,9 @@ const getStatusColor = (status: string) => {
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
         <div class="min-w-0 flex-1">
             <h1 class="text-3xl sm:text-4xl font-bold text-bakery-900 tracking-tight">
-                Our <span class="text-bakery-600">Selection</span>
+                {{ t('shop.selection').split(' ')[0] }} <span class="text-bakery-600">{{ t('shop.selection').split(' ')[1] }}</span>
             </h1>
-            <p class="text-bakery-500 mt-2 font-medium">Handcrafted treats, baked with precision and passion.</p>
+            <p class="text-bakery-500 mt-2 font-medium">{{ t('shop.slogan') }}</p>
         </div>
 
         <button
@@ -207,7 +209,7 @@ const getStatusColor = (status: string) => {
                 <ShoppingCart class="w-5 h-5 text-bakery-600" />
             </div>
             <div class="text-left">
-                <p class="text-xs font-bold text-bakery-400 uppercase tracking-widest leading-none mb-1">Your Basket</p>
+                <p class="text-xs font-bold text-bakery-400 uppercase tracking-widest leading-none mb-1">{{ t('shop.yourBasket') }}</p>
                 <p class="text-sm font-bold text-bakery-900">${{ totalPrice.toFixed(2) }}</p>
             </div>
             <span v-if="totalItems > 0" class="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-bakery-600 text-[10px] font-bold text-white shadow-lg animate-in zoom-in">
@@ -228,7 +230,7 @@ const getStatusColor = (status: string) => {
             class="flex-1 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200"
         >
             <Coffee class="w-4 h-4 mr-2" />
-            Menu
+            {{ t('shop.menu') }}
         </button>
         <button
             @click="activeTab = 'orders'"
@@ -240,7 +242,7 @@ const getStatusColor = (status: string) => {
             class="flex-1 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200"
         >
             <History class="w-4 h-4 mr-2" />
-            {{ isCashier ? 'Shop Orders' : 'My Orders' }}
+            {{ isCashier ? t('shop.shopOrders') : t('shop.myOrders') }}
             <span class="ml-1 opacity-60">({{ customerOrders.length }})</span>
         </button>
     </div>
@@ -270,7 +272,7 @@ const getStatusColor = (status: string) => {
                             v-model="selectedCategory"
                             class="h-12 px-4 rounded-2xl border border-bakery-100 focus:outline-none focus:ring-2 focus:ring-bakery-300 bg-white/50 text-sm font-semibold"
                         >
-                            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat === 'All' ? t('shop.categories') : cat }}</option>
                         </select>
                     </div>
 
@@ -281,7 +283,7 @@ const getStatusColor = (status: string) => {
                             v-model="sortBy"
                             class="h-12 px-4 rounded-2xl border border-bakery-100 focus:outline-none focus:ring-2 focus:ring-bakery-300 bg-white/50 text-sm font-semibold"
                         >
-                            <option value="name">Name: A to Z</option>
+                            <option value="name">Name</option>
                             <option value="price-low">Price: Low to High</option>
                             <option value="price-high">Price: High to Low</option>
                             <option value="rating">Top Rated</option>
@@ -344,7 +346,7 @@ const getStatusColor = (status: string) => {
                                     :disabled="product.stock === 0"
                                     class="h-12 px-6 rounded-2xl bg-bakery-600 text-white text-sm font-bold hover:bg-bakery-700 transition-all disabled:opacity-30 flex items-center shadow-lg shadow-bakery-100 active:scale-95"
                                 >
-                                    <Plus class="w-5 h-5 mr-2" /> Add
+                                    <Plus class="w-5 h-5 mr-2" /> {{ t('shop.addToCart').split(' ')[0] }}
                                 </button>
                              </div>
                           </div>
@@ -362,10 +364,10 @@ const getStatusColor = (status: string) => {
                  <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
                     <History class="w-8 h-8 text-green-600" />
                   </div>
-                <h3 class="text-lg font-medium text-green-900">No orders yet</h3>
-                <p class="text-green-600">Start browsing our menu to place your first order!</p>
+                <h3 class="text-lg font-medium text-green-900">{{ t('shop.noOrders') }}</h3>
+                <p class="text-green-600">{{ t('shop.startBrowsing') }}</p>
                 <button @click="activeTab = 'menu'" class="text-sm font-medium text-green-700 hover:text-green-900 hover:underline">
-                    Browse Menu
+                    {{ t('shop.menu') }}
                 </button>
             </div>
         </div>
@@ -384,21 +386,21 @@ const getStatusColor = (status: string) => {
                      </span>
                  </div>
                  <div class="border-t border-b border-green-100 py-3 mb-3 space-y-2">
-                     <p class="text-xs font-medium text-green-600 mb-2">Items</p>
+                     <p class="text-xs font-medium text-green-600 mb-2">{{ t('shop.items') }}</p>
                     <div v-for="(item, idx) in order.items" :key="idx" class="flex justify-between text-xs">
                         <span class="text-gray-700">{{ item.productName }} <span class="text-green-600 ml-1">x{{ item.quantity }}</span></span>
                         <span class="text-gray-900 font-medium">${{ (item.price * item.quantity).toFixed(2) }}</span>
                     </div>
                  </div>
                  <div class="flex justify-between items-center mb-4">
-                    <span class="text-sm font-medium text-gray-900">Total</span>
+                    <span class="text-sm font-medium text-gray-900">{{ t('shop.total') }}</span>
                     <span class="text-lg font-bold text-green-700">${{ order.total.toFixed(2) }}</span>
                  </div>
                  <button 
                     @click="viewOrderDetails(order)"
                     class="w-full h-8 rounded-md border border-green-200 text-green-700 text-xs hover:bg-green-50 flex items-center justify-center transition-colors"
                 >
-                    <Eye class="w-3 h-3 mr-1" /> View Details
+                    <Eye class="w-3 h-3 mr-1" /> {{ t('shop.viewDetails') }}
                  </button>
             </div>
         </div>
@@ -422,8 +424,8 @@ const getStatusColor = (status: string) => {
                 <div class="h-full flex flex-col bg-white shadow-2xl border-l border-bakery-100">
                     <div class="p-8 border-b border-bakery-50 flex justify-between items-center bg-bakery-50/50">
                         <div>
-                            <h3 class="font-black text-2xl text-bakery-900">Your Basket</h3>
-                            <p class="text-bakery-500 text-sm font-medium">{{ totalItems }} items selected</p>
+                            <h3 class="font-black text-2xl text-bakery-900">{{ t('shop.yourBasket') }}</h3>
+                            <p class="text-bakery-500 text-sm font-medium">{{ totalItems }} {{ t('shop.items').toLowerCase() }} selected</p>
                         </div>
                         <button 
                             @click="isCartOpen = false" 
@@ -439,11 +441,11 @@ const getStatusColor = (status: string) => {
                                 <ShoppingCart class="w-10 h-10 text-bakery-200" />
                             </div>
                             <div>
-                                <h4 class="text-xl font-bold text-bakery-900">Your basket is empty</h4>
+                                <h4 class="text-xl font-bold text-bakery-900">{{ t('shop.emptyCart') }}</h4>
                                 <p class="text-bakery-500 mt-2">Looks like you haven't added any treats yet.</p>
                             </div>
                             <button @click="isCartOpen = false" class="px-8 py-3 rounded-xl bg-bakery-600 text-white font-bold hover:bg-bakery-700 shadow-lg transition-all">
-                                Start Shopping
+                                {{ t('shop.startBrowsing').split(' ')[0] }}
                             </button>
                         </div>
                         <div v-else class="space-y-6">
@@ -474,7 +476,7 @@ const getStatusColor = (status: string) => {
                     <div v-if="cart.length > 0" class="p-8 border-t border-bakery-100 bg-white space-y-6">
                          <!-- Cashier specific input -->
                          <div v-if="isCashier" class="space-y-3">
-                              <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">Customer Information</label>
+                              <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">{{ t('shop.customerInfo') }}</label>
                               <input 
                                 v-model="orderCustomerName" 
                                 type="text" 
@@ -489,7 +491,7 @@ const getStatusColor = (status: string) => {
                                   <span>${{ totalPrice.toFixed(2) }}</span>
                              </div>
                              <div class="flex justify-between items-center text-2xl font-black text-bakery-900">
-                                  <span>Total</span>
+                                  <span>{{ t('shop.total') }}</span>
                                   <span>${{ totalPrice.toFixed(2) }}</span>
                              </div>
                          </div>
@@ -498,7 +500,7 @@ const getStatusColor = (status: string) => {
                             @click="handleCheckout"
                             class="w-full h-14 rounded-2xl bg-bakery-600 text-white font-bold text-lg hover:bg-bakery-700 shadow-2xl shadow-bakery-100 transition-all active:scale-95 flex items-center justify-center gap-3"
                         >
-                            Complete Order
+                            {{ t('shop.checkout') }}
                             <ArrowRight class="w-5 h-5" />
                         </button>
                     </div>
@@ -713,21 +715,21 @@ const getStatusColor = (status: string) => {
                     <Info class="w-10 h-10 text-green-600" />
                 </div>
                 <div class="space-y-2">
-                    <h3 class="text-2xl font-bold text-green-900">Yêu cầu đăng nhập</h3>
-                    <p class="text-green-600">Bạn cần đăng nhập để thực hiện đặt hàng. Tham gia với chúng tôi ngay để nhận được nhiều ưu đãi!</p>
+                    <h3 class="text-2xl font-bold text-green-900">{{ t('shop.loginRequired') }}</h3>
+                    <p class="text-green-600">{{ t('shop.loginPrompt') }}</p>
                 </div>
                 <div class="flex flex-col gap-3">
                     <button 
                         @click="router.push('/login')"
                         class="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95"
                     >
-                        Đăng nhập ngay
+                        {{ t('shop.loginNow') }}
                     </button>
                     <button 
                         @click="showLoginPrompt = false"
                         class="w-full py-3 px-4 bg-gray-50 hover:bg-gray-100 text-gray-600 font-medium rounded-xl transition-colors"
                     >
-                        Để sau
+                        {{ t('shop.maybeLater') }}
                     </button>
                 </div>
             </div>

@@ -16,10 +16,12 @@ import {
 
 import { useAuth } from '../../composables/useAuth';
 import { useNotifications } from '../../composables/useNotifications';
+import { useI18n } from '../../composables/useI18n';
 
 const router = useRouter();
 const route = useRoute();
 const { user, logout: authLogout } = useAuth();
+const { t } = useI18n();
 const notificationStore = useNotifications();
 const { unreadCount, markAsRead, markAllAsRead } = notificationStore;
 const notifications = computed(() => notificationStore.notifications.value);
@@ -35,27 +37,27 @@ const navigation = computed(() => {
   const role = user.value?.role?.toLowerCase() || '';
   
   if (['admin', 'manager', 'cashier', 'baker'].includes(role)) {
-    tabs.push({ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard });
+    tabs.push({ name: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard });
   }
   if (['admin', 'manager', 'cashier'].includes(role)) {
-    tabs.push({ name: 'Products', href: '/products', icon: Package });
+    tabs.push({ name: t('nav.products'), href: '/products', icon: Package });
   }
   if (['admin', 'manager', 'cashier', 'baker'].includes(role)) {
-    tabs.push({ name: 'Orders', href: '/orders', icon: ShoppingCart });
+    tabs.push({ name: t('nav.orders'), href: '/orders', icon: ShoppingCart });
   }
   if (['admin', 'manager', 'baker'].includes(role)) {
-    tabs.push({ name: 'Inventory', href: '/inventory', icon: Warehouse });
+    tabs.push({ name: t('nav.inventory'), href: '/inventory', icon: Warehouse });
   }
   if (['admin', 'manager'].includes(role)) {
-    tabs.push({ name: 'Reports', href: '/reports', icon: BarChart3 });
+    tabs.push({ name: t('nav.reports'), href: '/reports', icon: BarChart3 });
   }
   if (role === 'admin') {
-    tabs.push({ name: 'Users', href: '/users', icon: Users });
+    tabs.push({ name: t('nav.users'), href: '/users', icon: Users });
   }
   
   // Static tabs for everyone (including guests)
   if (!role || role === 'customer' || role === 'cashier') {
-    tabs.push({ name: 'Shop', href: '/customer', icon: ShoppingCart });
+    tabs.push({ name: t('nav.shop'), href: '/customer', icon: ShoppingCart });
   }
   
   return tabs;
@@ -117,17 +119,17 @@ const getNotifIconColor = (type: string) => {
                   class="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-md bg-white rounded-xl shadow-xl border border-green-100 z-50 overflow-hidden"
                 >
                   <div class="p-3 sm:p-4 border-b border-green-50 flex justify-between items-center bg-green-50/30">
-                    <h3 class="text-sm sm:text-base font-bold text-green-900">Notifications</h3>
+                    <h3 class="text-sm sm:text-base font-bold text-green-900">{{ t('nav.notifications') }}</h3>
                     <button 
                       @click="markAllAsRead" 
                       class="text-xs text-green-600 hover:text-green-800 font-medium"
                     >
-                      Mark all read
+                      {{ t('nav.markAllRead') }}
                     </button>
                   </div>
                   <div class="max-h-96 overflow-y-auto">
                     <div v-if="notifications.length === 0" class="p-8 text-center text-gray-400">
-                      No notifications yet
+                      {{ t('nav.noNotifications') }}
                     </div>
                     <div 
                       v-for="notif in notifications" 
@@ -152,7 +154,7 @@ const getNotifIconColor = (type: string) => {
                   </div>
                   <div class="p-3 text-center bg-gray-50 font-medium">
                     <router-link to="/notifications" class="text-xs text-green-700 hover:underline" @click="isNotificationOpen = false">
-                      View all notifications
+                      {{ t('nav.viewAll') }}
                     </router-link>
                   </div>
                 </div>
@@ -173,7 +175,7 @@ const getNotifIconColor = (type: string) => {
                   title="Settings"
                 >
                   <SettingsIcon class="w-4 h-4" />
-                  <span class="hidden lg:inline ml-2">Settings</span>
+                  <span class="hidden lg:inline ml-2">{{ t('nav.settings') }}</span>
                 </button>
                 <button 
                   @click="logout"
@@ -181,7 +183,7 @@ const getNotifIconColor = (type: string) => {
                   title="Logout"
                 >
                   <LogOut class="w-4 h-4" />
-                  <span class="hidden lg:inline ml-2">Logout</span>
+                  <span class="hidden lg:inline ml-2">{{ t('nav.logout') }}</span>
                 </button>
               </template>
               <template v-else>
@@ -190,7 +192,7 @@ const getNotifIconColor = (type: string) => {
                   class="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 sm:h-9 px-3 sm:px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition-all"
                 >
                   <User class="w-4 h-4" />
-                  <span class="hidden sm:inline ml-2">Login</span>
+                  <span class="hidden sm:inline ml-2">{{ t('nav.login') }}</span>
                 </button>
               </template>
             </div>

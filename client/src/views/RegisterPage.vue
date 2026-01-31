@@ -3,8 +3,10 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { Loader2, ArrowLeft, Phone, MapPin } from 'lucide-vue-next';
 import { useAuth } from '../composables/useAuth';
+import { useI18n } from '../composables/useI18n';
 
 const router = useRouter();
+const { t } = useI18n();
 
 const name = ref('');
 const email = ref('');
@@ -29,12 +31,12 @@ const handleSubmit = async () => {
     error.value = '';
 
     if (password.value !== confirmPassword.value) {
-      error.value = 'Passwords do not match';
+      error.value = t('auth.passMismatch');
       return;
     }
 
     if (password.value.length < 6) {
-      error.value = 'Password must be at least 6 characters';
+      error.value = t('auth.passTooShort');
       return;
     }
 
@@ -75,7 +77,7 @@ const handleSubmit = async () => {
         class="absolute top-8 left-8 z-20 text-bakery-900 font-bold flex items-center gap-2 px-6 py-3 rounded-2xl glass-card transition-all active:scale-95"
       >
         <ArrowLeft class="w-4 h-4" />
-        <span class="text-sm uppercase tracking-widest">Back to Home</span>
+        <span class="text-sm uppercase tracking-widest">{{ t('common.back') }}</span>
       </button>
       
       <div class="w-full max-w-lg relative z-10 glass-card rounded-[3rem] p-4 animate-in zoom-in duration-500 my-12">
@@ -85,8 +87,8 @@ const handleSubmit = async () => {
               <img src="/matcha-cake-logo.png" alt="Matcha Bakery Logo" class="w-full h-full object-cover" />
             </div>
             <div>
-                <h3 class="font-black text-3xl text-bakery-900 tracking-tight">Join the Family</h3>
-                <p class="text-bakery-500 font-medium tracking-tight">Register for exclusive access and rewards</p>
+                <h3 class="font-black text-3xl text-bakery-900 tracking-tight">{{ t('auth.joinTitle') }}</h3>
+                <p class="text-bakery-500 font-medium tracking-tight">{{ t('auth.joinSubtitle') }}</p>
             </div>
           </div>
 
@@ -99,7 +101,7 @@ const handleSubmit = async () => {
                 <!-- Left Column -->
                 <div class="space-y-6">
                     <div class="space-y-2">
-                      <label for="name" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">Full Name</label>
+                      <label for="name" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">{{ t('auth.fullName') }}</label>
                       <input
                         id="name"
                         type="text"
@@ -112,7 +114,7 @@ const handleSubmit = async () => {
                     </div>
 
                     <div class="space-y-2">
-                      <label for="email" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">Email Address</label>
+                      <label for="email" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">{{ t('auth.email') }}</label>
                       <input
                         id="email"
                         type="email"
@@ -125,7 +127,7 @@ const handleSubmit = async () => {
                     </div>
 
                     <div class="space-y-2">
-                      <label for="phone" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">Phone Number</label>
+                      <label for="phone" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">{{ t('auth.phone') }}</label>
                       <div class="relative group">
                         <Phone class="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-bakery-300 group-focus-within:text-bakery-500 transition-colors" />
                         <input
@@ -143,7 +145,7 @@ const handleSubmit = async () => {
                 <!-- Right Column -->
                 <div class="space-y-6">
                     <div class="space-y-2">
-                      <label for="address" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">Delivery Address</label>
+                      <label for="address" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">{{ t('auth.address') }}</label>
                       <div class="relative group">
                         <MapPin class="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-bakery-300 group-focus-within:text-bakery-500 transition-colors" />
                         <input
@@ -158,7 +160,7 @@ const handleSubmit = async () => {
                     </div>
 
                     <div class="space-y-2">
-                      <label for="password" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">Create Password</label>
+                      <label for="password" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">{{ t('auth.password') }}</label>
                       <input
                         id="password"
                         type="password"
@@ -171,7 +173,7 @@ const handleSubmit = async () => {
                     </div>
 
                     <div class="space-y-2">
-                      <label for="confirmPassword" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">Confirm Password</label>
+                      <label for="confirmPassword" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">{{ t('auth.confirmPassword') }}</label>
                       <input
                         id="confirmPassword"
                         type="password"
@@ -191,17 +193,17 @@ const handleSubmit = async () => {
               :disabled="isLoading"
             >
               <Loader2 v-if="isLoading" class="w-5 h-5 animate-spin" />
-              <span>{{ isLoading ? 'Creating account...' : 'Create Account' }}</span>
+              <span>{{ isLoading ? t('common.loading') : t('auth.createAccount') }}</span>
             </button>
 
             <div class="text-center pt-2">
-              <span class="text-bakery-500 font-medium tracking-tight">Already have an account? </span>
+              <span class="text-bakery-500 font-medium tracking-tight">{{ t('auth.haveAccount') }} </span>
               <button
                 type="button"
                 @click="onToggleMode"
                 class="text-bakery-900 hover:text-bakery-600 font-black tracking-tight"
               >
-                Sign In
+                {{ t('auth.signIn') }}
               </button>
             </div>
           </form>
