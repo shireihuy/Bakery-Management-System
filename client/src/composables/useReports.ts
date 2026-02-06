@@ -20,7 +20,7 @@ const categoryDistribution = ref<{ name: string; value: number }[]>([]);
 export function useReports() {
     const fetchReports = async () => {
         try {
-            const token = localStorage.getItem('bakery-token');
+            const token = localStorage.getItem('token');
             const response = await fetch('http://localhost:3000/api/reports/data', {
                 headers: {
                     'Authorization': `Bearer ${token}`
