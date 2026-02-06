@@ -245,7 +245,7 @@ const signatureProducts = [
                         <div 
                             v-for="(product, idx) in displayProducts" 
                             :key="`${product.id}-${idx}`" 
-                            class="flex-shrink-0 px-4"
+                            class="shrink-0 px-4"
                             :style="{ width: `${100 / slidesToShow}%` }"
                         >
                             <div class="bg-white rounded-[2.5rem] overflow-hidden border border-bakery-50 hover:border-bakery-200 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] h-full flex flex-col group/card">
@@ -322,7 +322,7 @@ const signatureProducts = [
             </div>
             <h1 class="text-6xl lg:text-8xl text-bakery-900 leading-[0.95] font-black tracking-tighter">
               {{ t('landing.heroTitle').split(',')[0] }} <br/>
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-bakery-600 to-bakery-400">
+              <span class="text-transparent bg-clip-text bg-linear-to-r from-bakery-600 to-bakery-400">
                 {{ t('landing.heroTitle').split(',')[1] || 'Crafted Daily' }}
               </span>
             </h1>
@@ -347,7 +347,7 @@ const signatureProducts = [
           </div>
           <div class="relative">
             <div class="absolute -inset-10 bg-bakery-200/30 rounded-[5rem] blur-3xl animate-pulse"></div>
-            <div class="relative rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border-[12px] border-white group">
+            <div class="relative rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border-12 border-white group">
               <img 
                 src="https://images.unsplash.com/photo-1592637970552-6c27432e7913?auto=format&fit=crop&q=80&w=1080"
                 alt="Matcha Bakery"
@@ -355,7 +355,7 @@ const signatureProducts = [
               />
               <div class="absolute bottom-10 left-10 right-10 glass-card p-8 rounded-[3rem] shadow-2xl">
                 <div class="flex items-center gap-6">
-                  <div class="w-16 h-16 bg-bakery-900 rounded-[2rem] flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                  <div class="w-16 h-16 bg-bakery-900 rounded-4xl flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-500">
                     <Star class="w-8 h-8 text-accent-gold fill-accent-gold" />
                   </div>
                   <div>
@@ -379,7 +379,7 @@ const signatureProducts = [
         <div class="container mx-auto px-6">
             <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-8">
                 <div v-for="(signatureProduct, index) in signatureProducts" :key="index" class="bg-bakery-50/30 p-10 rounded-[3rem] text-center hover:-translate-y-3 transition-all duration-700 group border border-transparent hover:border-bakery-100 hover:bg-white hover:shadow-2xl">
-                    <div :class="[`bg-gradient-to-br w-24 h-24 rounded-[2rem] flex items-center justify-center mb-8 mx-auto shadow-2xl transform group-hover:rotate-[15deg] transition-transform`, signatureProduct.color]">
+                    <div :class="[`bg-linear-to-br w-24 h-24 rounded-4xl flex items-center justify-center mb-8 mx-auto shadow-2xl transform group-hover:rotate-15 transition-transform`, signatureProduct.color]">
                         <Coffee class="w-12 h-12 text-white" />
                     </div>
                     <h3 class="text-bakery-900 font-black text-xl mb-3">{{ signatureProduct.name }}</h3>
@@ -411,7 +411,7 @@ const signatureProducts = [
                     :key="index"
                     class="p-10 rounded-[3.5rem] bg-white border border-bakery-50 hover:border-bakery-100 transition-all duration-500 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] group"
                 >
-                    <div class="w-16 h-16 rounded-[1.5rem] bg-bakery-50 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:bg-bakery-900 group-hover:text-white transition-all duration-500 text-bakery-900 shadow-sm">
+                    <div class="w-16 h-16 rounded-3xl bg-bakery-50 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:bg-bakery-900 group-hover:text-white transition-all duration-500 text-bakery-900 shadow-sm">
                         <component :is="feature.icon" class="w-8 h-8" />
                     </div>
                     <h3 class="text-bakery-900 font-black text-2xl mb-4 tracking-tight">{{ feature.title }}</h3>

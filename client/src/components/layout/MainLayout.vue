@@ -86,12 +86,12 @@ const getNotifIconColor = (type: string) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+  <div class="min-h-screen bg-linear-to-br from-green-50 via-emerald-50 to-teal-50">
       <header class="bg-white border-b border-green-200 shadow-sm sticky top-0 z-30">
         <div class="container mx-auto px-3 sm:px-6 py-3 sm:py-4">
           <div class="flex items-center justify-between gap-2">
-            <router-link to="/" class="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity min-w-0 flex-shrink">
-              <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden border border-green-200 shadow-sm flex-shrink-0">
+            <router-link to="/" class="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity min-w-0 shrink">
+              <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden border border-green-200 shadow-sm shrink-0">
                 <img src="/matcha-cake-logo.png" alt="Matcha Bakery Logo" class="w-full h-full object-cover" />
               </div>
               <div class="min-w-0">
@@ -99,7 +99,7 @@ const getNotifIconColor = (type: string) => {
                 <p class="text-xs text-green-600 hidden sm:block truncate">Manage your bakery operations</p>
               </div>
             </router-link>
-            <div class="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+            <div class="flex items-center gap-1 sm:gap-3 shrink-0">
               <!-- Notifications Popover (Hidden for guests) -->
               <div v-if="user" class="relative">
                 <button 
@@ -145,7 +145,7 @@ const getNotifIconColor = (type: string) => {
                         <div class="flex-1 min-w-0">
                           <div class="flex justify-between items-start mb-1 gap-2">
                             <span class="text-xs sm:text-sm font-bold text-gray-900 truncate">{{ notif.title }}</span>
-                            <span class="text-[10px] text-gray-400 flex-shrink-0">{{ formatTime(notif.timestamp) }}</span>
+                            <span class="text-[10px] text-gray-400 shrink-0">{{ formatTime(notif.timestamp) }}</span>
                           </div>
                           <p class="text-xs text-gray-600 leading-relaxed">{{ notif.message }}</p>
                         </div>
@@ -189,7 +189,7 @@ const getNotifIconColor = (type: string) => {
               <template v-else>
                 <button 
                   @click="router.push('/login')"
-                  class="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 sm:h-9 px-3 sm:px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition-all"
+                  class="inline-flex items-center justify-center rounded-md text-sm font-medium h-8 sm:h-9 px-3 sm:px-4 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-sm transition-all"
                 >
                   <User class="w-4 h-4" />
                   <span class="hidden sm:inline ml-2">{{ t('nav.login') }}</span>
@@ -212,7 +212,7 @@ const getNotifIconColor = (type: string) => {
                         class="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-1 sm:gap-2"
                         :class="[isActive(item.href) ? 'bg-white text-green-900 shadow-sm' : 'text-green-600 hover:text-green-800']"
                     >
-                        <component :is="item.icon" class="w-4 h-4 flex-shrink-0" />
+                        <component :is="item.icon" class="w-4 h-4 shrink-0" />
                         <span class="hidden sm:inline">{{ item.name }}</span>
                     </router-link>
                 </div>

@@ -310,11 +310,11 @@ const getStatusColor = (status: string) => {
             <div
                 v-for="product in filteredAndSortedProducts"
                 :key="product.id"
-                class="group flex flex-col bg-white rounded-[2.5rem] overflow-hidden border border-bakery-100 hover:border-bakery-300 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 animate-in fade-in zoom-in duration-700"
+                class="group flex flex-col bg-white rounded-[2.5rem] overflow-hidden border border-bakery-100 hover:border-bakery-300 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 animate-in fade-in zoom-in"
             >
                 <div class="relative h-64 overflow-hidden">
                     <img :src="product.image" :alt="product.name" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6">
+                    <div class="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6">
                         <p class="text-white text-sm font-medium line-clamp-2">{{ product.description }}</p>
                     </div>
                     <div class="absolute top-4 right-4 glass-card px-3 py-1.5 rounded-xl text-bakery-700 text-xs font-bold uppercase tracking-widest">
@@ -409,7 +409,7 @@ const getStatusColor = (status: string) => {
     <!-- Global Cart Side Drawer -->
     <div 
         v-if="isCartOpen" 
-        class="fixed inset-0 z-[100] overflow-hidden"
+        class="fixed inset-0 z-100 overflow-hidden"
     >
         <!-- Overlay -->
         <div 
@@ -450,7 +450,7 @@ const getStatusColor = (status: string) => {
                         </div>
                         <div v-else class="space-y-6">
                             <div v-for="item in cart" :key="item.id" class="flex gap-4 group">
-                                <div class="w-20 h-20 rounded-2xl overflow-hidden border border-bakery-100 flex-shrink-0">
+                                <div class="w-20 h-20 rounded-2xl overflow-hidden border border-bakery-100 shrink-0">
                                     <img :src="item.image" :alt="item.name" class="w-full h-full object-cover">
                                 </div>
                                 <div class="flex-1 flex flex-col justify-between py-1">
@@ -581,7 +581,7 @@ const getStatusColor = (status: string) => {
     <!-- Order Details Modal -->
     <div v-if="isOrderDetailsOpen && viewingOrder" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
-            <div class="p-6 border-b border-gray-100 bg-gradient-to-r from-green-50 to-emerald-50">
+            <div class="p-6 border-b border-gray-100 bg-linear-to-r from-green-50 to-emerald-50">
                 <div class="flex justify-between items-start">
                     <div>
                         <h2 class="text-2xl font-bold text-green-900">Order Details</h2>
@@ -675,7 +675,7 @@ const getStatusColor = (status: string) => {
                 <!-- Order Summary -->
                 <div class="space-y-3 pt-4 border-t border-gray-200">
                     <h3 class="font-semibold text-gray-900">Order Summary</h3>
-                    <div class="space-y-2 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                    <div class="space-y-2 p-4 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Subtotal</span>
                             <span class="font-medium text-gray-900">${{ viewingOrder.total.toFixed(2) }}</span>
@@ -708,7 +708,7 @@ const getStatusColor = (status: string) => {
     </div>
 
     <!-- Login Prompt Modal -->
-    <div v-if="showLoginPrompt" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div v-if="showLoginPrompt" class="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-300">
             <div class="p-8 text-center space-y-6">
                 <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
@@ -721,7 +721,7 @@ const getStatusColor = (status: string) => {
                 <div class="flex flex-col gap-3">
                     <button 
                         @click="router.push('/login')"
-                        class="w-full py-3 px-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95"
+                        class="w-full py-3 px-4 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95"
                     >
                         {{ t('shop.loginNow') }}
                     </button>

@@ -72,7 +72,7 @@ const handleUpdate = (path: string, event: Event) => {
 </script>
 
 <template>
-  <div class="fixed bottom-6 right-6 z-[100] flex flex-col items-end gap-4">
+  <div class="fixed bottom-6 right-6 z-100 flex flex-col items-end gap-4">
     <!-- Main Toggle Button -->
     <button 
       @click="isOpen = !isOpen"
@@ -145,7 +145,7 @@ const handleUpdate = (path: string, event: Event) => {
       leave-from-class="opacity-100 backdrop-blur-xl"
       leave-to-class="opacity-0 backdrop-blur-0"
     >
-      <div v-if="isEditorOpen" class="fixed inset-0 z-[110] bg-bakery-950/40 flex items-center justify-center p-6 backdrop-blur-sm">
+      <div v-if="isEditorOpen" class="fixed inset-0 z-110 bg-bakery-950/40 flex items-center justify-center p-6 backdrop-blur-sm">
         <div class="w-full max-w-4xl bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col h-[85vh]">
           <!-- Editor Header -->
           <div class="p-8 border-b border-bakery-100 flex items-center justify-between shrink-0">
