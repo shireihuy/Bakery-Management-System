@@ -1,4 +1,4 @@
-import { ref, readonly, computed } from 'vue';
+import { ref, readonly, computed, onMounted } from 'vue';
 
 export interface DailyRevenue {
     date: string;
@@ -13,47 +13,51 @@ export interface ProductPerformance {
     trend: 'up' | 'down' | 'stable';
 }
 
-const dailyHistory = ref<DailyRevenue[]>([
-    { date: 'Mon', revenue: 1250, orders: 45 },
-    { date: 'Tue', revenue: 980, orders: 38 },
-    { date: 'Wed', revenue: 1560, orders: 52 },
-    { date: 'Thu', revenue: 1100, orders: 41 },
-    { date: 'Fri', revenue: 2100, orders: 75 },
-    { date: 'Sat', revenue: 2850, orders: 98 },
-    { date: 'Sun', revenue: 2400, orders: 82 },
-]);
-
-const productPerformance = ref<ProductPerformance[]>([
-    { name: 'Matcha Mille Crepe', sales: 124, revenue: 1054, trend: 'up' },
-    { name: 'Matcha Latte', sales: 245, revenue: 1347.5, trend: 'up' },
-    { name: 'Matcha Cheesecake', sales: 86, revenue: 645, trend: 'stable' },
-    { name: 'Green Tea Macarons', sales: 195, revenue: 2340, trend: 'up' },
-    { name: 'Matcha Mochi Donut', sales: 156, revenue: 546, trend: 'down' },
-]);
+const dailyHistory = ref<DailyRevenue[]>([]);
+const productPerformance = ref<ProductPerformance[]>([]);
+const categoryDistribution = ref<{ name: string; value: number }[]>([]);
 
 export function useReports() {
+    const fetchReports = async () => {
+        try {
+            const token = localStorage.getItem('bakery-token');
+            const response = await fetch('http://localhost:3000/api/reports/data', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (!response.ok) throw new Error('Failed to fetch report data');
+            const data = await response.json();
+
+            dailyHistory.value = data.dailyHistory;
+            productPerformance.value = data.productPerformance;
+            categoryDistribution.value = data.categoryDistribution;
+        } catch (err) {
+            console.error('Error fetching reports:', err);
+        }
+    };
+
     const totalWeeklyRevenue = computed(() =>
-        dailyHistory.value.reduce((sum, day) => sum + day.revenue, 0)
+        dailyHistory.value.reduce((sum, day) => sum + Number(day.revenue), 0)
     );
 
     const totalWeeklyOrders = computed(() =>
-        dailyHistory.value.reduce((sum, day) => sum + day.orders, 0)
+        dailyHistory.value.reduce((sum, day) => sum + Number(day.orders), 0)
     );
 
     const averageOrderValue = computed(() =>
-        totalWeeklyRevenue.value / totalWeeklyOrders.value
+        totalWeeklyOrders.value > 0 ? totalWeeklyRevenue.value / totalWeeklyOrders.value : 0
     );
 
     const maxDailyRevenue = computed(() =>
-        Math.max(...dailyHistory.value.map(d => d.revenue))
+        dailyHistory.value.length > 0
+            ? Math.max(...dailyHistory.value.map(d => Number(d.revenue)))
+            : 0
     );
 
-    const categoryDistribution = ref([
-        { name: 'Cakes', value: 45 },
-        { name: 'Beverages', value: 25 },
-        { name: 'Pastries', value: 20 },
-        { name: 'Donuts', value: 10 },
-    ]);
+    onMounted(() => {
+        fetchReports();
+    });
 
     return {
         dailyHistory: readonly(dailyHistory),
@@ -62,6 +66,7 @@ export function useReports() {
         totalWeeklyRevenue,
         totalWeeklyOrders,
         averageOrderValue,
-        maxDailyRevenue
+        maxDailyRevenue,
+        fetchReports
     };
 }

@@ -33,6 +33,44 @@ const formatCurrency = (value: number) => {
         currency: 'USD'
     }).format(value);
 };
+
+const handleExport = () => {
+    // 1. Prepare Content for CSV
+    let csvContent = "DATA REPORT - BAKERY MANAGEMENT SYSTEM\n";
+    csvContent += `Report Interval: ${selectedRange.value}\n\n`;
+    
+    // Summary Section
+    csvContent += "SUMMARY\n";
+    csvContent += `Total Weekly Revenue,${totalWeeklyRevenue.value}\n`;
+    csvContent += `Total Weekly Orders,${totalWeeklyOrders.value}\n`;
+    csvContent += `Average Order Value,${averageOrderValue.value.toFixed(2)}\n\n`;
+    
+    // Daily History Section
+    csvContent += "DAILY REVENUE HISTORY\n";
+    csvContent += "Day,Revenue,Orders\n";
+    dailyHistory.value.forEach(day => {
+        csvContent += `${day.date},${day.revenue},${day.orders}\n`;
+    });
+    csvContent += "\n";
+    
+    // Product Performance Section
+    csvContent += "PRODUCT PERFORMANCE (BEST SELLERS)\n";
+    csvContent += "Product Name,Total Sales,Total Revenue\n";
+    productPerformance.value.forEach(p => {
+        csvContent += `"${p.name}",${p.sales},${p.revenue}\n`;
+    });
+    
+    // 2. Create Download Link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Bakery_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
 </script>
 
 <template>
@@ -52,7 +90,10 @@ const formatCurrency = (value: number) => {
                     <span class="font-medium text-gray-700">{{ selectedRange }}</span>
                     <ChevronRight class="w-4 h-4 text-gray-400 transition-transform group-hover:rotate-90" />
                 </div>
-                <button class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-bold shadow-md">
+                <button 
+                    @click="handleExport"
+                    class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-bold shadow-md"
+                >
                     <Download class="w-4 h-4" />
                     Export CSV
                 </button>
@@ -61,7 +102,7 @@ const formatCurrency = (value: number) => {
 
         <!-- Summary Statistics -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-gradient-to-br from-green-600 to-emerald-700 p-6 rounded-2xl text-white shadow-lg relative overflow-hidden group">
+            <div class="bg-linear-to-br from-green-600 to-emerald-700 p-6 rounded-2xl text-white shadow-lg relative overflow-hidden group">
                 <div class="relative z-10">
                     <div class="p-2 bg-white/20 w-fit rounded-lg mb-4">
                         <DollarSign class="w-6 h-6" />
@@ -116,7 +157,7 @@ const formatCurrency = (value: number) => {
                     <div v-for="day in dailyHistory" :key="day.date" class="flex flex-col items-center gap-3 w-full group">
                         <div class="relative w-8 bg-green-50 rounded-t-lg group-hover:bg-green-100 transition-all duration-300 flex items-end justify-center overflow-hidden h-full">
                             <div 
-                                class="w-full bg-gradient-to-t from-green-600 to-emerald-400 rounded-t-lg transition-all duration-1000 origin-bottom"
+                                class="w-full bg-linear-to-t from-green-600 to-emerald-400 rounded-t-lg transition-all duration-1000 origin-bottom"
                                 :style="{ height: `${(day.revenue / maxDailyRevenue) * 100}%` }"
                             >
                                 <div class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-white/20 transition-opacity"></div>
@@ -141,9 +182,9 @@ const formatCurrency = (value: number) => {
                 </div>
                 <div class="flex-1 flex items-center justify-around gap-8">
                     <!-- Simple Mock Pie Representation -->
-                    <div class="relative w-48 h-48 rounded-full border-[16px] border-emerald-600 flex items-center justify-center">
-                        <div class="absolute w-full h-full rounded-full border-[16px] border-green-400 border-l-transparent border-t-transparent rotate-45"></div>
-                        <div class="absolute w-full h-full rounded-full border-[16px] border-blue-400 border-r-transparent border-t-transparent border-b-transparent -rotate-12"></div>
+                    <div class="relative w-48 h-48 rounded-full border-16 border-emerald-600 flex items-center justify-center">
+                        <div class="absolute w-full h-full rounded-full border-16 border-green-400 border-l-transparent border-t-transparent rotate-45"></div>
+                        <div class="absolute w-full h-full rounded-full border-16 border-blue-400 border-r-transparent border-t-transparent border-b-transparent -rotate-12"></div>
                         <div class="text-center">
                             <span class="text-3xl font-black text-emerald-700">45%</span>
                             <p class="text-[10px] font-bold text-gray-400 uppercase">Cakes</p>
