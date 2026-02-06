@@ -87,7 +87,6 @@ const selectCategory = (category: string) => {
       type: 'bot',
       text: `Sure! Here are some common questions about ${category}:`
     });
-    scrollToBottom();
   }, 500);
 };
 
@@ -104,7 +103,6 @@ const selectQuestion = (qna: QnA) => {
       type: 'bot',
       text: qna.answer
     });
-    scrollToBottom();
   }, 600);
 };
 
@@ -124,6 +122,16 @@ const scrollToBottom = async () => {
     });
   }
 };
+
+// Auto scroll on messages change
+watch(messages, () => {
+  scrollToBottom();
+}, { deep: true });
+
+// Auto scroll when category changes (which changes the options height)
+watch(currentCategory, () => {
+  scrollToBottom();
+});
 
 watch(isOpen, (newVal) => {
   if (newVal) {
