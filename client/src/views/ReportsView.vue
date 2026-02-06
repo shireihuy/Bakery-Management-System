@@ -158,7 +158,7 @@ const handleExport = () => {
                         <div class="relative w-8 bg-green-50 rounded-t-lg group-hover:bg-green-100 transition-all duration-300 flex items-end justify-center overflow-hidden h-full">
                             <div 
                                 class="w-full bg-linear-to-t from-green-600 to-emerald-400 rounded-t-lg transition-all duration-1000 origin-bottom"
-                                :style="{ height: `${(day.revenue / maxDailyRevenue) * 100}%` }"
+                                :style="{ height: `${maxDailyRevenue > 0 ? (day.revenue / maxDailyRevenue) * 100 : 0}%` }"
                             >
                                 <div class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-white/20 transition-opacity"></div>
                             </div>

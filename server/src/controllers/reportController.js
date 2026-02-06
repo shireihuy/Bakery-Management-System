@@ -5,13 +5,13 @@ const getReportData = async (req, res) => {
         // 1. Daily Revenue & Orders (Last 7 Days)
         const dailyResult = await query(`
             SELECT 
-                TO_CHAR(order_date, 'Mon') as date,
-                SUM(total_price) as revenue,
-                COUNT(id) as orders
+                TO_CHAR(order_date, 'Dy') as date,
+                CAST(SUM(total_price) AS FLOAT) as revenue,
+                CAST(COUNT(id) AS INTEGER) as orders
             FROM orders
             WHERE order_date >= CURRENT_DATE - INTERVAL '6 days'
             AND status != 'Cancelled'
-            GROUP BY TO_CHAR(order_date, 'Mon'), DATE_TRUNC('day', order_date)
+            GROUP BY TO_CHAR(order_date, 'Dy'), DATE_TRUNC('day', order_date)
             ORDER BY DATE_TRUNC('day', order_date) ASC
         `);
 
