@@ -140,7 +140,7 @@ const filteredProducts = computed(() => {
           <h2 class="text-2xl font-bold tracking-tight text-green-900">Product Management</h2>
           <button 
             @click="() => { resetForm(); isDialogOpen = true; }"
-            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md"
+            class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md"
           >
             <Plus class="w-4 h-4 mr-2" />
             Add Product
@@ -171,11 +171,11 @@ const filteredProducts = computed(() => {
                 :key="product.id" 
                 class="rounded-xl border bg-card text-card-foreground shadow border-green-100 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-white"
             >
-                <div class="relative h-40 overflow-hidden">
+                <div class="relative h-40 overflow-hidden bg-green-50/30 flex items-center justify-center">
                   <img
                     :src="product.image"
                     :alt="product.name"
-                    class="w-full h-full object-cover"
+                    class="w-full h-full object-contain"
                   />
                   <span class="absolute top-2 right-2 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-600 text-white shadow-sm">{{ product.category }}</span>
                 </div>
@@ -314,8 +314,8 @@ const filteredProducts = computed(() => {
                   <div class="space-y-2">
                     <label for="image" class="text-sm font-medium text-gray-700">Product Image</label>
                     <div class="flex flex-col gap-3">
-                        <div v-if="imagePreview" class="relative w-full h-40 rounded-lg overflow-hidden border border-gray-200">
-                            <img :src="imagePreview" class="w-full h-full object-cover" />
+                        <div v-if="imagePreview" class="relative w-full h-40 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
+                            <img :src="imagePreview" class="w-full h-full object-contain" />
                             <button 
                                 @click.prevent="() => { selectedFile = null; imagePreview = ''; formData.image = ''; }"
                                 class="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 shadow-md"
@@ -381,9 +381,9 @@ const filteredProducts = computed(() => {
                     />
                   </div>
                   
-                  <button 
+                    <button 
                     type="submit" 
-                    class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg active:scale-[0.98]"
+                    class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 w-full bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg active:scale-[0.98]"
                   >
                     {{ editingProduct ? 'Update Product' : 'Add Product' }}
                   </button>
