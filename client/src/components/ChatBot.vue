@@ -141,7 +141,7 @@ watch(isOpen, (newVal) => {
 </script>
 
 <template>
-  <div class="fixed bottom-6 left-6 z-100">
+  <div class="fixed bottom-6 right-6 z-100 flex flex-col items-end">
     <!-- Chat Toggle Button -->
     <button 
       @click="toggleChat"
@@ -162,13 +162,13 @@ watch(isOpen, (newVal) => {
     <!-- Chat Window -->
     <Transition
       enter-active-class="transition duration-300 ease-out"
-      enter-from-class="transform -translate-x-10 -translate-y-10 opacity-0 scale-95"
+      enter-from-class="transform translate-x-10 -translate-y-10 opacity-0 scale-95"
       enter-to-class="transform translate-x-0 translate-y-0 opacity-100 scale-100"
       leave-active-class="transition duration-200 ease-in"
       leave-from-class="transform translate-x-0 translate-y-0 opacity-100 scale-100"
-      leave-to-class="transform -translate-x-10 -translate-y-10 opacity-0 scale-95"
+      leave-to-class="transform translate-x-10 -translate-y-10 opacity-0 scale-95"
     >
-      <div v-if="isOpen" class="absolute bottom-20 left-0 w-80 md:w-96 glass-card rounded-[2.5rem] overflow-hidden flex flex-col max-h-[70vh] ring-1 ring-bakery-900/5">
+      <div v-if="isOpen" class="absolute bottom-20 right-0 w-80 md:w-96 glass-card rounded-[2.5rem] overflow-hidden flex flex-col max-h-[70vh] ring-1 ring-bakery-900/5">
         <!-- Header -->
         <div class="bg-bakery-900 p-6 text-white flex items-center gap-4">
           <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl">

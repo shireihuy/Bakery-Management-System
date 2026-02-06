@@ -72,7 +72,7 @@ const handleUpdate = (path: string, event: Event) => {
 </script>
 
 <template>
-  <div class="fixed bottom-6 right-6 z-100 flex flex-col items-end gap-4">
+  <div class="fixed bottom-6 left-6 z-100 flex flex-col items-start gap-4">
     <!-- Main Toggle Button -->
     <button 
       @click="isOpen = !isOpen"
