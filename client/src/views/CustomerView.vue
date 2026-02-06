@@ -523,8 +523,8 @@ const getStatusColor = (status: string) => {
                  </div>
                  
                  <div class="space-y-6">
-                    <div class="relative h-64 rounded-xl overflow-hidden">
-                        <img :src="selectedProduct.image" :alt="selectedProduct.name" class="w-full h-full object-cover">
+                    <div class="relative h-64 sm:h-96 rounded-xl overflow-hidden bg-bakery-50/50 flex items-center justify-center">
+                        <img :src="selectedProduct.image" :alt="selectedProduct.name" class="w-full h-full object-contain">
                          <span class="absolute top-4 right-4 bg-black/50 backdrop-blur-md text-white px-3 py-1 rounded-full text-sm font-medium">{{ selectedProduct.category }}</span>
                     </div>
                     
