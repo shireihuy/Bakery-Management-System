@@ -72,17 +72,17 @@ const handleUpdate = (path: string, event: Event) => {
 </script>
 
 <template>
-  <div class="fixed bottom-6 left-6 z-100 flex flex-col items-start gap-4">
+  <div class="fixed bottom-4 md:bottom-6 left-4 md:left-6 z-100 flex flex-col items-start gap-4">
     <!-- Main Toggle Button -->
     <button 
       @click="isOpen = !isOpen"
-      class="w-14 h-14 rounded-full bg-bakery-900 text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group overflow-hidden relative"
+      class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-bakery-900 text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group overflow-hidden relative"
     >
-      <div v-if="!isOpen" class="flex flex-col items-center justify-center gap-1">
-        <span class="text-[10px] font-black uppercase tracking-tighter">{{ currentLocale }}</span>
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      <div v-if="!isOpen" class="flex flex-col items-center justify-center gap-0.5 md:gap-1">
+        <span class="text-[8px] md:text-[10px] font-black uppercase tracking-tighter">{{ currentLocale }}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
       </div>
-      <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
 
     <!-- Settings Panel -->
@@ -94,7 +94,7 @@ const handleUpdate = (path: string, event: Event) => {
       leave-from-class="transform translate-y-0 opacity-100 scale-100"
       leave-to-class="transform translate-y-10 opacity-0 scale-95"
     >
-      <div v-if="isOpen" class="w-80 bg-white/90 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] border border-white/50 p-6 flex flex-col gap-6 ring-1 ring-bakery-900/5">
+      <div v-if="isOpen" class="w-[calc(100vw-2rem)] sm:w-80 bg-white/90 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.15)] border border-white/50 p-6 flex flex-col gap-6 ring-1 ring-bakery-900/5">
         <div class="flex items-center justify-between px-2">
           <h3 class="font-black text-xs uppercase tracking-[0.2em] text-bakery-400">Regional Settings</h3>
         </div>

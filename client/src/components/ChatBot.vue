@@ -141,22 +141,22 @@ watch(isOpen, (newVal) => {
 </script>
 
 <template>
-  <div class="fixed bottom-6 right-6 z-100 flex flex-col items-end">
+  <div class="fixed bottom-4 md:bottom-6 right-4 md:right-6 z-100 flex flex-col items-end">
     <!-- Chat Toggle Button -->
     <button 
       @click="toggleChat"
-      class="w-14 h-14 rounded-full bg-bakery-600 text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group relative animate-float"
+      class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-bakery-600 text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group relative animate-float"
       :class="{ 'rotate-90': isOpen }"
     >
-      <svg v-if="!isOpen" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg v-if="!isOpen" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
       </svg>
-      <svg v-else xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
       
       <!-- Notification Dot -->
-      <div v-if="!isOpen" class="absolute -top-1 -right-1 w-4 h-4 bg-accent-gold rounded-full border-2 border-white animate-pulse"></div>
+      <div v-if="!isOpen" class="absolute -top-1 -right-1 w-3.5 h-3.5 md:w-4 md:h-4 bg-accent-gold rounded-full border-2 border-white animate-pulse"></div>
     </button>
 
     <!-- Chat Window -->
@@ -168,7 +168,7 @@ watch(isOpen, (newVal) => {
       leave-from-class="transform translate-x-0 translate-y-0 opacity-100 scale-100"
       leave-to-class="transform translate-x-10 -translate-y-10 opacity-0 scale-95"
     >
-      <div v-if="isOpen" class="absolute bottom-20 right-0 w-80 md:w-96 glass-card rounded-[2.5rem] overflow-hidden flex flex-col max-h-[70vh] ring-1 ring-bakery-900/5">
+      <div v-if="isOpen" class="absolute bottom-16 md:bottom-20 right-0 w-[calc(100vw-2rem)] sm:w-80 md:w-96 glass-card rounded-4xl md:rounded-[2.5rem] overflow-hidden flex flex-col max-h-[70vh] ring-1 ring-bakery-900/5">
         <!-- Header -->
         <div class="bg-bakery-900 p-6 text-white flex items-center gap-4">
           <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl">

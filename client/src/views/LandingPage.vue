@@ -248,8 +248,8 @@ const signatureProducts = [
                             class="shrink-0 px-4"
                             :style="{ width: `${100 / slidesToShow}%` }"
                         >
-                            <div class="bg-white rounded-[2.5rem] overflow-hidden border border-bakery-50 hover:border-bakery-200 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] h-full flex flex-col group/card">
-                                <div class="relative h-72 overflow-hidden">
+                            <div class="bg-white rounded-3xl lg:rounded-[2.5rem] overflow-hidden border border-bakery-50 hover:border-bakery-200 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] h-full flex flex-col group/card">
+                                <div class="relative h-64 lg:h-72 overflow-hidden">
                                     <img
                                         :src="product.image"
                                         :alt="product.name"
@@ -263,18 +263,18 @@ const signatureProducts = [
                                         <span class="text-xs text-bakery-900 font-black">{{product.rating}}</span>
                                     </div>
                                 </div>
-                                <div class="p-6 flex-1 flex flex-col">
+                                <div class="p-5 lg:p-6 flex-1 flex flex-col">
                                     <h3 class="text-bakery-900 mb-2 font-black text-lg">{{product.name}}</h3>
-                                    <p class="text-sm text-bakery-500 mb-6 font-medium line-clamp-2">{{product.description}}</p>
+                                    <p class="text-xs lg:text-sm text-bakery-500 mb-6 font-medium line-clamp-2">{{product.description}}</p>
                                     <div class="flex items-center justify-between mt-auto">
-                                        <span class="text-2xl text-bakery-900 font-black">
+                                        <span class="text-xl lg:text-2xl text-bakery-900 font-black">
                                             ${{product.price.toFixed(2)}}
                                         </span>
                                         <button
                                             @click="onGetStarted"
-                                            class="w-12 h-12 rounded-2xl bg-bakery-50 flex items-center justify-center text-bakery-900 group-hover/card:bg-bakery-900 group-hover/card:text-white transition-all duration-300 shadow-sm"
+                                            class="shrink-0 w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-bakery-50 flex items-center justify-center text-bakery-900 group-hover/card:bg-bakery-900 group-hover/card:text-white transition-all duration-300 shadow-sm"
                                         >
-                                            <ArrowRight class="w-5 h-5" />
+                                            <ArrowRight class="w-4 h-4 lg:w-5 lg:h-5" />
                                         </button>
                                     </div>
                                 </div>
@@ -320,7 +320,7 @@ const signatureProducts = [
                 🍃 {{ t('nav.about') }}
               </span>
             </div>
-            <h1 class="text-6xl lg:text-8xl text-bakery-900 leading-[0.95] font-black tracking-tighter">
+            <h1 class="text-5xl lg:text-8xl text-bakery-900 leading-[0.95] font-black tracking-tighter">
               {{ t('landing.heroTitle').split(',')[0] }} <br/>
               <span class="text-transparent bg-clip-text bg-linear-to-r from-bakery-600 to-bakery-400">
                 {{ t('landing.heroTitle').split(',')[1] || 'Crafted Daily' }}
@@ -347,19 +347,19 @@ const signatureProducts = [
           </div>
           <div class="relative">
             <div class="absolute -inset-10 bg-bakery-200/30 rounded-[5rem] blur-3xl animate-pulse"></div>
-            <div class="relative rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border-12 border-white group">
+            <div class="relative rounded-[2.5rem] lg:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border-8 lg:border-12 border-white group">
               <img 
                 src="https://images.unsplash.com/photo-1592637970552-6c27432e7913?auto=format&fit=crop&q=80&w=1080"
                 alt="Matcha Bakery"
-                class="w-full h-[650px] object-cover transition-transform duration-1000 group-hover:scale-105"
+                class="w-full h-[400px] lg:h-[650px] object-cover transition-transform duration-1000 group-hover:scale-105"
               />
-              <div class="absolute bottom-10 left-10 right-10 glass-card p-8 rounded-[3rem] shadow-2xl">
-                <div class="flex items-center gap-6">
-                  <div class="w-16 h-16 bg-bakery-900 rounded-4xl flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-500">
-                    <Star class="w-8 h-8 text-accent-gold fill-accent-gold" />
+              <div class="absolute bottom-6 lg:bottom-10 left-6 lg:left-10 right-6 lg:right-10 glass-card p-5 lg:p-8 rounded-4xl lg:rounded-[3rem] shadow-2xl">
+                <div class="flex items-center gap-4 lg:gap-6">
+                  <div class="w-12 h-12 lg:w-16 lg:h-16 bg-bakery-900 rounded-2xl lg:rounded-4xl flex items-center justify-center rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                    <Star class="w-6 h-6 lg:w-8 lg:h-8 text-accent-gold fill-accent-gold" />
                   </div>
                   <div>
-                    <p class="text-bakery-900 font-black text-2xl tracking-tight">4.9/5 Rating</p>
+                    <p class="text-bakery-900 font-black text-xl lg:text-2xl tracking-tight">4.9/5 Rating</p>
                     <p class="text-bakery-500 font-bold uppercase tracking-widest text-[10px]">Trusted by thousands</p>
                   </div>
                 </div>
@@ -377,8 +377,8 @@ const signatureProducts = [
             <div class="w-20 h-1.5 bg-bakery-900 mx-auto rounded-full"></div>
         </div>
         <div class="container mx-auto px-6">
-            <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-8">
-                <div v-for="(signatureProduct, index) in signatureProducts" :key="index" class="bg-bakery-50/30 p-10 rounded-[3rem] text-center hover:-translate-y-3 transition-all duration-700 group border border-transparent hover:border-bakery-100 hover:bg-white hover:shadow-2xl">
+            <div class="grid md:grid-cols-2 lg:grid-cols-5 gap-6 lg:gap-8">
+                <div v-for="(signatureProduct, index) in signatureProducts" :key="index" class="bg-bakery-50/30 p-8 lg:p-10 rounded-4xl lg:rounded-[3rem] text-center hover:-translate-y-3 transition-all duration-700 group border border-transparent hover:border-bakery-100 hover:bg-white hover:shadow-2xl">
                     <div :class="[`bg-linear-to-br w-24 h-24 rounded-4xl flex items-center justify-center mb-8 mx-auto shadow-2xl transform group-hover:rotate-15 transition-transform`, signatureProduct.color]">
                         <Coffee class="w-12 h-12 text-white" />
                     </div>
@@ -409,7 +409,7 @@ const signatureProducts = [
                 <div 
                     v-for="(feature, index) in features"
                     :key="index"
-                    class="p-10 rounded-[3.5rem] bg-white border border-bakery-50 hover:border-bakery-100 transition-all duration-500 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] group"
+                    class="p-8 lg:p-10 rounded-[2.5rem] lg:rounded-[3.5rem] bg-white border border-bakery-50 hover:border-bakery-100 transition-all duration-500 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] group"
                 >
                     <div class="w-16 h-16 rounded-3xl bg-bakery-50 flex items-center justify-center mb-8 group-hover:scale-110 group-hover:bg-bakery-900 group-hover:text-white transition-all duration-500 text-bakery-900 shadow-sm">
                         <component :is="feature.icon" class="w-8 h-8" />
@@ -423,14 +423,14 @@ const signatureProducts = [
       </section>
 
       <!-- CTA Modern Section -->
-      <section class="container mx-auto px-6 mb-32">
-        <div class="bg-bakery-900 rounded-[5rem] py-32 relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] group">
+      <section class="container mx-auto px-6 mb-20 lg:mb-32">
+        <div class="bg-bakery-900 rounded-[3rem] lg:rounded-[5rem] py-20 lg:py-32 relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] group">
             <div class="absolute inset-0 opacity-20 transition-transform duration-[10s] group-hover:scale-125">
                 <img src="https://images.unsplash.com/photo-1555932450-31a8aec2adf1?auto=format&fit=crop&q=80&w=1080" class="w-full h-full object-cover">
             </div>
-            <div class="container mx-auto px-6 text-center relative z-10 space-y-12">
-              <div class="max-w-4xl mx-auto space-y-8">
-                <h2 class="text-6xl lg:text-8xl text-white font-black tracking-tighter leading-tight">
+            <div class="container mx-auto px-6 text-center relative z-10 space-y-8 lg:space-y-12">
+              <div class="max-w-4xl mx-auto space-y-6 lg:space-y-8">
+                <h2 class="text-5xl lg:text-8xl text-white font-black tracking-tighter leading-tight">
                   Taste the <br/>
                   <span class="text-bakery-400">Excellence.</span>
                 </h2>
