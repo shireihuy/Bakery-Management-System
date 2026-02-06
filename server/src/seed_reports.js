@@ -31,16 +31,14 @@ const seed = async () => {
 
     console.log('Connected to database. Generating test data...');
 
-    const products = [
-        { id: 1, price: 5.00 },
-        { id: 2, price: 6.00 },
-        { id: 3, price: 3.00 },
-        { id: 4, price: 3.50 },
-        { id: 5, price: 12.00 },
-        { id: 6, price: 7.50 },
-        { id: 7, price: 22.00 },
-        { id: 10, price: 5.50 }
-    ];
+    console.log('Connected to database. Fetching products...');
+    const productRes = await pool.query('SELECT id, price FROM products');
+    const products = productRes.rows;
+
+    if (products.length === 0) {
+        console.error('No products found in database. Please add products first.');
+        process.exit(1);
+    }
 
     const today = new Date();
 
@@ -51,8 +49,8 @@ const seed = async () => {
             const date = new Date();
             date.setDate(today.getDate() - i);
 
-            // Generate 3-8 orders per day
-            const orderCount = Math.floor(Math.random() * 6) + 3;
+            // Generate 5-20 orders per day for more dramatic bars
+            const orderCount = Math.floor(Math.random() * 15) + 5;
 
             for (let j = 0; j < orderCount; j++) {
                 // Select 1-3 random products

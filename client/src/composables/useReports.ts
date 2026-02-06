@@ -17,21 +17,41 @@ const dailyHistory = ref<DailyRevenue[]>([]);
 const productPerformance = ref<ProductPerformance[]>([]);
 const categoryDistribution = ref<{ name: string; value: number }[]>([]);
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
 export function useReports() {
     const fetchReports = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:3000/api/reports/data', {
+            console.log('Fetching reports from:', `${API_URL}/reports/data`);
+
+            const response = await fetch(`${API_URL}/reports/data`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            if (!response.ok) throw new Error('Failed to fetch report data');
-            const data = await response.json();
 
-            dailyHistory.value = data.dailyHistory;
-            productPerformance.value = data.productPerformance;
-            categoryDistribution.value = data.categoryDistribution;
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to fetch report data: ${response.status} ${errorText}`);
+            }
+
+            const data = await response.json();
+            console.log('Report data received:', data);
+
+            dailyHistory.value = (data.dailyHistory || []).map((d: any) => ({
+                ...d,
+                revenue: Number(d.revenue) || 0,
+                orders: Number(d.orders) || 0
+            }));
+
+            productPerformance.value = (data.productPerformance || []).map((p: any) => ({
+                ...p,
+                revenue: Number(p.revenue) || 0,
+                sales: Number(p.sales) || 0
+            }));
+
+            categoryDistribution.value = data.categoryDistribution || [];
         } catch (err) {
             console.error('Error fetching reports:', err);
         }

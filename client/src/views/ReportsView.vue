@@ -151,14 +151,14 @@ const handleExport = () => {
                         <TrendingUp class="w-5 h-5 text-green-600" />
                         Revenue Over Time
                     </h3>
-                    <span class="text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full uppercase tracking-wider">Weekly Glance</span>
+                    <span class="text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full uppercase tracking-wider">7-Day Analytics</span>
                 </div>
                 <div class="flex items-end justify-between h-64 px-4 pb-4 border-b border-gray-100 mb-8">
-                    <div v-for="day in dailyHistory" :key="day.date" class="flex flex-col items-center gap-3 w-full group">
+                    <div v-for="(day, index) in dailyHistory" :key="index" class="flex flex-col items-center gap-3 w-full group">
                         <div class="relative w-8 bg-green-50 rounded-t-lg group-hover:bg-green-100 transition-all duration-300 flex items-end justify-center overflow-hidden h-full">
                             <div 
                                 class="w-full bg-linear-to-t from-green-600 to-emerald-400 rounded-t-lg transition-all duration-1000 origin-bottom"
-                                :style="{ height: `${maxDailyRevenue > 0 ? (day.revenue / maxDailyRevenue) * 100 : 0}%` }"
+                                :style="{ height: `${maxDailyRevenue > 0 ? Math.max((day.revenue / maxDailyRevenue) * 100, 2) : 0}%` }"
                             >
                                 <div class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-white/20 transition-opacity"></div>
                             </div>
