@@ -153,22 +153,52 @@ const handleExport = () => {
                     </h3>
                     <span class="text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full uppercase tracking-wider">7-Day Analytics</span>
                 </div>
-                <div class="flex items-end justify-between h-64 px-4 pb-4 border-b border-gray-100 mb-8">
-                    <div v-for="(day, index) in dailyHistory" :key="index" class="flex flex-col items-center gap-3 w-full group">
-                        <div class="relative w-8 bg-green-50 rounded-t-lg group-hover:bg-green-100 transition-all duration-300 flex items-end justify-center overflow-hidden h-full">
-                            <div 
-                                class="w-full bg-linear-to-t from-green-600 to-emerald-400 rounded-t-lg transition-all duration-1000 origin-bottom"
-                                :style="{ height: `${maxDailyRevenue > 0 ? Math.max((day.revenue / maxDailyRevenue) * 100, 2) : 0}%` }"
+                <div class="h-64 mb-8">
+                    <svg class="w-full h-full" viewBox="0 0 400 230" preserveAspectRatio="none">
+                        <!-- Background Grid Lines -->
+                        <line x1="0" y1="20" x2="400" y2="20" stroke="#f3f4f6" stroke-width="1" />
+                        <line x1="0" y1="65" x2="400" y2="65" stroke="#f3f4f6" stroke-width="1" />
+                        <line x1="0" y1="110" x2="400" y2="110" stroke="#f3f4f6" stroke-width="1" />
+                        <line x1="0" y1="155" x2="400" y2="155" stroke="#f3f4f6" stroke-width="1" />
+                        <line x1="0" y1="200" x2="400" y2="200" stroke="#f3f4f6" stroke-width="2" />
+                        
+                        <!-- Data Bars -->
+                        <g v-for="(day, index) in dailyHistory" :key="index">
+                            <!-- Revenue Number on Top -->
+                            <text
+                                :x="(index * (400 / dailyHistory.length)) + (400 / dailyHistory.length / 2)"
+                                :y="200 - (maxDailyRevenue > 0 ? (day.revenue / maxDailyRevenue) * 170 : 0) - 8"
+                                text-anchor="middle"
+                                class="text-[8px] font-black fill-emerald-800"
+                                style="font-size: 9px;"
                             >
-                                <div class="absolute inset-0 opacity-0 group-hover:opacity-100 bg-white/20 transition-opacity"></div>
-                            </div>
-                            <!-- Tooltip -->
-                            <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                                {{ formatCurrency(day.revenue) }}
-                            </div>
-                        </div>
-                        <span class="text-xs font-bold text-gray-400 uppercase tracking-tighter">{{ day.date }}</span>
-                    </div>
+                                ${{ Math.round(day.revenue) }}
+                            </text>
+
+                            <!-- The Bar -->
+                            <rect
+                                :x=" (index * (400 / dailyHistory.length)) + (400 / dailyHistory.length / 4)"
+                                :y="200 - (maxDailyRevenue > 0 ? (day.revenue / maxDailyRevenue) * 170 : 0)"
+                                :width="400 / dailyHistory.length / 2"
+                                :height="maxDailyRevenue > 0 ? (day.revenue / maxDailyRevenue) * 170 : 0"
+                                rx="6"
+                                class="fill-current text-green-600 hover:text-emerald-500 transition-all duration-300 cursor-pointer"
+                            >
+                                <title>{{ day.date }}: {{ formatCurrency(day.revenue) }}</title>
+                            </rect>
+
+                            <!-- Day Label Below -->
+                            <text
+                                :x="(index * (400 / dailyHistory.length)) + (400 / dailyHistory.length / 2)"
+                                y="220"
+                                text-anchor="middle"
+                                class="text-[10px] font-black fill-gray-400 uppercase tracking-tighter"
+                                style="font-size: 10px;"
+                            >
+                                {{ day.date }}
+                            </text>
+                        </g>
+                    </svg>
                 </div>
             </div>
 
