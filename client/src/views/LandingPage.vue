@@ -197,7 +197,7 @@ const signatureProducts = [
 </script>
 
 <template>
-    <div class="min-h-screen bg-accent-cream">
+    <div class="min-h-screen bg-accent-cream overflow-x-hidden">
       <!-- Header -->
       <header class="glass-header">
         <div class="container mx-auto px-6 py-4">
@@ -286,13 +286,13 @@ const signatureProducts = [
                 <!-- Navigation Controls -->
                 <button 
                     @click="prevSlide"
-                    class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 w-14 h-14 rounded-full bg-white shadow-2xl border border-bakery-50 flex items-center justify-center text-bakery-900 hover:bg-bakery-900 hover:text-white transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-0 z-10"
+                    class="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 w-14 h-14 rounded-full bg-white shadow-2xl border border-bakery-50 items-center justify-center text-bakery-900 hover:bg-bakery-900 hover:text-white transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-0 z-10"
                 >
                     <ChevronLeft class="w-6 h-6" />
                 </button>
                 <button 
                     @click="nextSlide"
-                    class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 w-14 h-14 rounded-full bg-white shadow-2xl border border-bakery-50 flex items-center justify-center text-bakery-900 hover:bg-bakery-900 hover:text-white transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-0 z-10"
+                    class="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 w-14 h-14 rounded-full bg-white shadow-2xl border border-bakery-50 items-center justify-center text-bakery-900 hover:bg-bakery-900 hover:text-white transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-0 z-10"
                 >
                     <ChevronRight class="w-6 h-6" />
                 </button>
@@ -314,7 +314,7 @@ const signatureProducts = [
       <!-- Hero Section -->
       <section class="container mx-auto px-6 py-24 lg:py-40">
         <div class="grid lg:grid-cols-2 gap-20 items-center">
-          <div class="space-y-10">
+          <div class="space-y-10 text-center lg:text-left flex flex-col items-center lg:items-start">
             <div class="inline-block">
               <span class="bg-bakery-900 text-white px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">
                 🍃 {{ t('nav.about') }}
@@ -326,27 +326,27 @@ const signatureProducts = [
                 {{ t('landing.heroTitle').split(',')[1] || 'Crafted Daily' }}
               </span>
             </h1>
-            <p class="text-xl text-bakery-500 leading-relaxed max-w-xl font-medium">
+            <p class="text-xl text-bakery-500 leading-relaxed max-w-xl font-medium mx-auto lg:mx-0">
               {{ t('landing.heroSubtitle') }}
             </p>
-            <div class="flex flex-wrap gap-6 pt-6">
+            <div class="flex flex-wrap justify-center lg:justify-start gap-4 lg:gap-6 pt-6">
               <button 
                 @click="onGetStarted"
-                class="inline-flex items-center justify-center rounded-3xl text-lg font-black h-16 px-12 bg-bakery-900 hover:bg-bakery-950 text-white shadow-2xl hover:-translate-y-1 transition-all active:scale-95"
+                class="inline-flex items-center justify-center rounded-3xl text-lg font-black h-16 px-10 lg:px-12 bg-bakery-900 hover:bg-bakery-950 text-white shadow-2xl hover:-translate-y-1 transition-all active:scale-95"
               >
                 {{ t('landing.enterShop') }}
                 <ShoppingCart class="w-6 h-6 ml-3" />
               </button>
               <button 
                 @click="onViewMenu"
-                class="inline-flex items-center justify-center rounded-3xl text-lg font-black h-16 px-12 border-2 border-bakery-100 text-bakery-900 hover:bg-bakery-50 transition-all"
+                class="inline-flex items-center justify-center rounded-3xl text-lg font-black h-16 px-10 lg:px-12 border-2 border-bakery-100 text-bakery-900 hover:bg-bakery-50 transition-all"
               >
                 {{ t('landing.viewMenu') }}
               </button>
             </div>
           </div>
           <div class="relative">
-            <div class="absolute -inset-10 bg-bakery-200/30 rounded-[5rem] blur-3xl animate-pulse"></div>
+            <div class="absolute -inset-4 lg:-inset-10 bg-bakery-200/30 rounded-[5rem] blur-3xl animate-pulse"></div>
             <div class="relative rounded-[2.5rem] lg:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border-8 lg:border-12 border-white group">
               <img 
                 src="https://images.unsplash.com/photo-1592637970552-6c27432e7913?auto=format&fit=crop&q=80&w=1080"
