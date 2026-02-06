@@ -201,11 +201,7 @@ const filteredProducts = computed(() => {
                       </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <p class="text-green-600 text-xs">Cost</p>
-                        <p class="text-green-900 font-medium">${{ product.cost?.toFixed(2) }}</p>
-                      </div>
-                      <div>
+                      <div class="col-span-2">
                         <p class="text-green-600 text-xs">Price</p>
                         <p class="text-green-900 font-medium">${{ product.price.toFixed(2) }}</p>
                       </div>
@@ -213,12 +209,7 @@ const filteredProducts = computed(() => {
                         <p class="text-green-600 text-xs">Stock</p>
                         <p class="text-green-900 font-medium">{{ product.stock }} {{ product.unit }}</p>
                       </div>
-                      <div>
-                        <p class="text-green-600 text-xs">Margin</p>
-                         <p class="text-green-600 font-medium">
-                          {{ product.cost && product.cost > 0 ? (((product.price - product.cost) / product.cost) * 100).toFixed(0) : '100' }}%
-                        </p>
-                      </div>
+                      <!-- Cost and Margin hidden for now as they are not supported by the DB yet -->
                     </div>
                   </div>
                 </div>
@@ -266,18 +257,10 @@ const filteredProducts = computed(() => {
                     </select>
                   </div>
                   <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                      <label for="cost" class="text-sm font-medium text-gray-700">Cost ($)</label>
-                      <input
-                        id="cost"
-                        type="number"
-                        step="0.01"
-                        v-model="formData.cost"
-                        required
-                        class="flex h-10 w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
-                      />
-                    </div>
-                    <div class="space-y-2">
+                    <!-- Cost field hidden: Not needed by DB yet, reserved for later implementation -->
+                    <input type="hidden" v-model="formData.cost" />
+                    
+                    <div class="space-y-2 col-span-2">
                       <label for="price" class="text-sm font-medium text-gray-700">Price ($)</label>
                       <input
                         id="price"
@@ -350,24 +333,9 @@ const filteredProducts = computed(() => {
                       class="flex min-h-[80px] w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
                     />
                   </div>
-                   <div class="space-y-2">
-                    <label for="ingredients" class="text-sm font-medium text-gray-700">Ingredients (comma separated)</label>
-                     <textarea
-                      id="ingredients"
-                      v-model="formData.ingredients"
-                      required
-                      class="flex min-h-[60px] w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
-                    />
-                  </div>
-                   <div class="space-y-2">
-                    <label for="allergens" class="text-sm font-medium text-gray-700">Allergens (comma separated)</label>
-                     <textarea
-                      id="allergens"
-                      v-model="formData.allergens"
-                      required
-                      class="flex min-h-[60px] w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
-                    />
-                  </div>
+                   <!-- Ingredients and Allergens hidden: Not needed by DB yet, reserved for later implementation -->
+                   <input type="hidden" v-model="formData.ingredients" />
+                   <input type="hidden" v-model="formData.allergens" />
                    <div class="space-y-2">
                     <label for="rating" class="text-sm font-medium text-gray-700">Rating (0-5)</label>
                     <input
