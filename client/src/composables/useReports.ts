@@ -23,7 +23,6 @@ export function useReports() {
     const fetchReports = async () => {
         try {
             const token = localStorage.getItem('token');
-            console.log('Fetching reports from:', `${API_URL}/reports/data`);
 
             const response = await fetch(`${API_URL}/reports/data`, {
                 headers: {
@@ -37,7 +36,6 @@ export function useReports() {
             }
 
             const data = await response.json();
-            console.log('Report data received:', data);
 
             dailyHistory.value = (data.dailyHistory || []).map((d: any) => ({
                 ...d,
