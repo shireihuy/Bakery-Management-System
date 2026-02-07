@@ -82,6 +82,27 @@ export interface TranslationSchema {
         passMismatch: string;
         passTooShort: string;
     };
+    dashboard: {
+        managementSuite: string;
+        artisanInsights: string;
+        heroSubtitle: string;
+        status: string;
+        active: string;
+        totalRevenue: string;
+        fromOrders: string;
+        activeOrders: string;
+        waitingAction: string;
+        totalProducts: string;
+        activeCatalog: string;
+        lowStockItems: string;
+        requiringAttention: string;
+        liveUpdates: string;
+        inventoryAlerts: string;
+        refillRecommended: string;
+        critical: string;
+        inventoryOptimal: string;
+        signatureCatalog: string;
+    };
 }
 
 export const defaultTranslations: Record<Language, TranslationSchema> = {
@@ -166,6 +187,27 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             joinSubtitle: 'Register for exclusive access and rewards',
             passMismatch: 'Passwords do not match',
             passTooShort: 'Password must be at least 6 characters'
+        },
+        dashboard: {
+            managementSuite: 'Management Suite',
+            artisanInsights: 'Artisan Insights',
+            heroSubtitle: 'Real-time performance metrics for your handcrafted bakery operations.',
+            status: 'Status',
+            active: 'Active',
+            totalRevenue: 'Total Revenue',
+            fromOrders: 'From {n} orders',
+            activeOrders: 'Active Orders',
+            waitingAction: 'Waiting for action',
+            totalProducts: 'Total Products',
+            activeCatalog: 'Active catalog',
+            lowStockItems: 'Low Stock Items',
+            requiringAttention: 'Requiring attention',
+            liveUpdates: 'Live Updates',
+            inventoryAlerts: 'Inventory Alerts',
+            refillRecommended: 'Refill Recommended',
+            critical: 'Critical',
+            inventoryOptimal: 'All inventory levels are optimal.',
+            signatureCatalog: 'Signature Catalog'
         }
     },
     jp: {
@@ -249,6 +291,27 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             joinSubtitle: '登録して限定アクセスと特典を受け取りましょう',
             passMismatch: 'パスワードが一致しません',
             passTooShort: 'パスワードは6文字以上である必要があります'
+        },
+        dashboard: {
+            managementSuite: '管理スイート',
+            artisanInsights: '職人のインサイト',
+            heroSubtitle: '手作りベーカリー運営のためのリアルタイム・パフォーマンス・メトリクス。',
+            status: 'ステータス',
+            active: 'アクティブ',
+            totalRevenue: '総収益',
+            fromOrders: '{n}件の注文から',
+            activeOrders: 'アクティブな注文',
+            waitingAction: 'アクション待機中',
+            totalProducts: '全商品',
+            activeCatalog: '有効なカタログ',
+            lowStockItems: '在庫不足アイテム',
+            requiringAttention: '要注意',
+            liveUpdates: 'ライブ更新',
+            inventoryAlerts: '在庫アラート',
+            refillRecommended: '補充推奨',
+            critical: '重要',
+            inventoryOptimal: 'すべての在庫レベルは最適です。',
+            signatureCatalog: 'シグネチャーカタログ'
         }
     },
     vn: {
@@ -332,6 +395,27 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             joinSubtitle: 'Đăng ký để nhận quyền truy cập và phần thưởng độc quyền',
             passMismatch: 'Mật khẩu không khớp',
             passTooShort: 'Mật khẩu phải có ít nhất 6 ký tự'
+        },
+        dashboard: {
+            managementSuite: 'Bộ Công Cụ Quản Lý',
+            artisanInsights: 'Thông Tin Chuyên Sâu',
+            heroSubtitle: 'Các chỉ số hiệu suất thời gian thực cho hoạt động làm bánh thủ công của bạn.',
+            status: 'Trạng thái',
+            active: 'Đang hoạt động',
+            totalRevenue: 'Tổng Doanh Thu',
+            fromOrders: 'Từ {n} đơn hàng',
+            activeOrders: 'Đơn Hàng Đang Xử Lý',
+            waitingAction: 'Đang chờ xử lý',
+            totalProducts: 'Tổng Sản Phẩm',
+            activeCatalog: 'Danh mục hoạt động',
+            lowStockItems: 'Mặt Hàng Sắp Hết',
+            requiringAttention: 'Cần chú ý',
+            liveUpdates: 'Cập nhật trực tiếp',
+            inventoryAlerts: 'Cảnh Báo Kho Hàng',
+            refillRecommended: 'Khuyên dùng bổ sung',
+            critical: 'Nguy cấp',
+            inventoryOptimal: 'Tất cả mức tồn kho đều tối ưu.',
+            signatureCatalog: 'Danh Mục Đặc Trưng'
         }
     }
 };

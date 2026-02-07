@@ -10,10 +10,12 @@ import {
 import { useOrders } from '../composables/useOrders';
 import { useProducts } from '../composables/useProducts';
 import { useInventory } from '../composables/useInventory';
+import { useI18n } from '../composables/useI18n';
 
 const { orders, fetchOrders } = useOrders();
 const { products, fetchProducts } = useProducts();
 const { lowStockItems: inventoryLowStock } = useInventory();
+const { t } = useI18n();
 
 onMounted(async () => {
     try {
@@ -28,33 +30,33 @@ onMounted(async () => {
 
 const stats = computed(() => [
   {
-    title: "Total Revenue",
+    title: t('dashboard.totalRevenue'),
     value: `$${orders.value.reduce((sum, o) => sum + (o.status !== 'Cancelled' ? o.total : 0), 0).toLocaleString()}`,
-    change: `From ${orders.value.length} orders`,
+    change: t('dashboard.fromOrders').replace('{n}', orders.value.length.toString()),
     icon: DollarSign,
     color: "text-green-600",
     bgColor: "bg-green-100"
   },
   {
-    title: "Active Orders",
+    title: t('dashboard.activeOrders'),
     value: orders.value.filter(o => ['Pending', 'Baking', 'Ready'].includes(o.status)).length.toString(),
-    change: "Waiting for action",
+    change: t('dashboard.waitingAction'),
     icon: ShoppingCart,
     color: "text-blue-600",
     bgColor: "bg-blue-100"
   },
   {
-    title: "Total Products",
+    title: t('dashboard.totalProducts'),
     value: products.value.length.toString(),
-    change: "Active catalog",
+    change: t('dashboard.activeCatalog'),
     icon: Package,
     color: "text-purple-600",
     bgColor: "bg-purple-100"
   },
   {
-    title: "Low Stock Items",
+    title: t('dashboard.lowStockItems'),
     value: inventoryLowStock.value.length.toString(),
-    change: "Requiring attention",
+    change: t('dashboard.requiringAttention'),
     icon: AlertTriangle,
     color: "text-red-600",
     bgColor: "bg-red-100"
@@ -74,7 +76,7 @@ const lowStockDisplay = computed(() => {
   <div class="space-y-8 p-1 sm:p-2 bg-accent-cream">
     <!-- Sophisticated Welcome Banner -->
     <div class="relative rounded-3xl overflow-hidden shadow-2xl premium-shadow group">
-      <div class="absolute inset-0 bg-gradient-to-r from-bakery-900 to-bakery-700 opacity-90 group-hover:scale-105 transition-transform duration-1000"></div>
+      <div class="absolute inset-0 bg-linear-to-r from-bakery-900 to-bakery-700 opacity-90 group-hover:scale-105 transition-transform duration-1000"></div>
       <div class="absolute top-0 right-0 w-1/3 h-full overflow-hidden opacity-30">
           <img
             src="https://images.unsplash.com/photo-1679673987713-54f809ce417d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGJyZWFkJTIwYmFrZXJ5fGVufDF8fHx8MTc2MTk3NzQ4MXww&ixlib=rb-4.1.0&q=80&w=600"
@@ -86,16 +88,16 @@ const lowStockDisplay = computed(() => {
           <div class="text-center sm:text-left space-y-4">
             <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-bakery-500/20 border border-white/20 backdrop-blur-md">
               <Sparkles class="w-4 h-4 text-bakery-200" />
-              <span class="text-xs font-bold text-bakery-100 uppercase tracking-widest">Management Suite</span>
+              <span class="text-xs font-bold text-bakery-100 uppercase tracking-widest">{{ t('dashboard.managementSuite') }}</span>
             </div>
-            <h2 class="text-4xl sm:text-5xl font-black text-white leading-tight">Artisan Insights</h2>
-            <p class="text-bakery-100/80 text-lg max-w-md font-medium">Real-time performance metrics for your handcrafted bakery operations.</p>
+            <h2 class="text-4xl sm:text-5xl font-black text-white leading-tight">{{ t('dashboard.artisanInsights') }}</h2>
+            <p class="text-bakery-100/80 text-lg max-w-md font-medium">{{ t('dashboard.heroSubtitle') }}</p>
           </div>
           
           <div class="flex items-center gap-6">
               <div class="bg-white/10 backdrop-blur-md border border-white/10 p-6 rounded-3xl text-center min-w-[120px]">
-                  <p class="text-bakery-200 text-xs font-bold uppercase tracking-widest mb-1">Status</p>
-                  <p class="text-white font-black text-xl">Active</p>
+                  <p class="text-bakery-200 text-xs font-bold uppercase tracking-widest mb-1">{{ t('dashboard.status') }}</p>
+                  <p class="text-white font-black text-xl">{{ t('dashboard.active') }}</p>
               </div>
           </div>
       </div>
@@ -106,7 +108,7 @@ const lowStockDisplay = computed(() => {
       <div 
         v-for="(stat, index) in stats" 
         :key="index" 
-        class="glass-card p-8 rounded-[2.5rem] hover:scale-105 transition-all duration-500 group animate-in zoom-in duration-700"
+        class="glass-card p-8 rounded-[2.5rem] hover:scale-105 transition-all duration-500 group animate-in zoom-in"
         :style="{ animationDelay: `${index * 100}ms` }"
       >
         <div class="flex items-start justify-between mb-6">
@@ -127,10 +129,10 @@ const lowStockDisplay = computed(() => {
       <!-- Recent Orders with Live Status -->
       <div class="glass-card rounded-[2.5rem] border border-bakery-100 overflow-hidden">
         <div class="p-8 border-b border-bakery-50 flex items-center justify-between">
-          <h3 class="font-black text-bakery-900 text-xl tracking-tight">Active Orders</h3>
+          <h3 class="font-black text-bakery-900 text-xl tracking-tight">{{ t('dashboard.activeOrders') }}</h3>
           <div class="flex items-center gap-2">
               <div class="w-2 h-2 rounded-full bg-bakery-500 animate-pulse"></div>
-              <span class="text-[10px] font-black text-bakery-400 uppercase tracking-widest">Live Updates</span>
+              <span class="text-[10px] font-black text-bakery-400 uppercase tracking-widest">{{ t('dashboard.liveUpdates') }}</span>
           </div>
         </div>
         <div class="p-8 space-y-4">
@@ -153,7 +155,7 @@ const lowStockDisplay = computed(() => {
               </div>
               <div class="text-right">
                 <p class="text-lg font-black text-bakery-900">${{ order.total.toFixed(2) }}</p>
-                <p class="text-[10px] text-bakery-400 font-bold uppercase tracking-widest">{{ order.items.length }} items</p>
+                <p class="text-[10px] text-bakery-400 font-bold uppercase tracking-widest">{{ order.items.length }} {{ t('dashboard.items') }}</p>
               </div>
             </div>
         </div>
@@ -164,7 +166,7 @@ const lowStockDisplay = computed(() => {
         <div class="p-8 border-b border-bakery-50">
           <h3 class="font-black text-bakery-900 text-xl tracking-tight flex items-center gap-3">
             <AlertTriangle class="w-6 h-6 text-red-500" />
-            Inventory Alerts
+            {{ t('dashboard.inventoryAlerts') }}
           </h3>
         </div>
         <div class="p-8 space-y-6">
@@ -172,9 +174,9 @@ const lowStockDisplay = computed(() => {
               <div class="flex justify-between items-start mb-4">
                 <div>
                     <p class="text-bakery-900 font-black">{{ item.name }}</p>
-                    <p class="text-xs text-red-600 font-bold uppercase tracking-widest mt-1">Refill Recommended</p>
+                    <p class="text-xs text-red-600 font-bold uppercase tracking-widest mt-1">{{ t('dashboard.refillRecommended') }}</p>
                 </div>
-                <div class="px-3 py-1 rounded-full bg-red-600 text-white text-[10px] font-black uppercase tracking-widest">Critical</div>
+                <div class="px-3 py-1 rounded-full bg-red-600 text-white text-[10px] font-black uppercase tracking-widest">{{ t('dashboard.critical') }}</div>
               </div>
               <div class="space-y-3">
                   <div class="flex justify-between text-xs font-bold text-bakery-500">
@@ -193,7 +195,7 @@ const lowStockDisplay = computed(() => {
                 <div class="w-16 h-16 rounded-full bg-bakery-50 flex items-center justify-center">
                     <sparkles class="w-8 h-8 text-bakery-300" />
                 </div>
-                <p class="text-bakery-500 font-medium tracking-tight">All inventory levels are optimal.</p>
+                <p class="text-bakery-500 font-medium tracking-tight">{{ t('dashboard.inventoryOptimal') }}</p>
             </div>
         </div>
       </div>
@@ -202,7 +204,7 @@ const lowStockDisplay = computed(() => {
     <!-- Featured Products Modern Display -->
     <div class="glass-card rounded-[2.5rem] border border-bakery-100 overflow-hidden">
         <div class="p-8 border-b border-bakery-50">
-            <h3 class="font-black text-bakery-900 text-xl tracking-tight">Signature Catalog</h3>
+            <h3 class="font-black text-bakery-900 text-xl tracking-tight">{{ t('dashboard.signatureCatalog') }}</h3>
         </div>
         <div class="p-8">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -213,7 +215,7 @@ const lowStockDisplay = computed(() => {
                             :alt="product.name"
                             class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-1000"
                             />
-                        <div class="absolute inset-0 bg-gradient-to-t from-bakery-900/80 to-transparent p-6 flex flex-col justify-end">
+                        <div class="absolute inset-0 bg-linear-to-t from-bakery-900/80 to-transparent p-6 flex flex-col justify-end">
                             <span class="text-[10px] font-black text-bakery-200 uppercase tracking-widest mb-1">{{ product.category }}</span>
                             <h4 class="text-white font-bold">{{ product.name }}</h4>
                         </div>
