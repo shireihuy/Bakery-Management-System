@@ -8,8 +8,10 @@ import {
   X 
 } from 'lucide-vue-next';
 import { useProducts, type Product } from '../composables/useProducts';
+import { useI18n } from '../composables/useI18n';
 
 const { products, addProduct, updateProduct, deleteProduct, fetchProducts } = useProducts();
+const { t } = useI18n();
 
 import { onMounted } from 'vue';
 
@@ -137,13 +139,13 @@ const filteredProducts = computed(() => {
     <div class="rounded-xl border bg-card text-card-foreground shadow border-green-200 bg-white">
       <div class="p-6">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <h2 class="text-2xl font-bold tracking-tight text-green-900">Product Management</h2>
+          <h2 class="text-2xl font-bold tracking-tight text-green-900">{{ t('products.productManagement') }}</h2>
           <button 
             @click="() => { resetForm(); isDialogOpen = true; }"
             class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-md"
           >
             <Plus class="w-4 h-4 mr-2" />
-            Add Product
+            {{ t('products.addProduct') }}
           </button>
         </div>
 
@@ -151,7 +153,7 @@ const filteredProducts = computed(() => {
             <div class="relative flex-1">
               <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-green-500" />
               <input
-                placeholder="Search products..."
+                :placeholder="t('products.searchProducts')"
                 v-model="searchTerm"
                 class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 pl-10 border-green-200 focus:border-green-500 focus:ring-green-500"
               />
@@ -160,7 +162,7 @@ const filteredProducts = computed(() => {
                 v-model="filterCategory"
                 class="flex h-10 w-full md:w-48 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 border-green-200 focus:border-green-500 focus:ring-green-500"
             >
-              <option value="all">All Categories</option>
+              <option value="all">{{ t('products.allCategories') }}</option>
               <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
             </select>
         </div>
@@ -202,11 +204,11 @@ const filteredProducts = computed(() => {
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-sm">
                       <div class="col-span-2">
-                        <p class="text-green-600 text-xs">Price</p>
+                        <p class="text-green-600 text-xs">{{ t('products.price') }}</p>
                         <p class="text-green-900 font-medium">${{ product.price.toFixed(2) }}</p>
                       </div>
                       <div>
-                        <p class="text-green-600 text-xs">Stock</p>
+                        <p class="text-green-600 text-xs">{{ t('products.stock') }}</p>
                         <p class="text-green-900 font-medium">{{ product.stock }} {{ product.unit }}</p>
                       </div>
                       <!-- Cost and Margin hidden for now as they are not supported by the DB yet -->
@@ -216,7 +218,7 @@ const filteredProducts = computed(() => {
             </div>
         </div>
          <div v-if="filteredProducts.length === 0" class="text-center py-12 text-green-600 italic">
-            No products found. Try adjusting your filters.
+            {{ t('products.noProductsFound') }}
          </div>
       </div>
     </div>
@@ -226,8 +228,8 @@ const filteredProducts = computed(() => {
         <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-green-50/50">
                 <div>
-                     <h3 class="font-bold text-lg text-green-900">{{ editingProduct ? 'Edit Product' : 'Add New Product' }}</h3>
-                     <p class="text-sm text-green-600">{{ editingProduct ? 'Update product information' : 'Add a new product to your bakery' }}</p>
+                     <h3 class="font-bold text-lg text-green-900">{{ editingProduct ? t('products.editProduct') : t('products.addProduct') }}</h3>
+                     <p class="text-sm text-green-600">{{ editingProduct ? t('products.updateProduct') : t('products.addProduct') }}</p>
                 </div>
                 <button @click="isDialogOpen = false" class="text-gray-400 hover:text-green-600">
                     <X class="w-5 h-5" />
@@ -238,7 +240,7 @@ const filteredProducts = computed(() => {
                 <form @submit.prevent="handleSubmit" class="space-y-4">
                   <!-- ... rest of form ... -->
                   <div class="space-y-2">
-                    <label for="name" class="text-sm font-medium text-gray-700">Product Name</label>
+                    <label for="name" class="text-sm font-medium text-gray-700">{{ t('products.productName') }}</label>
                     <input
                       id="name"
                       v-model="formData.name"
@@ -247,7 +249,7 @@ const filteredProducts = computed(() => {
                     />
                   </div>
                   <div class="space-y-2">
-                    <label for="category" class="text-sm font-medium text-gray-700">Category</label>
+                    <label for="category" class="text-sm font-medium text-gray-700">{{ t('products.category') }}</label>
                     <select 
                         id="category"
                         v-model="formData.category"
@@ -261,7 +263,7 @@ const filteredProducts = computed(() => {
                     <input type="hidden" v-model="formData.cost" />
                     
                     <div class="space-y-2 col-span-2">
-                      <label for="price" class="text-sm font-medium text-gray-700">Price ($)</label>
+                      <label for="price" class="text-sm font-medium text-gray-700">{{ t('products.price') }} ($)</label>
                       <input
                         id="price"
                         type="number"
@@ -274,7 +276,7 @@ const filteredProducts = computed(() => {
                   </div>
                   <div class="grid grid-cols-2 gap-4">
                     <div class="space-y-2">
-                      <label for="stock" class="text-sm font-medium text-gray-700">Stock</label>
+                      <label for="stock" class="text-sm font-medium text-gray-700">{{ t('products.stock') }}</label>
                       <input
                         id="stock"
                         type="number"
@@ -284,7 +286,7 @@ const filteredProducts = computed(() => {
                       />
                     </div>
                     <div class="space-y-2">
-                      <label for="unit" class="text-sm font-medium text-gray-700">Unit</label>
+                      <label for="unit" class="text-sm font-medium text-gray-700">{{ t('products.unit') }}</label>
                       <select 
                         id="unit"
                         v-model="formData.unit"
@@ -295,7 +297,7 @@ const filteredProducts = computed(() => {
                     </div>
                   </div>
                   <div class="space-y-2">
-                    <label for="image" class="text-sm font-medium text-gray-700">Product Image</label>
+                    <label for="image" class="text-sm font-medium text-gray-700">{{ t('products.uploadImage') }}</label>
                     <div class="flex flex-col gap-3">
                         <div v-if="imagePreview" class="relative w-full h-40 rounded-lg overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
                             <img :src="imagePreview" class="w-full h-full object-contain" />
@@ -309,12 +311,12 @@ const filteredProducts = computed(() => {
                         <div v-else class="flex items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
                             <label class="flex flex-col items-center cursor-pointer">
                                 <Plus class="w-8 h-8 text-gray-400" />
-                                <span class="mt-2 text-sm text-gray-500">Upload product image</span>
+                                <span class="mt-2 text-sm text-gray-500">{{ t('products.uploadImage') }}</span>
                                 <input type="file" class="hidden" accept="image/*" @change="onFileChange" />
                             </label>
                         </div>
                         <div class="flex items-center gap-2">
-                            <span class="text-xs text-gray-500">Or use URL:</span>
+                            <span class="text-xs text-gray-500">{{ t('products.orUseUrl') }}:</span>
                             <input
                               id="image"
                               v-model="formData.image"
@@ -325,7 +327,7 @@ const filteredProducts = computed(() => {
                     </div>
                   </div>
                    <div class="space-y-2">
-                    <label for="description" class="text-sm font-medium text-gray-700">Description</label>
+                    <label for="description" class="text-sm font-medium text-gray-700">{{ t('products.description') }}</label>
                      <textarea
                       id="description"
                       v-model="formData.description"
@@ -337,7 +339,7 @@ const filteredProducts = computed(() => {
                    <input type="hidden" v-model="formData.ingredients" />
                    <input type="hidden" v-model="formData.allergens" />
                    <div class="space-y-2">
-                    <label for="rating" class="text-sm font-medium text-gray-700">Rating (0-5)</label>
+                    <label for="rating" class="text-sm font-medium text-gray-700">{{ t('products.rating') }} (0-5)</label>
                     <input
                       id="rating"
                       v-model="formData.rating"
@@ -353,7 +355,7 @@ const filteredProducts = computed(() => {
                     type="submit" 
                     class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-10 px-4 py-2 w-full bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg active:scale-[0.98]"
                   >
-                    {{ editingProduct ? 'Update Product' : 'Add Product' }}
+                    {{ editingProduct ? t('products.updateProduct') : t('products.addProduct') }}
                   </button>
                 </form>
             </div>

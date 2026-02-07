@@ -24,7 +24,9 @@ const {
     averageOrderValue,
     maxDailyRevenue
 } = useReports();
+import { useI18n } from '../composables/useI18n';
 
+const { t } = useI18n();
 const selectedRange = ref('Last 7 Days');
 
 const formatCurrency = (value: number) => {
@@ -80,9 +82,9 @@ const handleExport = () => {
             <div>
                 <h2 class="text-2xl font-bold text-green-900 flex items-center gap-3">
                     <BarChart3 class="w-7 h-7 text-green-600" />
-                    Analytics & Reports
+                    {{ t('reports.analyticsReports') }}
                 </h2>
-                <p class="text-sm text-green-600">Track your bakery's growth and performance</p>
+                <p class="text-sm text-green-600">{{ t('reports.trackGrowth') }}</p>
             </div>
             <div class="flex items-center gap-3">
                 <div class="relative bg-white border border-green-100 rounded-lg px-3 py-2 flex items-center gap-2 text-sm shadow-sm group hover:border-green-400 cursor-pointer transition-all">
@@ -95,7 +97,7 @@ const handleExport = () => {
                     class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all font-bold shadow-md"
                 >
                     <Download class="w-4 h-4" />
-                    Export CSV
+                    {{ t('reports.exportCsv') }}
                 </button>
             </div>
         </div>
@@ -107,11 +109,11 @@ const handleExport = () => {
                     <div class="p-2 bg-white/20 w-fit rounded-lg mb-4">
                         <DollarSign class="w-6 h-6" />
                     </div>
-                    <p class="text-green-50/80 font-medium text-sm">Total Revenue (Weekly)</p>
+                    <p class="text-green-50/80 font-medium text-sm">{{ t('reports.totalRevenueWeekly') }}</p>
                     <h3 class="text-3xl font-bold mt-1">{{ formatCurrency(totalWeeklyRevenue) }}</h3>
                     <div class="flex items-center gap-1 mt-4 text-sm font-medium bg-white/20 w-fit px-2 py-1 rounded-full">
                         <ArrowUpRight class="w-4 h-4" />
-                        +12.5% from last week
+                        +12.5% {{ t('reports.fromLastWeek') }}
                     </div>
                 </div>
                 <DollarSign class="absolute bottom-[-20px] right-[-20px] w-40 h-40 text-white/10 rotate-12 group-hover:rotate-45 transition-transform duration-700" />
@@ -121,11 +123,11 @@ const handleExport = () => {
                 <div class="p-2 bg-blue-50 w-fit rounded-lg mb-4 text-blue-600">
                     <ShoppingBag class="w-6 h-6" />
                 </div>
-                <p class="text-gray-500 font-medium text-sm">Total Orders</p>
+                <p class="text-gray-500 font-medium text-sm">{{ t('reports.totalWeeklyOrders') }}</p>
                 <h3 class="text-3xl font-bold mt-1 text-gray-900">{{ totalWeeklyOrders }}</h3>
                 <div class="flex items-center gap-1 mt-4 text-sm font-medium text-green-600">
                     <TrendingUp class="w-4 h-4" />
-                    +8.2% sales volume
+                    +8.2% {{ t('reports.salesVolume') }}
                 </div>
             </div>
 
@@ -133,11 +135,11 @@ const handleExport = () => {
                 <div class="p-2 bg-purple-50 w-fit rounded-lg mb-4 text-purple-600">
                     <Users class="w-6 h-6" />
                 </div>
-                <p class="text-gray-500 font-medium text-sm">Average Order Value</p>
+                <p class="text-gray-500 font-medium text-sm">{{ t('reports.averageOrderValue') }}</p>
                 <h3 class="text-3xl font-bold mt-1 text-gray-900">{{ formatCurrency(averageOrderValue) }}</h3>
                 <div class="flex items-center gap-1 mt-4 text-sm font-medium text-red-500">
                     <TrendingDown class="w-4 h-4" />
-                    -2.1% from average
+                    -2.1% {{ t('reports.fromAverage') }}
                 </div>
             </div>
         </div>
@@ -149,9 +151,9 @@ const handleExport = () => {
                 <div class="flex justify-between items-center mb-8">
                     <h3 class="font-bold text-gray-900 text-lg flex items-center gap-2">
                         <TrendingUp class="w-5 h-5 text-green-600" />
-                        Revenue Over Time
+                        {{ t('reports.revenueOverTime') }}
                     </h3>
-                    <span class="text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full uppercase tracking-wider">7-Day Analytics</span>
+                    <span class="text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full uppercase tracking-wider">{{ t('reports.sevenDayAnalytics') }}</span>
                 </div>
                 <div class="h-64 mb-8">
                     <svg class="w-full h-full" viewBox="0 0 400 230" preserveAspectRatio="none">
@@ -207,7 +209,7 @@ const handleExport = () => {
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="font-bold text-gray-900 text-lg flex items-center gap-2">
                         <PieChart class="w-5 h-5 text-green-600" />
-                        Category Distribution
+                        {{ t('reports.categoryDistribution') }}
                     </h3>
                 </div>
                 <div class="flex-1 flex items-center justify-around gap-8">
@@ -217,7 +219,7 @@ const handleExport = () => {
                         <div class="absolute w-full h-full rounded-full border-16 border-blue-400 border-r-transparent border-t-transparent border-b-transparent -rotate-12"></div>
                         <div class="text-center">
                             <span class="text-3xl font-black text-emerald-700">45%</span>
-                            <p class="text-[10px] font-bold text-gray-400 uppercase">Cakes</p>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase">{{ t('products.category') }}</p>
                         </div>
                     </div>
                     <div class="space-y-4 flex-1 max-w-[200px]">
@@ -242,18 +244,18 @@ const handleExport = () => {
         <!-- Best Selling Products Table -->
         <div class="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
             <div class="p-6 border-b border-gray-50 flex justify-between items-center">
-                <h3 class="font-bold text-gray-900 text-lg">Best Selling Products</h3>
-                <button class="text-green-700 font-bold text-sm hover:underline">View Detailed Rankings</button>
+                <h3 class="font-bold text-gray-900 text-lg">{{ t('reports.bestSellingProducts') }}</h3>
+                <button class="text-green-700 font-bold text-sm hover:underline">{{ t('reports.viewRankings') }}</button>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
                     <thead class="bg-green-50/50 text-green-900 font-bold border-b border-green-100">
                         <tr>
-                            <th class="px-6 py-4">Product Name</th>
-                            <th class="px-6 py-4">Total Sales</th>
-                            <th class="px-6 py-4">Total Revenue</th>
-                            <th class="px-6 py-4">Current Trend</th>
-                            <th class="px-6 py-4 text-right">Performance Score</th>
+                            <th class="px-6 py-4">{{ t('reports.productName') || t('products.productName') }}</th>
+                            <th class="px-6 py-4">{{ t('reports.totalSales') }}</th>
+                            <th class="px-6 py-4">{{ t('reports.totalRevenue') }}</th>
+                            <th class="px-6 py-4">{{ t('reports.currentTrend') }}</th>
+                            <th class="px-6 py-4 text-right">{{ t('reports.performanceScore') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">

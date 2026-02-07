@@ -12,8 +12,10 @@ import {
     X
 } from 'lucide-vue-next';
 import { useUsers, type User } from '../composables/useUsers';
+import { useI18n } from '../composables/useI18n';
 
 const { users, addUser, updateUser, deleteUser } = useUsers();
+const { t } = useI18n();
 
 const searchQuery = ref('');
 const roleFilter = ref('all');
@@ -129,15 +131,15 @@ const getRoleBadgeColor = (role: string) => {
         <!-- Header Actions -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <h2 class="text-2xl font-bold text-green-900">User Management</h2>
-                <p class="text-sm text-green-600">Manage staff accounts and customer profiles</p>
+                <h2 class="text-2xl font-bold text-green-900">{{ t('users.userManagement') }}</h2>
+                <p class="text-sm text-green-600">{{ t('users.manageStaff') }}</p>
             </div>
             <button 
                 @click="openAddModal"
-                class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 shadow-md transition-all active:scale-95"
+                class="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 shadow-md transition-all active:scale-95"
             >
                 <UserPlus class="w-4 h-4" />
-                Add New User
+                {{ t('users.addNewUser') }}
             </button>
         </div>
 
@@ -148,7 +150,7 @@ const getRoleBadgeColor = (role: string) => {
                 <input 
                     v-model="searchQuery"
                     type="text" 
-                    placeholder="Search by name or email..." 
+                    :placeholder="t('users.searchPlaceholder')" 
                     class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                 >
             </div>
@@ -158,7 +160,7 @@ const getRoleBadgeColor = (role: string) => {
                     v-model="roleFilter"
                     class="border border-gray-200 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                 >
-                    <option value="all">All Roles</option>
+                    <option value="all">{{ t('users.allRoles') }}</option>
                     <option value="Admin">Admin</option>
                     <option value="Manager">Manager</option>
                     <option value="Baker">Baker</option>
@@ -174,19 +176,19 @@ const getRoleBadgeColor = (role: string) => {
                 <table class="w-full text-left text-sm">
                     <thead class="bg-green-50/50 text-green-900 border-b border-green-100 font-medium">
                         <tr>
-                            <th class="px-6 py-4">User</th>
-                            <th class="px-6 py-4">Role</th>
-                            <th class="px-6 py-4">Status</th>
-                            <th class="px-6 py-4">Contact Info</th>
-                            <th class="px-6 py-4">Joined Date</th>
-                            <th class="px-6 py-4 text-right">Actions</th>
+                            <th class="px-6 py-4">{{ t('users.user') }}</th>
+                            <th class="px-6 py-4">{{ t('users.role') }}</th>
+                            <th class="px-6 py-4">{{ t('users.status') }}</th>
+                            <th class="px-6 py-4">{{ t('users.contactInfo') }}</th>
+                            <th class="px-6 py-4">{{ t('users.joinedDate') }}</th>
+                            <th class="px-6 py-4 text-right">{{ t('common.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <tr v-for="user in filteredUsers" :key="user.id" class="hover:bg-green-50/30 transition-colors group">
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center text-green-700 font-bold uppercase border border-green-200">
+                                    <div class="w-10 h-10 rounded-full bg-linear-to-br from-green-100 to-emerald-100 flex items-center justify-center text-green-700 font-bold uppercase border border-green-200">
                                         {{ user.name.charAt(0) }}
                                     </div>
                                     <div>
@@ -235,7 +237,7 @@ const getRoleBadgeColor = (role: string) => {
                                     <button 
                                         @click="handleDelete(user)"
                                         class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                        title="Delete User"
+                                        :title="t('common.delete')"
                                     >
                                         <Trash2 class="w-4 h-4" />
                                     </button>
@@ -244,7 +246,7 @@ const getRoleBadgeColor = (role: string) => {
                         </tr>
                         <tr v-if="filteredUsers.length === 0">
                             <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                                No users found matching your search.
+                                {{ t('users.noUsersFound') }}
                             </td>
                         </tr>
                     </tbody>
@@ -257,7 +259,7 @@ const getRoleBadgeColor = (role: string) => {
             <div class="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-green-100">
                 <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-green-50/30">
                     <h2 class="text-xl font-bold text-green-900">
-                        {{ editingUser ? 'Edit User' : 'Add New User' }}
+                        {{ editingUser ? t('users.editUser') : t('users.addNewUser') }}
                     </h2>
                     <button @click="isModalOpen = false" class="text-gray-400 hover:text-gray-600">
                         <X class="w-6 h-6" />
@@ -270,15 +272,15 @@ const getRoleBadgeColor = (role: string) => {
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="space-y-1">
-                            <label class="text-sm font-medium text-gray-700">Full Name</label>
+                            <label class="text-sm font-medium text-gray-700">{{ t('users.fullName') }}</label>
                             <input v-model="form.name" type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
                         </div>
                         <div class="space-y-1">
-                            <label class="text-sm font-medium text-gray-700">Email Address</label>
+                            <label class="text-sm font-medium text-gray-700">{{ t('users.email') }}</label>
                             <input v-model="form.email" type="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
                         </div>
                         <div class="space-y-1">
-                            <label class="text-sm font-medium text-gray-700">Role</label>
+                            <label class="text-sm font-medium text-gray-700">{{ t('users.role') }}</label>
                             <select 
                                 v-model="form.role" 
                                 :disabled="editingUser?.role === 'Admin'"
@@ -292,11 +294,11 @@ const getRoleBadgeColor = (role: string) => {
                             </select>
                         </div>
                         <div v-if="!editingUser" class="space-y-1">
-                            <label class="text-sm font-medium text-gray-700">Password</label>
+                            <label class="text-sm font-medium text-gray-700">{{ t('users.password') }}</label>
                             <input v-model="form.password" type="password" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
                         </div>
                         <div class="space-y-1">
-                            <label class="text-sm font-medium text-gray-700">Status</label>
+                            <label class="text-sm font-medium text-gray-700">{{ t('users.status') }}</label>
                             <select v-model="form.status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white">
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
@@ -305,22 +307,22 @@ const getRoleBadgeColor = (role: string) => {
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-sm font-medium text-gray-700">Phone (Optional)</label>
+                        <label class="text-sm font-medium text-gray-700">{{ t('users.phone') }}</label>
                         <input v-model="form.phone" type="tel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
                     </div>
 
                     <div class="space-y-1">
-                        <label class="text-sm font-medium text-gray-700">Address (Optional)</label>
+                        <label class="text-sm font-medium text-gray-700">{{ t('users.address') }}</label>
                         <textarea v-model="form.address" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none resize-none"></textarea>
                     </div>
 
                     <div class="flex justify-end gap-3 pt-4">
                         <button type="button" @click="isModalOpen = false" :disabled="isSubmitting" class="px-4 py-2 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 cursor-pointer">
-                            Cancel
+                            {{ t('common.cancel') }}
                         </button>
                         <button type="submit" :disabled="isSubmitting" class="px-6 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2">
                             <span v-if="isSubmitting" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                            {{ editingUser ? (isSubmitting ? 'Updating...' : 'Update User') : (isSubmitting ? 'Creating...' : 'Create User') }}
+                            {{ editingUser ? (isSubmitting ? t('users.updating') : t('users.editUser')) : (isSubmitting ? t('users.creating') : t('users.addNewUser')) }}
                         </button>
                     </div>
                 </form>
@@ -334,7 +336,7 @@ const getRoleBadgeColor = (role: string) => {
             <div class="p-6 border-b border-red-100 bg-red-50">
                 <h3 class="text-xl font-bold text-red-900 flex items-center gap-2">
                     <Trash2 class="w-5 h-5" />
-                    Confirm Account Deletion
+                    {{ t('users.confirmDeletion') }}
                 </h3>
             </div>
             
@@ -346,7 +348,7 @@ const getRoleBadgeColor = (role: string) => {
                 </div>
 
                 <p class="text-sm text-red-600 font-medium">
-                    Warning: This action cannot be undone. All data associated with this user will be permanently removed.
+                    {{ t('users.deleteWarning') }}
                 </p>
 
                 <label class="flex items-start gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
@@ -356,7 +358,7 @@ const getRoleBadgeColor = (role: string) => {
                         class="mt-1 w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
                     >
                     <span class="text-sm text-gray-700 select-none">
-                        I confirm that I understand this action is <strong>permanent</strong> and I want to proceed.
+                        {{ t('users.understandPermanent') }}
                     </span>
                 </label>
             </div>
@@ -366,14 +368,14 @@ const getRoleBadgeColor = (role: string) => {
                     @click="isDeleteModalOpen = false"
                     class="px-4 py-2 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                    Cancel
+                    {{ t('common.cancel') }}
                 </button>
                 <button 
                     @click="confirmDelete"
                     :disabled="!confirmDeleteCheckbox"
                     class="px-6 py-2 bg-red-600 text-white font-bold rounded-lg shadow-md hover:bg-red-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale active:scale-95"
                 >
-                    Delete Permanently
+                    {{ t('users.deletePermanently') }}
                 </button>
             </div>
         </div>

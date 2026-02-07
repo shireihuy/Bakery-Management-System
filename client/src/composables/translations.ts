@@ -103,6 +103,107 @@ export interface TranslationSchema {
         inventoryOptimal: string;
         signatureCatalog: string;
     };
+    orders: {
+        totalOrders: string;
+        pending: string;
+        processing: string;
+        searchPlaceholder: string;
+        allStatus: string;
+        orderId: string;
+        customer: string;
+        date: string;
+        items: string;
+        total: string;
+        status: string;
+        actions: string;
+        noOrdersFound: string;
+        viewDetails: string;
+        orderDetails: string;
+        placedOn: string;
+        updateStatus: string;
+        startBaking: string;
+        markReady: string;
+        markCompleted: string;
+        cancelOrder: string;
+        orderFulfilled: string;
+        orderCancelled: string;
+        customerDetails: string;
+        name: string;
+        email: string;
+        phone: string;
+        address: string;
+        orderTimeline: string;
+        orderItems: string;
+        product: string;
+        qty: string;
+        price: string;
+        subtotal: string;
+        notes: string;
+    };
+    products: {
+        productManagement: string;
+        addProduct: string;
+        editProduct: string;
+        updateProduct: string;
+        searchProducts: string;
+        allCategories: string;
+        noProductsFound: string;
+        price: string;
+        stock: string;
+        productName: string;
+        category: string;
+        unit: string;
+        description: string;
+        rating: string;
+        uploadImage: string;
+        orUseUrl: string;
+    };
+    reports: {
+        analyticsReports: string;
+        trackGrowth: string;
+        exportCsv: string;
+        totalRevenueWeekly: string;
+        totalWeeklyOrders: string;
+        averageOrderValue: string;
+        fromLastWeek: string;
+        salesVolume: string;
+        fromAverage: string;
+        revenueOverTime: string;
+        sevenDayAnalytics: string;
+        categoryDistribution: string;
+        bestSellingProducts: string;
+        totalSales: string;
+        totalRevenue: string;
+        currentTrend: string;
+        performanceScore: string;
+        viewRankings: string;
+    };
+    users: {
+        userManagement: string;
+        manageStaff: string;
+        addNewUser: string;
+        editUser: string;
+        searchPlaceholder: string;
+        allRoles: string;
+        user: string;
+        role: string;
+        status: string;
+        contactInfo: string;
+        joinedDate: string;
+        noUsersFound: string;
+        fullName: string;
+        email: string;
+        password: string;
+        phone: string;
+        address: string;
+        createUser: string;
+        updating: string;
+        creating: string;
+        confirmDeletion: string;
+        deleteWarning: string;
+        understandPermanent: string;
+        deletePermanently: string;
+    };
 }
 
 export const defaultTranslations: Record<Language, TranslationSchema> = {
@@ -208,6 +309,107 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             critical: 'Critical',
             inventoryOptimal: 'All inventory levels are optimal.',
             signatureCatalog: 'Signature Catalog'
+        },
+        orders: {
+            totalOrders: 'Total Orders',
+            pending: 'Pending',
+            processing: 'Processing',
+            searchPlaceholder: 'Search #ID or customer...',
+            allStatus: 'All Status',
+            orderId: 'Order ID',
+            customer: 'Customer',
+            date: 'Date',
+            items: 'Items',
+            total: 'Total',
+            status: 'Status',
+            actions: 'Actions',
+            noOrdersFound: 'No orders found matching your criteria',
+            viewDetails: 'View Details',
+            orderDetails: 'Order Details',
+            placedOn: 'Placed on',
+            updateStatus: 'Update Status',
+            startBaking: 'Start Baking',
+            markReady: 'Mark Ready',
+            markCompleted: 'Mark Completed',
+            cancelOrder: 'Cancel Order',
+            orderFulfilled: 'Order Fulfilled',
+            orderCancelled: 'Order Cancelled',
+            customerDetails: 'Customer Details',
+            name: 'Name',
+            email: 'Email',
+            phone: 'Phone',
+            address: 'Address',
+            orderTimeline: 'Order Timeline',
+            orderItems: 'Order Items',
+            product: 'Product',
+            qty: 'Qty',
+            price: 'Price',
+            subtotal: 'Subtotal',
+            notes: 'Notes'
+        },
+        products: {
+            productManagement: 'Product Management',
+            addProduct: 'Add Product',
+            editProduct: 'Edit Product',
+            updateProduct: 'Update Product',
+            searchProducts: 'Search products...',
+            allCategories: 'All Categories',
+            noProductsFound: 'No products found. Try adjusting your filters.',
+            price: 'Price',
+            stock: 'Stock',
+            productName: 'Product Name',
+            category: 'Category',
+            unit: 'Unit',
+            description: 'Description',
+            rating: 'Rating',
+            uploadImage: 'Upload product image',
+            orUseUrl: 'Or use URL'
+        },
+        reports: {
+            analyticsReports: 'Analytics & Reports',
+            trackGrowth: "Track your bakery's growth and performance",
+            exportCsv: 'Export CSV',
+            totalRevenueWeekly: 'Total Revenue (Weekly)',
+            totalWeeklyOrders: 'Total Weekly Orders',
+            averageOrderValue: 'Average Order Value',
+            fromLastWeek: 'from last week',
+            salesVolume: 'sales volume',
+            fromAverage: 'from average',
+            revenueOverTime: 'Revenue Over Time',
+            sevenDayAnalytics: '7-Day Analytics',
+            categoryDistribution: 'Category Distribution',
+            bestSellingProducts: 'Best Selling Products',
+            totalSales: 'Total Sales',
+            totalRevenue: 'Total Revenue',
+            currentTrend: 'Current Trend',
+            performanceScore: 'Performance Score',
+            viewRankings: 'View Detailed Rankings'
+        },
+        users: {
+            userManagement: 'User Management',
+            manageStaff: 'Manage staff accounts and customer profiles',
+            addNewUser: 'Add New User',
+            editUser: 'Edit User',
+            searchPlaceholder: 'Search by name or email...',
+            allRoles: 'All Roles',
+            user: 'User',
+            role: 'Role',
+            status: 'Status',
+            contactInfo: 'Contact Info',
+            joinedDate: 'Joined Date',
+            noUsersFound: 'No users found matching your search.',
+            fullName: 'Full Name',
+            email: 'Email Address',
+            password: 'Password',
+            phone: 'Phone (Optional)',
+            address: 'Address (Optional)',
+            createUser: 'Create User',
+            updating: 'Updating...',
+            creating: 'Creating...',
+            confirmDeletion: 'Confirm Account Deletion',
+            deleteWarning: 'Warning: This action cannot be undone. All data associated with this user will be permanently removed.',
+            understandPermanent: 'I confirm that I understand this action is permanent and I want to proceed.',
+            deletePermanently: 'Delete Permanently'
         }
     },
     jp: {
@@ -312,6 +514,107 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             critical: '重要',
             inventoryOptimal: 'すべての在庫レベルは最適です。',
             signatureCatalog: 'シグネチャーカタログ'
+        },
+        orders: {
+            totalOrders: '注文総数',
+            pending: '保留中',
+            processing: '処理中',
+            searchPlaceholder: '注文番号または顧客名で検索...',
+            allStatus: 'すべてのステータス',
+            orderId: '注文番号',
+            customer: '顧客',
+            date: '日付',
+            items: '品目',
+            total: '合計',
+            status: 'ステータス',
+            actions: 'アクション',
+            noOrdersFound: '条件に一致する注文は見つかりませんでした',
+            viewDetails: '詳細を表示',
+            orderDetails: '注文詳細',
+            placedOn: '注文日',
+            updateStatus: 'ステータスを更新',
+            startBaking: '調理開始',
+            markReady: '準備完了',
+            markCompleted: '完了にする',
+            cancelOrder: '注文をキャンセル',
+            orderFulfilled: '注文完了',
+            orderCancelled: 'キャンセル済み',
+            customerDetails: '顧客詳細',
+            name: '名前',
+            email: 'メールアドレス',
+            phone: '電話番号',
+            address: '住所',
+            orderTimeline: '注文タイムライン',
+            orderItems: '注文品目',
+            product: '商品',
+            qty: '数量',
+            price: '単価',
+            subtotal: '小計',
+            notes: '備考'
+        },
+        products: {
+            productManagement: '商品管理',
+            addProduct: '商品を追加',
+            editProduct: '商品を編集',
+            updateProduct: '商品を更新',
+            searchProducts: '商品を検索...',
+            allCategories: 'すべてのカテゴリー',
+            noProductsFound: '商品が見つかりませんでした。フィルターを調整してください。',
+            price: '価格',
+            stock: '在庫',
+            productName: '商品名',
+            category: 'カテゴリー',
+            unit: '単位',
+            description: '説明',
+            rating: '評価',
+            uploadImage: '画像をアップロード',
+            orUseUrl: 'またはURLを使用'
+        },
+        reports: {
+            analyticsReports: '分析とレポート',
+            trackGrowth: 'ベーカリーの成長とパフォーマンスを追跡',
+            exportCsv: 'CSVをエクスポート',
+            totalRevenueWeekly: '週次総収益',
+            totalWeeklyOrders: '週次注文総数',
+            averageOrderValue: '平均注文金額',
+            fromLastWeek: '先週比',
+            salesVolume: '販売量',
+            fromAverage: '平均比',
+            revenueOverTime: '収益の推移',
+            sevenDayAnalytics: '7日間の分析',
+            categoryDistribution: 'カテゴリー分布',
+            bestSellingProducts: '売筋商品',
+            totalSales: '総販売数',
+            totalRevenue: '総収益',
+            currentTrend: '現在のトレンド',
+            performanceScore: 'パフォーマンススコア',
+            viewRankings: '詳細ランキングを表示'
+        },
+        users: {
+            userManagement: 'ユーザー管理',
+            manageStaff: 'スタッフアカウントと顧客プロフィールを管理',
+            addNewUser: '新規ユーザーを追加',
+            editUser: 'ユーザーを編集',
+            searchPlaceholder: '名前またはメールアドレスで検索...',
+            allRoles: 'すべての役割',
+            user: 'ユーザー',
+            role: '役割',
+            status: 'ステータス',
+            contactInfo: '連絡先情報',
+            joinedDate: '登録日',
+            noUsersFound: '検索条件に一致するユーザーは見つかりませんでした。',
+            fullName: 'フルネーム',
+            email: 'メールアドレス',
+            password: 'パスワード',
+            phone: '電話番号（任意）',
+            address: '住所（任意）',
+            createUser: 'ユーザーを作成',
+            updating: '更新中...',
+            creating: '作成中...',
+            confirmDeletion: 'アカウント削除の確認',
+            deleteWarning: '警告：この操作は取り消せません。このユーザーに関連するすべてのデータが完全に削除されます。',
+            understandPermanent: 'この操作が永続的であることを理解し、続行することを確認します。',
+            deletePermanently: '完全に削除する'
         }
     },
     vn: {
@@ -416,6 +719,107 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             critical: 'Nguy cấp',
             inventoryOptimal: 'Tất cả mức tồn kho đều tối ưu.',
             signatureCatalog: 'Danh Mục Đặc Trưng'
+        },
+        orders: {
+            totalOrders: 'Tổng Đơn Hàng',
+            pending: 'Chờ xử lý',
+            processing: 'Đang nấu',
+            searchPlaceholder: 'Tìm mã đơn hoặc khách hàng...',
+            allStatus: 'Tất cả trạng thái',
+            orderId: 'Mã đơn hàng',
+            customer: 'Khách hàng',
+            date: 'Ngày đặt',
+            items: 'Sản phẩm',
+            total: 'Tổng cộng',
+            status: 'Trạng thái',
+            actions: 'Thao tác',
+            noOrdersFound: 'Không tìm thấy đơn hàng nào phù hợp',
+            viewDetails: 'Xem chi tiết',
+            orderDetails: 'Chi tiết đơn hàng',
+            placedOn: 'Đặt lúc',
+            updateStatus: 'Cập nhật trạng thái',
+            startBaking: 'Bắt đầu làm',
+            markReady: 'Đã xong',
+            markCompleted: 'Hoàn thành',
+            cancelOrder: 'Hủy đơn hàng',
+            orderFulfilled: 'Đã giao hàng',
+            orderCancelled: 'Đã hủy đơn',
+            customerDetails: 'Thông tin khách hàng',
+            name: 'Họ tên',
+            email: 'Email',
+            phone: 'Số điện thoại',
+            address: 'Địa chỉ',
+            orderTimeline: 'Lịch sử đơn hàng',
+            orderItems: 'Sản phẩm đã đặt',
+            product: 'Sản phẩm',
+            qty: 'SL',
+            price: 'Giá',
+            subtotal: 'Thành tiền',
+            notes: 'Ghi chú'
+        },
+        products: {
+            productManagement: 'Quản Lý Sản Phẩm',
+            addProduct: 'Thêm sản phẩm',
+            editProduct: 'Sửa sản phẩm',
+            updateProduct: 'Cập nhật sản phẩm',
+            searchProducts: 'Tìm kiếm sản phẩm...',
+            allCategories: 'Tất cả danh mục',
+            noProductsFound: 'Không tìm thấy sản phẩm. Hãy thử điều chỉnh bộ lọc.',
+            price: 'Giá bán',
+            stock: 'Kho hàng',
+            productName: 'Tên sản phẩm',
+            category: 'Danh mục',
+            unit: 'Đơn vị',
+            description: 'Mô tả',
+            rating: 'Đánh giá',
+            uploadImage: 'Tải ảnh sản phẩm',
+            orUseUrl: 'Hoặc dùng URL'
+        },
+        reports: {
+            analyticsReports: 'Phân Tích & Báo Cáo',
+            trackGrowth: 'Theo dõi sự tăng trưởng và hiệu suất của cửa hàng',
+            exportCsv: 'Xuất file CSV',
+            totalRevenueWeekly: 'Doanh Thu Hàng Tuần',
+            totalWeeklyOrders: 'Tổng Đơn Hàng Tuần',
+            averageOrderValue: 'Giá Trị Đơn Trung Bình',
+            fromLastWeek: 'so với tuần trước',
+            salesVolume: 'lượng đơn hàng',
+            fromAverage: 'so với trung bình',
+            revenueOverTime: 'Doanh Thu Theo Thời Gian',
+            sevenDayAnalytics: 'Phân tích 7 ngày',
+            categoryDistribution: 'Phân Bổ Theo Danh Mục',
+            bestSellingProducts: 'Sản Phẩm Bán Chạy',
+            totalSales: 'Tổng Đã Bán',
+            totalRevenue: 'Tổng Doanh Thu',
+            currentTrend: 'Xu hướng',
+            performanceScore: 'Điểm Hiệu Suất',
+            viewRankings: 'Xem bảng xếp hạng chi tiết'
+        },
+        users: {
+            userManagement: 'Quản Lý Người Dùng',
+            manageStaff: 'Quản lý tài khoản nhân viên và hồ sơ khách hàng',
+            addNewUser: 'Thêm người dùng mới',
+            editUser: 'Sửa người dùng',
+            searchPlaceholder: 'Tìm theo tên hoặc email...',
+            allRoles: 'Tất cả vai trò',
+            user: 'Người dùng',
+            role: 'Vai trò',
+            status: 'Trạng thái',
+            contactInfo: 'Thông tin liên hệ',
+            joinedDate: 'Ngày tham gia',
+            noUsersFound: 'Không tìm thấy người dùng nào phù hợp.',
+            fullName: 'Họ và tên',
+            email: 'Địa chỉ Email',
+            password: 'Mật khẩu',
+            phone: 'Số điện thoại (tùy chọn)',
+            address: 'Địa chỉ (tùy chọn)',
+            createUser: 'Tạo người dùng',
+            updating: 'Đang cập nhật...',
+            creating: 'Đang tạo...',
+            confirmDeletion: 'Xác Nhận Xóa Tài Khoản',
+            deleteWarning: 'Cảnh báo: Hành động này không thể hoàn tác. Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn.',
+            understandPermanent: 'Tôi xác nhận rằng mình hiểu hành động này là vĩnh viễn và muốn tiếp tục.',
+            deletePermanently: 'Xóa vĩnh viễn'
         }
     }
 };

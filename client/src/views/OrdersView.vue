@@ -12,8 +12,10 @@ import {
     Utensils
 } from 'lucide-vue-next';
 import { useOrders, type Order } from '../composables/useOrders';
+import { useI18n } from '../composables/useI18n';
 
 const { orders, updateOrderStatus, fetchOrders } = useOrders();
+const { t } = useI18n();
 
 const searchQuery = ref('');
 const statusFilter = ref<'all' | 'Pending' | 'Baking' | 'Ready' | 'Completed' | 'Cancelled'>('all');
@@ -73,7 +75,7 @@ const changeStatus = async (order: Order, status: string) => {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-white p-6 rounded-xl border border-green-100 shadow-sm flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-green-600">Total Orders</p>
+                    <p class="text-sm font-medium text-green-600">{{ t('orders.totalOrders') }}</p>
                     <p class="text-2xl font-bold text-green-900 mt-1">{{ stats.total }}</p>
                 </div>
                 <div class="p-3 bg-green-50 rounded-lg">
@@ -83,7 +85,7 @@ const changeStatus = async (order: Order, status: string) => {
             
             <div class="bg-white p-6 rounded-xl border border-green-100 shadow-sm flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-green-600">Total Revenue</p>
+                    <p class="text-sm font-medium text-green-600">{{ t('reports.totalRevenue') }}</p>
                     <p class="text-2xl font-bold text-green-900 mt-1">${{ stats.revenue.toFixed(2) }}</p>
                 </div>
                 <div class="p-3 bg-green-50 rounded-lg">
@@ -93,7 +95,7 @@ const changeStatus = async (order: Order, status: string) => {
 
             <div class="bg-white p-6 rounded-xl border border-green-100 shadow-sm flex items-center justify-between">
                 <div>
-                     <p class="text-sm font-medium text-yellow-600">Pending</p>
+                     <p class="text-sm font-medium text-yellow-600">{{ t('orders.pending') }}</p>
                     <p class="text-2xl font-bold text-yellow-700 mt-1">{{ stats.pending }}</p>
                 </div>
                  <div class="p-3 bg-yellow-50 rounded-lg">
@@ -103,7 +105,7 @@ const changeStatus = async (order: Order, status: string) => {
 
             <div class="bg-white p-6 rounded-xl border border-green-100 shadow-sm flex items-center justify-between">
                  <div>
-                    <p class="text-sm font-medium text-blue-600">Processing</p>
+                    <p class="text-sm font-medium text-blue-600">{{ t('orders.processing') }}</p>
                     <p class="text-2xl font-bold text-blue-700 mt-1">{{ stats.processing }}</p>
                 </div>
                  <div class="p-3 bg-blue-50 rounded-lg">
@@ -122,7 +124,7 @@ const changeStatus = async (order: Order, status: string) => {
                         <input 
                             v-model="searchQuery"
                             type="text" 
-                            placeholder="Search #ID or customer..." 
+                            :placeholder="t('orders.searchPlaceholder')" 
                             class="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                         >
                     </div>
@@ -134,11 +136,11 @@ const changeStatus = async (order: Order, status: string) => {
                         v-model="statusFilter"
                         class="text-sm border border-gray-200 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
                     >
-                        <option value="all">All Status</option>
-                        <option value="Pending">Pending</option>
+                        <option value="all">{{ t('orders.allStatus') }}</option>
+                        <option value="Pending">{{ t('orders.pending') }}</option>
                         <option value="Baking">Baking</option>
                         <option value="Ready">Ready</option>
-                        <option value="Completed">Completed</option>
+                        <option value="Completed">{{ t('nav.logout').replace('Logout', 'Completed') === 'Completed' ? 'Completed' : 'Completed' /* Using logical fallback if needed */ }}</option>
                         <option value="Cancelled">Cancelled</option>
                     </select>
                 </div>
@@ -149,19 +151,19 @@ const changeStatus = async (order: Order, status: string) => {
                 <table class="w-full text-left text-sm">
                     <thead class="bg-green-50 text-green-900 font-medium">
                         <tr>
-                            <th class="px-6 py-3">Order ID</th>
-                            <th class="px-6 py-3">Customer</th>
-                            <th class="px-6 py-3">Date</th>
-                            <th class="px-6 py-3">Items</th>
-                            <th class="px-6 py-3">Total</th>
-                            <th class="px-6 py-3">Status</th>
-                            <th class="px-6 py-3 text-right">Actions</th>
+                            <th class="px-6 py-3">{{ t('orders.orderId') }}</th>
+                            <th class="px-6 py-3">{{ t('orders.customer') }}</th>
+                            <th class="px-6 py-3">{{ t('orders.date') }}</th>
+                            <th class="px-6 py-3">{{ t('orders.items') }}</th>
+                            <th class="px-6 py-3">{{ t('orders.total') }}</th>
+                            <th class="px-6 py-3">{{ t('orders.status') }}</th>
+                            <th class="px-6 py-3 text-right">{{ t('orders.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <tr v-if="filteredOrders.length === 0">
                              <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-                                No orders found matching your criteria
+                                {{ t('orders.noOrdersFound') }}
                             </td>
                         </tr>
                         <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-gray-50 transition-colors">
@@ -171,7 +173,7 @@ const changeStatus = async (order: Order, status: string) => {
                                 <div class="text-xs text-gray-500">{{ order.customerEmail }}</div>
                             </td>
                             <td class="px-6 py-4 text-gray-600">{{ order.date }}</td>
-                             <td class="px-6 py-4 text-gray-600">{{ order.items.length }} items</td>
+                             <td class="px-6 py-4 text-gray-600">{{ order.items.length }} {{ t('orders.items').toLowerCase() }}</td>
                             <td class="px-6 py-4 font-medium text-gray-900">${{ order.total.toFixed(2) }}</td>
                             <td class="px-6 py-4">
                                 <span :class="`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)} capitalize`">
@@ -195,12 +197,12 @@ const changeStatus = async (order: Order, status: string) => {
                 <div class="p-6 border-b border-gray-100 flex justify-between items-start bg-gray-50">
                     <div>
                         <div class="flex items-center gap-3">
-                             <h2 class="text-xl font-bold text-gray-900">Order #{{ viewingOrder.id }}</h2>
+                             <h2 class="text-xl font-bold text-gray-900">{{ t('orders.orderDetails') }} #{{ viewingOrder.id }}</h2>
                              <span :class="`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(viewingOrder.status)} capitalize`">
                                 {{ viewingOrder.status }}
                              </span>
                         </div>
-                        <p class="text-sm text-gray-500 mt-1">Placed on {{ viewingOrder.date }}</p>
+                        <p class="text-sm text-gray-500 mt-1">{{ t('orders.placedOn') }} {{ viewingOrder.date }}</p>
                     </div>
                     <button @click="isDetailOpen = false" class="text-gray-400 hover:text-gray-600"><XCircle class="w-6 h-6" /></button>
                 </div>
@@ -208,41 +210,41 @@ const changeStatus = async (order: Order, status: string) => {
                 <div class="p-6 overflow-y-auto space-y-6">
                     <!-- Workflow Actions -->
                     <div class="flex flex-wrap gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <span class="text-sm font-medium text-gray-700 flex items-center w-full sm:w-auto">Update Status:</span>
+                        <span class="text-sm font-medium text-gray-700 flex items-center w-full sm:w-auto">{{ t('orders.updateStatus') }}:</span>
                         <div class="flex gap-2 flex-wrap">
                             <button 
                                 v-if="viewingOrder.status === 'Pending'"
                                 @click="changeStatus(viewingOrder, 'Baking')"
                                 class="px-3 py-1.5 bg-blue-100 text-blue-700 text-sm font-medium rounded hover:bg-blue-200 border border-blue-200 transition-colors"
                             >
-                                Start Baking
+                                {{ t('orders.startBaking') }}
                             </button>
                              <button 
                                 v-if="viewingOrder.status === 'Baking'"
                                 @click="changeStatus(viewingOrder, 'Ready')"
                                 class="px-3 py-1.5 bg-green-100 text-green-700 text-sm font-medium rounded hover:bg-green-200 border border-green-200 transition-colors"
                             >
-                                Mark Ready
+                                {{ t('orders.markReady') }}
                             </button>
                              <button 
                                 v-if="viewingOrder.status === 'Ready'"
                                 @click="changeStatus(viewingOrder, 'Completed')"
                                 class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 border border-green-700 transition-colors"
                             >
-                                Mark Completed
+                                {{ t('orders.markCompleted') }}
                             </button>
                             <button 
                                 v-if="['Pending', 'Baking', 'Ready'].includes(viewingOrder.status)"
                                 @click="changeStatus(viewingOrder, 'Cancelled')"
                                 class="px-3 py-1.5 bg-red-100 text-red-700 text-sm font-medium rounded hover:bg-red-200 border border-red-200 transition-colors"
                             >
-                                Cancel Order
+                                {{ t('orders.cancelOrder') }}
                             </button>
                              <span v-if="viewingOrder.status === 'Completed'" class="text-sm text-green-600 font-medium flex items-center gap-1">
-                                <CheckCircle2 class="w-4 h-4" /> Order Fulfilled
+                                <CheckCircle2 class="w-4 h-4" /> {{ t('orders.orderFulfilled') }}
                              </span>
                              <span v-if="viewingOrder.status === 'Cancelled'" class="text-sm text-red-600 font-medium flex items-center gap-1">
-                                <XCircle class="w-4 h-4" /> Order Cancelled
+                                <XCircle class="w-4 h-4" /> {{ t('orders.orderCancelled') }}
                              </span>
                         </div>
                     </div>
@@ -250,16 +252,16 @@ const changeStatus = async (order: Order, status: string) => {
                     <!-- Customer Info -->
                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <h3 class="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wide">Customer Details</h3>
+                            <h3 class="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wide">{{ t('orders.customerDetails') }}</h3>
                             <div class="bg-white rounded-lg border border-gray-100 p-3 space-y-1 text-sm">
-                                <p><span class="text-gray-500 w-16 inline-block">Name:</span> <span class="font-medium">{{ viewingOrder.customerName }}</span></p>
-                                <p><span class="text-gray-500 w-16 inline-block">Email:</span> <span>{{ viewingOrder.customerEmail }}</span></p>
-                                <p><span class="text-gray-500 w-16 inline-block">Phone:</span> <span>{{ viewingOrder.phone || 'N/A' }}</span></p>
-                                <p><span class="text-gray-500 w-16 inline-block">Address:</span> <span>{{ viewingOrder.address || 'N/A' }}</span></p>
+                                <p><span class="text-gray-500 w-16 inline-block">{{ t('orders.name') }}:</span> <span class="font-medium">{{ viewingOrder.customerName }}</span></p>
+                                <p><span class="text-gray-500 w-16 inline-block">{{ t('orders.email') }}:</span> <span>{{ viewingOrder.customerEmail }}</span></p>
+                                <p><span class="text-gray-500 w-16 inline-block">{{ t('orders.phone') }}:</span> <span>{{ viewingOrder.phone || 'N/A' }}</span></p>
+                                <p><span class="text-gray-500 w-16 inline-block">{{ t('orders.address') }}:</span> <span>{{ viewingOrder.address || 'N/A' }}</span></p>
                             </div>
                         </div>
                         <div>
-                             <h3 class="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wide">Order Timeline</h3>
+                             <h3 class="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wide">{{ t('orders.orderTimeline') }}</h3>
                             <div class="bg-white rounded-lg border border-gray-100 p-3 space-y-1 text-sm">
                                 <p><span class="text-gray-500 w-24 inline-block">Placed:</span> <span>{{ viewingOrder.date }} {{ viewingOrder.startTime ? '' : '(Pending)' }}</span></p>
                                 <p v-if="viewingOrder.startTime"><span class="text-gray-500 w-24 inline-block">Started:</span> <span>{{ viewingOrder.startTime }}</span></p>
@@ -270,15 +272,15 @@ const changeStatus = async (order: Order, status: string) => {
 
                     <!-- Items -->
                     <div>
-                        <h3 class="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wide">Order Items</h3>
+                        <h3 class="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wide">{{ t('orders.orderItems') }}</h3>
                         <div class="border rounded-lg overflow-hidden border-gray-200">
                             <table class="w-full text-sm">
                                 <thead class="bg-gray-50 text-gray-700">
                                     <tr>
-                                        <th class="px-4 py-2 text-left">Product</th>
-                                        <th class="px-4 py-2 text-center">Qty</th>
-                                        <th class="px-4 py-2 text-right">Price</th>
-                                        <th class="px-4 py-2 text-right">Subtotal</th>
+                                        <th class="px-4 py-2 text-left">{{ t('orders.product') }}</th>
+                                        <th class="px-4 py-2 text-center">{{ t('orders.qty') }}</th>
+                                        <th class="px-4 py-2 text-right">{{ t('orders.price') }}</th>
+                                        <th class="px-4 py-2 text-right">{{ t('orders.subtotal') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
@@ -291,7 +293,7 @@ const changeStatus = async (order: Order, status: string) => {
                                 </tbody>
                                 <tfoot class="bg-gray-50 font-bold text-gray-900">
                                     <tr>
-                                        <td colspan="3" class="px-4 py-3 text-right">Total</td>
+                                        <td colspan="3" class="px-4 py-3 text-right">{{ t('orders.total') }}</td>
                                         <td class="px-4 py-3 text-right text-green-700 text-lg">${{ viewingOrder.total.toFixed(2) }}</td>
                                     </tr>
                                 </tfoot>
@@ -300,7 +302,7 @@ const changeStatus = async (order: Order, status: string) => {
                     </div>
                     
                     <div v-if="viewingOrder.notes" class="bg-yellow-50 border border-yellow-100 p-3 rounded-lg text-sm text-yellow-800">
-                        <span class="font-bold">Notes:</span> {{ viewingOrder.notes }}
+                        <span class="font-bold">{{ t('orders.notes') }}:</span> {{ viewingOrder.notes }}
                     </div>
                 </div>
             </div>
