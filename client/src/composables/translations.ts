@@ -204,6 +204,57 @@ export interface TranslationSchema {
         understandPermanent: string;
         deletePermanently: string;
     };
+    inventory: {
+        inventoryManagement: string;
+        monitorAndManage: string;
+        totalItems: string;
+        lowStock: string;
+        categories: string;
+        restocksToday: string;
+        addNewItem: string;
+        searchPlaceholder: string;
+        allCategories: string;
+        itemDetails: string;
+        category: string;
+        stockLevel: string;
+        status: string;
+        lastRestock: string;
+        editItem: string;
+        outOfStock: string;
+        inStock: string;
+        itemName: string;
+        unit: string;
+        currentQuantity: string;
+        minStockAlert: string;
+        newInventoryItem: string;
+        editInventoryItem: string;
+    };
+    settings: {
+        accountSettings: string;
+        managePersonal: string;
+        profile: string;
+        notifications: string;
+        security: string;
+        fullName: string;
+        emailAddress: string;
+        phoneNumber: string;
+        role: string;
+        address: string;
+        saveChanges: string;
+        saving: string;
+        profileUpdated: string;
+        profileUpdateFailed: string;
+    };
+    notifications: {
+        notificationsCenter: string;
+        stayUpdated: string;
+        markAllAsRead: string;
+        filterBy: string;
+        totalAlerts: string;
+        noNotifications: string;
+        caughtUp: string;
+        markAsRead: string;
+    };
 }
 
 export const defaultTranslations: Record<Language, TranslationSchema> = {
@@ -410,7 +461,58 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             deleteWarning: 'Warning: This action cannot be undone. All data associated with this user will be permanently removed.',
             understandPermanent: 'I confirm that I understand this action is permanent and I want to proceed.',
             deletePermanently: 'Delete Permanently'
-        }
+        },
+        inventory: {
+            inventoryManagement: 'Inventory Management',
+            monitorAndManage: 'Monitor and manage bakery ingredients and supplies',
+            totalItems: 'Total Items',
+            lowStock: 'Low Stock',
+            categories: 'Categories',
+            restocksToday: 'Restocks Today',
+            addNewItem: 'Add New Item',
+            searchPlaceholder: 'Search inventory items...',
+            allCategories: 'All Categories',
+            itemDetails: 'Item Details',
+            category: 'Category',
+            stockLevel: 'Stock Level',
+            status: 'Status',
+            lastRestock: 'Last Restock',
+            editItem: 'Edit Item',
+            outOfStock: 'Out of Stock',
+            inStock: 'In Stock',
+            itemName: 'Item Name',
+            unit: 'Unit (kg, l, pcs...)',
+            currentQuantity: 'Current Quantity',
+            minStockAlert: 'Min. Stock Alert',
+            newInventoryItem: 'New Inventory Item',
+            editInventoryItem: 'Edit Inventory Item',
+        },
+        settings: {
+            accountSettings: 'Account Settings',
+            managePersonal: 'Manage your personal information and preferences',
+            profile: 'Profile',
+            notifications: 'Notifications',
+            security: 'Security',
+            fullName: 'Full Name',
+            emailAddress: 'Email Address',
+            phoneNumber: 'Phone Number',
+            role: 'Role',
+            address: 'Address',
+            saveChanges: 'Save Changes',
+            saving: 'Saving...',
+            profileUpdated: 'Profile updated successfully!',
+            profileUpdateFailed: 'Failed to update profile.',
+        },
+        notifications: {
+            notificationsCenter: 'Notifications Center',
+            stayUpdated: 'Stay updated with the latest bakery activity',
+            markAllAsRead: 'Mark all as read',
+            filterBy: 'Filter by',
+            totalAlerts: 'alerts',
+            noNotifications: 'No Notifications Found',
+            caughtUp: "You're all caught up! Check back later for updates.",
+            markAsRead: 'Mark as read',
+        },
     },
     jp: {
         common: {
@@ -615,7 +717,58 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             deleteWarning: '警告：この操作は取り消せません。このユーザーに関連するすべてのデータが完全に削除されます。',
             understandPermanent: 'この操作が永続的であることを理解し、続行することを確認します。',
             deletePermanently: '完全に削除する'
-        }
+        },
+        inventory: {
+            inventoryManagement: '在庫管理',
+            monitorAndManage: 'ベーカリーの原材料と備品の監視と管理',
+            totalItems: '全アイテム数',
+            lowStock: '在庫少',
+            categories: 'カテゴリー',
+            restocksToday: '本日の補充',
+            addNewItem: '新規アイテム追加',
+            searchPlaceholder: '在庫アイテムを検索...',
+            allCategories: 'すべてのカテゴリー',
+            itemDetails: 'アイテム詳細',
+            category: 'カテゴリー',
+            stockLevel: '在庫レベル',
+            status: 'ステータス',
+            lastRestock: '最終補充',
+            editItem: 'アイテム編集',
+            outOfStock: '在庫切れ',
+            inStock: '在庫あり',
+            itemName: 'アイテム名',
+            unit: '単位 (kg, l, 個...)',
+            currentQuantity: '現在の数量',
+            minStockAlert: '最小在庫アラート',
+            newInventoryItem: '新規在庫アイテム',
+            editInventoryItem: '在庫アイテム編集',
+        },
+        settings: {
+            accountSettings: 'アカウント設定',
+            managePersonal: '個人情報と設定の管理',
+            profile: 'プロフィール',
+            notifications: '通知',
+            security: 'セキュリティ',
+            fullName: '氏名',
+            emailAddress: 'メールアドレス',
+            phoneNumber: '電話番号',
+            role: '役割',
+            address: '住所',
+            saveChanges: '変更を保存',
+            saving: '保存中...',
+            profileUpdated: 'プロフィールが更新されました！',
+            profileUpdateFailed: 'プロフィールの更新に失敗しました。',
+        },
+        notifications: {
+            notificationsCenter: '通知センター',
+            stayUpdated: '最新のベーカリー活動を確認',
+            markAllAsRead: 'すべて既読にする',
+            filterBy: 'フィルター',
+            totalAlerts: '件の通知',
+            noNotifications: '通知はありません',
+            caughtUp: 'すべて確認済みです！後で更新を確認してください。',
+            markAsRead: '既読にする',
+        },
     },
     vn: {
         common: {
@@ -820,6 +973,57 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             deleteWarning: 'Cảnh báo: Hành động này không thể hoàn tác. Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn.',
             understandPermanent: 'Tôi xác nhận rằng mình hiểu hành động này là vĩnh viễn và muốn tiếp tục.',
             deletePermanently: 'Xóa vĩnh viễn'
-        }
+        },
+        inventory: {
+            inventoryManagement: 'Quản lý kho',
+            monitorAndManage: 'Theo dõi và quản lý nguyên liệu và vật tư bánh',
+            totalItems: 'Tổng số mặt hàng',
+            lowStock: 'Sắp hết hàng',
+            categories: 'Danh mục',
+            restocksToday: 'Nhập kho hôm nay',
+            addNewItem: 'Thêm mặt hàng mới',
+            searchPlaceholder: 'Tìm kiếm mặt hàng kho...',
+            allCategories: 'Tất cả danh mục',
+            itemDetails: 'Chi tiết mặt hàng',
+            category: 'Danh mục',
+            stockLevel: 'Mức tồn kho',
+            status: 'Trạng thái',
+            lastRestock: 'Lần nhập cuối',
+            editItem: 'Sửa mặt hàng',
+            outOfStock: 'Hết hàng',
+            inStock: 'Còn hàng',
+            itemName: 'Tên mặt hàng',
+            unit: 'Đơn vị (kg, l, chiếc...)',
+            currentQuantity: 'Số lượng hiện tại',
+            minStockAlert: 'Cảnh báo tồn tối thiểu',
+            newInventoryItem: 'Mặt hàng kho mới',
+            editInventoryItem: 'Sửa mặt hàng kho',
+        },
+        settings: {
+            accountSettings: 'Cài đặt tài khoản',
+            managePersonal: 'Quản lý thông tin cá nhân và sở thích của bạn',
+            profile: 'Hồ sơ',
+            notifications: 'Thông báo',
+            security: 'Bảo mật',
+            fullName: 'Họ và tên',
+            emailAddress: 'Địa chỉ Email',
+            phoneNumber: 'Số điện thoại',
+            role: 'Vai trò',
+            address: 'Địa chỉ',
+            saveChanges: 'Lưu thay đổi',
+            saving: 'Đang lưu...',
+            profileUpdated: 'Cập nhật hồ sơ thành công!',
+            profileUpdateFailed: 'Cập nhật hồ sơ thất bại.',
+        },
+        notifications: {
+            notificationsCenter: 'Trung tâm thông báo',
+            stayUpdated: 'Cập nhật các hoạt động mới nhất của tiệm',
+            markAllAsRead: 'Đánh dấu tất cả là đã đọc',
+            filterBy: 'Lọc theo',
+            totalAlerts: 'thông báo',
+            noNotifications: 'Không có thông báo nào',
+            caughtUp: 'Bạn đã xem hết thông báo! Hãy quay lại sau.',
+            markAsRead: 'Đánh dấu đã đọc',
+        },
     }
 };

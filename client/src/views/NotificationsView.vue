@@ -13,8 +13,10 @@ import {
     Check
 } from 'lucide-vue-next';
 import { useNotifications } from '../composables/useNotifications';
+import { useI18n } from '../composables/useI18n';
 
 const { notifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+const { t } = useI18n();
 
 const filterType = ref('all');
 
@@ -60,16 +62,16 @@ const getStyles = (type: string, isRead: boolean) => {
             <div>
                 <h2 class="text-2xl font-bold text-green-900 flex items-center gap-3">
                     <Bell class="w-6 h-6 text-green-600" />
-                    Notifications Center
+                    {{ t('notifications.notificationsCenter') }}
                 </h2>
-                <p class="text-sm text-green-600">Stay updated with the latest bakery activity</p>
+                <p class="text-sm text-green-600">{{ t('notifications.stayUpdated') }}</p>
             </div>
             <button 
                 @click="markAllAsRead"
                 class="flex items-center gap-2 px-4 py-2 text-green-700 hover:bg-green-50 rounded-lg transition-colors border border-green-200"
             >
                 <CheckCheck class="w-4 h-4" />
-                Mark all as read
+                {{ t('notifications.markAllAsRead') }}
             </button>
         </div>
 
@@ -77,7 +79,7 @@ const getStyles = (type: string, isRead: boolean) => {
         <div class="bg-white p-4 rounded-xl border border-green-100 shadow-sm flex items-center justify-between">
             <div class="flex items-center gap-4">
                 <span class="text-sm font-medium text-gray-500 flex items-center gap-1">
-                    <Filter class="w-4 h-4" /> Filter by:
+                    <Filter class="w-4 h-4" /> {{ t('notifications.filterBy') }}:
                 </span>
                 <div class="flex gap-2">
                     <button 
@@ -92,7 +94,7 @@ const getStyles = (type: string, isRead: boolean) => {
                 </div>
             </div>
             <span class="text-xs text-gray-400 font-medium">
-                Total: {{ filteredNotifications.length }} alerts
+                Total: {{ filteredNotifications.length }} {{ t('notifications.totalAlerts') }}
             </span>
         </div>
 
@@ -100,8 +102,8 @@ const getStyles = (type: string, isRead: boolean) => {
         <div class="space-y-3">
             <div v-if="filteredNotifications.length === 0" class="bg-white p-12 text-center rounded-2xl border border-green-100 shadow-sm">
                 <Bell class="w-12 h-12 text-gray-200 mx-auto mb-4" />
-                <h3 class="text-lg font-bold text-gray-900">No Notifications Found</h3>
-                <p class="text-gray-500">You're all caught up! Check back later for updates.</p>
+                <h3 class="text-lg font-bold text-gray-900">{{ t('notifications.noNotifications') }}</h3>
+                <p class="text-gray-500">{{ t('notifications.caughtUp') }}</p>
             </div>
 
             <div 
@@ -132,13 +134,13 @@ const getStyles = (type: string, isRead: boolean) => {
                             @click="markAsRead(notif.id)"
                             class="text-xs font-bold text-green-600 hover:text-green-800 flex items-center gap-1 pr-3 border-r border-gray-100"
                         >
-                            <Check class="w-3 h-3" /> Mark as read
+                            <Check class="w-3 h-3" /> {{ t('notifications.markAsRead') }}
                         </button>
                         <button 
                             @click="deleteNotification(notif.id)"
                             class="text-xs font-bold text-red-500 hover:text-red-700 flex items-center gap-1"
                         >
-                            <Trash2 class="w-3 h-3" /> Delete
+                            <Trash2 class="w-3 h-3" /> {{ t('common.delete') }}
                         </button>
                     </div>
                 </div>

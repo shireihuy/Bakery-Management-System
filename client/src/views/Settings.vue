@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useAuth } from '../composables/useAuth';
+import { useI18n } from '../composables/useI18n';
 import { User, Save, Bell, Shield, Key } from 'lucide-vue-next';
 
 const { user, updateProfile } = useAuth();
+const { t } = useI18n();
 
 const formData = ref({
     name: '',
@@ -38,9 +40,9 @@ const handleSave = async () => {
             address: formData.value.address
         });
         
-        message.value = { text: 'Profile updated successfully!', type: 'success' };
+        message.value = { text: t('settings.profileUpdated'), type: 'success' };
     } catch (error) {
-        message.value = { text: 'Failed to update profile.', type: 'error' };
+        message.value = { text: t('settings.profileUpdateFailed'), type: 'error' };
     } finally {
         isSaving.value = false;
     }
@@ -53,9 +55,9 @@ const handleSave = async () => {
             <div class="p-6 border-b border-green-100 bg-green-50/50">
                 <h2 class="text-xl font-bold text-green-900 flex items-center gap-2">
                     <User class="w-5 h-5 text-green-600" />
-                    Account Settings
+                    {{ t('settings.accountSettings') }}
                 </h2>
-                <p class="text-sm text-green-600 mt-1">Manage your personal information and preferences</p>
+                <p class="text-sm text-green-600 mt-1">{{ t('settings.managePersonal') }}</p>
             </div>
             
             <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -63,15 +65,15 @@ const handleSave = async () => {
                 <div class="space-y-2">
                     <button class="w-full flex items-center gap-3 px-4 py-2 bg-green-50 text-green-700 font-medium rounded-lg border border-green-200">
                         <User class="w-4 h-4" />
-                        Profile
+                        {{ t('settings.profile') }}
                     </button>
                     <button class="w-full flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
                         <Bell class="w-4 h-4" />
-                        Notifications
+                        {{ t('settings.notifications') }}
                     </button>
                     <button class="w-full flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
                         <Shield class="w-4 h-4" />
-                        Security
+                        {{ t('settings.security') }}
                     </button>
                 </div>
 
@@ -80,7 +82,7 @@ const handleSave = async () => {
                     <form @submit.prevent="handleSave" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
-                                <label class="text-sm font-medium text-gray-700">Full Name</label>
+                                <label class="text-sm font-medium text-gray-700">{{ t('settings.fullName') }}</label>
                                 <div class="relative">
                                     <input 
                                         v-model="formData.name"
@@ -92,7 +94,7 @@ const handleSave = async () => {
                             </div>
                             
                             <div class="space-y-1">
-                                <label class="text-sm font-medium text-gray-700">Email Address</label>
+                                <label class="text-sm font-medium text-gray-700">{{ t('settings.emailAddress') }}</label>
                                 <div class="relative">
                                     <input 
                                         v-model="formData.email"
@@ -104,7 +106,7 @@ const handleSave = async () => {
                             </div>
                             
                             <div class="space-y-1">
-                                <label class="text-sm font-medium text-gray-700">Phone Number</label>
+                                <label class="text-sm font-medium text-gray-700">{{ t('settings.phoneNumber') }}</label>
                                 <div class="relative">
                                     <input 
                                         v-model="formData.phone"
@@ -116,7 +118,7 @@ const handleSave = async () => {
                             </div>
                             
                             <div class="space-y-1">
-                                <label class="text-sm font-medium text-gray-700">Role</label>
+                                <label class="text-sm font-medium text-gray-700">{{ t('settings.role') }}</label>
                                 <div class="relative">
                                     <input 
                                         :value="user?.role"
@@ -130,7 +132,7 @@ const handleSave = async () => {
                         </div>
 
                         <div class="space-y-1">
-                            <label class="text-sm font-medium text-gray-700">Address</label>
+                            <label class="text-sm font-medium text-gray-700">{{ t('settings.address') }}</label>
                             <textarea 
                                 v-model="formData.address"
                                 rows="3"
@@ -147,11 +149,11 @@ const handleSave = async () => {
                             <button 
                                 type="submit" 
                                 :disabled="isSaving"
-                                class="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-medium rounded-lg hover:from-green-700 hover:to-emerald-700 shadow-md transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                                class="flex items-center gap-2 px-6 py-2.5 bg-linear-to-r from-green-600 to-emerald-600 text-white font-medium rounded-lg hover:from-green-700 hover:to-emerald-700 shadow-md transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                             >
                                 <Save v-if="!isSaving" class="w-4 h-4" />
                                 <span v-if="isSaving" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                {{ isSaving ? 'Saving...' : 'Save Changes' }}
+                                {{ isSaving ? t('settings.saving') : t('settings.saveChanges') }}
                             </button>
                         </div>
                     </form>

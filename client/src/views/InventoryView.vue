@@ -16,8 +16,10 @@ import {
     ClipboardList
 } from 'lucide-vue-next';
 import { useInventory, type InventoryItem } from '../composables/useInventory';
+import { useI18n } from '../composables/useI18n';
 
 const { inventory, lowStockItems, addItem, updateItem, deleteItem, adjustQuantity } = useInventory();
+const { t } = useI18n();
 
 const searchQuery = ref('');
 const categoryFilter = ref('all');
@@ -41,9 +43,9 @@ const filteredInventory = computed(() => {
 });
 
 const getStockStatus = (item: InventoryItem) => {
-    if (item.quantity === 0) return { label: 'Out of Stock', color: 'bg-red-100 text-red-700 border-red-200' };
-    if (item.quantity <= item.minQuantity) return { label: 'Low Stock', color: 'bg-orange-100 text-orange-700 border-orange-200' };
-    return { label: 'In Stock', color: 'bg-green-100 text-green-700 border-green-200' };
+    if (item.quantity === 0) return { label: t('inventory.outOfStock'), color: 'bg-red-100 text-red-700 border-red-200' };
+    if (item.quantity <= item.minQuantity) return { label: t('inventory.lowStock'), color: 'bg-orange-100 text-orange-700 border-orange-200' };
+    return { label: t('inventory.inStock'), color: 'bg-green-100 text-green-700 border-green-200' };
 };
 
 const openAddModal = () => {
@@ -68,7 +70,7 @@ const handleSubmit = () => {
 };
 
 const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to remove this item from inventory?')) {
+    if (confirm(t('users.confirmDeletion'))) {
         deleteItem(id);
     }
 };
@@ -84,7 +86,7 @@ const handleDelete = (id: string) => {
                         <Warehouse class="w-6 h-6" />
                     </div>
                     <div>
-                        <p class="text-sm text-gray-500 font-medium">Total Items</p>
+                        <p class="text-sm text-gray-500 font-medium">{{ t('inventory.totalItems') }}</p>
                         <p class="text-2xl font-bold text-gray-900">{{ inventory.length }}</p>
                     </div>
                 </div>
@@ -95,7 +97,7 @@ const handleDelete = (id: string) => {
                         <AlertTriangle class="w-6 h-6" />
                     </div>
                     <div>
-                        <p class="text-sm text-gray-500 font-medium">Low Stock</p>
+                        <p class="text-sm text-gray-500 font-medium">{{ t('inventory.lowStock') }}</p>
                         <p class="text-2xl font-bold text-gray-900">{{ lowStockItems.length }}</p>
                     </div>
                 </div>
@@ -106,7 +108,7 @@ const handleDelete = (id: string) => {
                         <ClipboardList class="w-6 h-6" />
                     </div>
                     <div>
-                        <p class="text-sm text-gray-500 font-medium">Categories</p>
+                        <p class="text-sm text-gray-500 font-medium">{{ t('inventory.categories') }}</p>
                         <p class="text-2xl font-bold text-gray-900">3</p>
                     </div>
                 </div>
@@ -117,7 +119,7 @@ const handleDelete = (id: string) => {
                         <History class="w-6 h-6" />
                     </div>
                     <div>
-                        <p class="text-sm text-gray-500 font-medium">Restocks Today</p>
+                        <p class="text-sm text-gray-500 font-medium">{{ t('inventory.restocksToday') }}</p>
                         <p class="text-2xl font-bold text-gray-900">2</p>
                     </div>
                 </div>
@@ -127,15 +129,15 @@ const handleDelete = (id: string) => {
         <!-- Header Actions -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-                <h2 class="text-2xl font-bold text-green-900">Inventory Management</h2>
-                <p class="text-sm text-green-600">Monitor and manage bakery ingredients and supplies</p>
+                <h2 class="text-2xl font-bold text-green-900">{{ t('inventory.inventoryManagement') }}</h2>
+                <p class="text-sm text-green-600">{{ t('inventory.monitorAndManage') }}</p>
             </div>
             <button 
                 @click="openAddModal"
-                class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 shadow-md transition-all active:scale-95"
+                class="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 shadow-md transition-all active:scale-95"
             >
                 <Plus class="w-4 h-4" />
-                Add New Item
+                {{ t('inventory.addNewItem') }}
             </button>
         </div>
 
@@ -146,7 +148,7 @@ const handleDelete = (id: string) => {
                 <input 
                     v-model="searchQuery"
                     type="text" 
-                    placeholder="Search inventory items..." 
+                    :placeholder="t('inventory.searchPlaceholder')" 
                     class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
                 >
             </div>
@@ -156,7 +158,7 @@ const handleDelete = (id: string) => {
                     v-model="categoryFilter"
                     class="border border-gray-200 rounded-lg py-2 px-3 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white min-w-[150px]"
                 >
-                    <option value="all">All Categories</option>
+                    <option value="all">{{ t('inventory.allCategories') }}</option>
                     <option value="Ingredients">Ingredients</option>
                     <option value="Supplies">Supplies</option>
                     <option value="Packaging">Packaging</option>
@@ -168,14 +170,14 @@ const handleDelete = (id: string) => {
         <div class="bg-white rounded-2xl border border-green-100 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm">
-                    <thead class="bg-green-50/50 text-green-900 border-b border-green-100 font-medium font-bold px-6">
+                    <thead class="bg-green-50/50 text-green-900 border-b border-green-100 font-bold px-6">
                         <tr>
-                            <th class="px-6 py-4">Item Details</th>
-                            <th class="px-6 py-4">Category</th>
-                            <th class="px-6 py-4">Stock Level</th>
-                            <th class="px-6 py-4">Status</th>
-                            <th class="px-6 py-4">Last Restock</th>
-                            <th class="px-6 py-4 text-right">Actions</th>
+                            <th class="px-6 py-4">{{ t('inventory.itemDetails') }}</th>
+                            <th class="px-6 py-4">{{ t('inventory.category') }}</th>
+                            <th class="px-6 py-4">{{ t('inventory.stockLevel') }}</th>
+                            <th class="px-6 py-4">{{ t('inventory.status') }}</th>
+                            <th class="px-6 py-4">{{ t('inventory.lastRestock') }}</th>
+                            <th class="px-6 py-4 text-right">{{ t('common.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -227,10 +229,10 @@ const handleDelete = (id: string) => {
                                         </button>
                                         <div class="absolute right-0 bottom-full mb-2 hidden group-hover/actions:block w-32 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10">
                                             <button @click="openEditModal(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-green-50 flex items-center gap-2">
-                                                <Edit class="w-3 h-3" /> Edit Item
+                                                <Edit class="w-3 h-3" /> {{ t('inventory.editItem') }}
                                             </button>
                                             <button @click="handleDelete(item.id)" class="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2">
-                                                <Trash2 class="w-3 h-3" /> Delete
+                                                <Trash2 class="w-3 h-3" /> {{ t('common.delete') }}
                                             </button>
                                         </div>
                                     </div>
@@ -247,7 +249,7 @@ const handleDelete = (id: string) => {
             <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden border border-green-100">
                 <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-green-50/30">
                     <h2 class="text-xl font-bold text-green-900">
-                        {{ editingItem ? 'Edit Inventory Item' : 'New Inventory Item' }}
+                        {{ editingItem ? t('inventory.editInventoryItem') : t('inventory.newInventoryItem') }}
                     </h2>
                     <button @click="isModalOpen = false" class="text-gray-400 hover:text-gray-600">
                         <X class="w-6 h-6" />
@@ -256,13 +258,13 @@ const handleDelete = (id: string) => {
 
                 <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
                     <div class="space-y-1">
-                        <label class="text-sm font-medium text-gray-700">Item Name</label>
+                        <label class="text-sm font-medium text-gray-700">{{ t('inventory.itemName') }}</label>
                         <input v-model="form.name" type="text" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1">
-                            <label class="text-sm font-medium text-gray-700">Category</label>
+                            <label class="text-sm font-medium text-gray-700">{{ t('inventory.category') }}</label>
                             <select v-model="form.category" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-white font-medium">
                                 <option value="Ingredients">Ingredients</option>
                                 <option value="Supplies">Supplies</option>
@@ -270,21 +272,21 @@ const handleDelete = (id: string) => {
                             </select>
                         </div>
                         <div class="space-y-1">
-                            <label class="text-sm font-medium text-gray-700">Unit (kg, l, pcs...)</label>
+                            <label class="text-sm font-medium text-gray-700">{{ t('inventory.unit') }}</label>
                             <input v-model="form.unit" type="text" required placeholder="e.g. kg" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1">
-                            <label class="text-sm font-medium text-gray-700">Current Quantity</label>
+                            <label class="text-sm font-medium text-gray-700">{{ t('inventory.currentQuantity') }}</label>
                             <div class="relative">
                                 <input v-model.number="form.quantity" type="number" step="0.1" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
                                 <ArrowUpRight class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             </div>
                         </div>
                         <div class="space-y-1">
-                            <label class="text-sm font-medium text-gray-700">Min. Stock Alert</label>
+                            <label class="text-sm font-medium text-gray-700">{{ t('inventory.minStockAlert') }}</label>
                             <div class="relative">
                                 <input v-model.number="form.minQuantity" type="number" step="0.1" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
                                 <AlertTriangle class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-400 opacity-50" />
@@ -294,10 +296,10 @@ const handleDelete = (id: string) => {
 
                     <div class="flex justify-end gap-3 pt-6 border-t border-gray-50 mt-6">
                         <button type="button" @click="isModalOpen = false" class="px-6 py-2 text-gray-600 font-bold hover:bg-gray-100 rounded-xl transition-colors">
-                            Cancel
+                            {{ t('common.cancel') }}
                         </button>
                         <button type="submit" class="px-8 py-2 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-md transition-all active:scale-95">
-                            {{ editingItem ? 'Save Changes' : 'Add Item' }}
+                            {{ editingItem ? t('common.save') : t('inventory.addNewItem') }}
                         </button>
                     </div>
                 </form>
