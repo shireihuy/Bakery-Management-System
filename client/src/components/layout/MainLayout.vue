@@ -87,7 +87,7 @@ const getNotifIconColor = (type: string) => {
 
 <template>
   <div class="min-h-screen bg-linear-to-br from-green-50 via-emerald-50 to-teal-50">
-      <header class="bg-white border-b border-green-200 shadow-sm sticky top-0 z-30">
+      <header class="bg-white/95 backdrop-blur-md border-b border-green-200 shadow-sm fixed top-0 left-0 right-0 z-40 transition-all duration-300">
         <div class="container mx-auto px-3 sm:px-6 py-3 sm:py-4">
           <div class="flex items-center justify-between gap-2">
             <router-link to="/" class="flex items-center gap-2 sm:gap-3 hover:opacity-80 transition-opacity min-w-0 shrink">
@@ -200,7 +200,7 @@ const getNotifIconColor = (type: string) => {
         </div>
       </header>
 
-      <main class="container mx-auto px-3 sm:px-6 py-4 sm:py-8">
+      <main class="container mx-auto px-3 sm:px-6 pt-20 sm:pt-24 pb-4 sm:pb-8">
         <!-- Navigation Tabs -->
         <div class="space-y-4 sm:space-y-6">
             <div class="overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 scrollbar-hide">

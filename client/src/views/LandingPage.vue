@@ -75,14 +75,22 @@ const handleResize = () => {
     }
 };
 
+const isScrolled = ref(false);
+
+const handleScroll = () => {
+    isScrolled.value = window.scrollY > 20;
+};
+
 onMounted(() => {
     handleResize();
     window.addEventListener('resize', handleResize);
+    window.addEventListener('scroll', handleScroll);
     fetchProducts();
 });
 
 onUnmounted(() => {
     window.removeEventListener('resize', handleResize);
+    window.removeEventListener('scroll', handleScroll);
 });
 
 // Auto-rotate carousel
@@ -197,10 +205,13 @@ const signatureProducts = [
 </script>
 
 <template>
-    <div class="min-h-screen bg-accent-cream overflow-x-hidden">
+    <div class="min-h-screen bg-accent-cream overflow-x-hidden pt-20 sm:pt-24">
       <!-- Header -->
-      <header class="glass-header">
-        <div class="container mx-auto px-6 py-4">
+      <header 
+        class="glass-header w-full flex-none transition-all duration-500"
+        :class="{ 'py-2 shadow-2xl bg-white/95': isScrolled, 'py-4': !isScrolled }"
+      >
+        <div class="container mx-auto px-6">
           <div class="flex items-center justify-between">
             <router-link to="/" class="flex items-center gap-4 group no-transition-all">
               <div class="w-12 h-12 rounded-xl overflow-hidden border-2 border-bakery-200 shadow-md transform group-hover:rotate-6 group-hover:scale-110 transition-transform duration-500">
