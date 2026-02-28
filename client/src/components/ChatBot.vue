@@ -114,10 +114,15 @@ const sendToAI = async (text: string) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prompt: text,
-        history: messages.value.slice(-5).map(m => ({
-          role: m.type === 'user' ? 'user' : 'model',
-          parts: [{ text: m.text }]
-        }))
+        history: (() => {
+          let h = messages.value.slice(-6).map(m => ({
+            role: m.type === 'user' ? 'user' : 'model',
+            parts: [{ text: m.text }]
+          }));
+          // Gemini requires history to start with user role
+          const firstUserIdx = h.findIndex(m => m.role === 'user');
+          return firstUserIdx !== -1 ? h.slice(firstUserIdx) : [];
+        })()
       })
     });
 

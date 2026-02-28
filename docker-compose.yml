@@ -19,6 +19,8 @@ services:
     build: ./server
     container_name: bakery-api
     restart: always
+    env_file:
+      - ./server/.env
     environment:
       - PORT=3000
       - DB_USER=${DB_USER:-postgres}
