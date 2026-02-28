@@ -450,7 +450,7 @@ const addToCartFromDialogExtended = (event: MouseEvent) => {
     <!-- Global Cart Side Drawer -->
     <div 
         v-if="isCartOpen" 
-        class="fixed inset-0 z-100 overflow-hidden"
+        class="fixed inset-0 z-110 overflow-hidden"
     >
         <!-- Overlay -->
         <div 
@@ -749,7 +749,7 @@ const addToCartFromDialogExtended = (event: MouseEvent) => {
     </div>
 
     <!-- Login Prompt Modal -->
-    <div v-if="showLoginPrompt" class="fixed inset-0 z-60 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div v-if="showLoginPrompt" class="fixed inset-0 z-150 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-300">
             <div class="p-8 text-center space-y-6">
                 <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
