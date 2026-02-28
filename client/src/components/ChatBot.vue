@@ -56,8 +56,10 @@ const qnaData: QnA[] = [
 ];
 
 const isOpen = ref(false);
+const userInput = ref('');
+const isBaking = ref(false);
 const messages = ref<Message[]>([
-  { id: 1, type: 'bot', text: 'Hello! I\'m your Bakery Assistant. How can I help you today?' }
+  { id: 1, type: 'bot', text: 'Hello! I\'m your Bakery AI Assistant. How can I help you today?' }
 ]);
 const messageContainer = ref<HTMLElement | null>(null);
 
@@ -90,20 +92,56 @@ const selectCategory = (category: string) => {
   }, 500);
 };
 
-const selectQuestion = (qna: QnA) => {
-  messages.value.push({
+const sendToAI = async (text: string) => {
+  if (!text.trim() || isBaking.value) return;
+
+  const userMessage: Message = {
     id: Date.now(),
     type: 'user',
-    text: qna.question
-  });
+    text: text
+  };
+  
+  if (userInput.value === text) {
+    userInput.value = '';
+  }
+  
+  messages.value.push(userMessage);
+  isBaking.value = true;
 
-  setTimeout(() => {
+  try {
+    const response = await fetch('http://localhost:3000/api/ai/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        prompt: text,
+        history: messages.value.slice(-5).map(m => ({
+          role: m.type === 'user' ? 'user' : 'model',
+          parts: [{ text: m.text }]
+        }))
+      })
+    });
+
+    const data = await response.json();
+    
     messages.value.push({
       id: Date.now() + 1,
       type: 'bot',
-      text: qna.answer
+      text: data.text || "Sorry, I'm having trouble connecting to the oven right now. 🥖"
     });
-  }, 600);
+  } catch (error) {
+    console.error('AI Error:', error);
+    messages.value.push({
+      id: Date.now() + 1,
+      type: 'bot',
+      text: "Oops! My flour is a bit clumped. Please try again later! 🥯"
+    });
+  } finally {
+    isBaking.value = false;
+  }
+};
+
+const selectQuestion = (qna: QnA) => {
+  sendToAI(qna.question);
 };
 
 const resetChat = () => {
@@ -204,6 +242,18 @@ watch(isOpen, (newVal) => {
               {{ msg.text }}
             </div>
           </div>
+          
+          <!-- Baking Loader -->
+          <div v-if="isBaking" class="flex justify-start">
+            <div class="bg-white text-bakery-400 p-4 rounded-3xl rounded-tl-none shadow-sm border border-bakery-100 flex items-center gap-2">
+              <span class="text-xs font-medium italic">Baking response...</span>
+              <div class="flex gap-1">
+                <span class="w-1.5 h-1.5 bg-bakery-300 rounded-full animate-bounce"></span>
+                <span class="w-1.5 h-1.5 bg-bakery-300 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                <span class="w-1.5 h-1.5 bg-bakery-300 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Options Area -->
@@ -244,9 +294,39 @@ watch(isOpen, (newVal) => {
           </div>
         </div>
 
-        <!-- Footer -->
-        <div class="px-6 py-4 bg-bakery-50/50 border-t border-bakery-100 text-center">
-          <p class="text-[9px] font-black uppercase tracking-[0.2em] text-bakery-300">Bakery Smart Assistant • v1.0</p>
+        <!-- Input Area -->
+        <div class="p-4 bg-white border-t border-bakery-100">
+          <form @submit.prevent="sendToAI(userInput)" class="relative flex items-center gap-2">
+            <input 
+              v-model="userInput"
+              type="text"
+              placeholder="Ask anything about our bakery..."
+              class="w-full bg-bakery-50/50 border border-bakery-100 rounded-2xl py-3 px-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-bakery-600/20 focus:border-bakery-600 transition-all"
+              :disabled="isBaking"
+            />
+            <button 
+              type="submit"
+              :disabled="!userInput.trim() || isBaking"
+              class="absolute right-2 p-2 text-bakery-600 hover:bg-bakery-100 rounded-xl transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            </button>
+          </form>
+        </div>
+
+        <!-- Footer / Quick Suggestions -->
+        <div class="px-6 py-4 bg-bakery-50/50 border-t border-bakery-100">
+          <div v-if="!currentCategory" class="flex flex-wrap gap-2 mb-3">
+             <button 
+                v-for="cat in categories.slice(0, 3)" 
+                :key="cat"
+                @click="selectCategory(cat)"
+                class="px-3 py-1.5 rounded-full bg-white border border-bakery-100 text-[10px] font-bold text-bakery-600 hover:bg-bakery-600 hover:text-white transition-all shadow-sm"
+             >
+               {{ cat }}
+             </button>
+          </div>
+          <p class="text-[9px] font-black uppercase tracking-[0.2em] text-bakery-300 text-center">Powered by Gemini AI • v2.0</p>
         </div>
       </div>
     </Transition>
