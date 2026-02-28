@@ -132,7 +132,7 @@ const handleCheckout = async () => {
     }
 
     try {
-        await addOrder({
+        const result = await addOrder({
             customerId: isCashier.value ? null : user.value.id,
             customerName: isCashier.value ? orderCustomerName.value : user.value.name,
             items: cart.value.map(item => ({
@@ -143,18 +143,13 @@ const handleCheckout = async () => {
             total: totalPrice.value
         });
 
-        // Refresh orders
-        if (isCashier.value) {
-            await fetchOrders();
-        } else {
-            await fetchMyOrders();
-        }
-
-        alert('Order placed successfully!');
+        // Clear cart before redirecting
         cart.value = [];
         orderCustomerName.value = '';
         isCartOpen.value = false;
-        activeTab.value = 'orders';
+
+        // Redirect to payment view
+        router.push(`/payment/${result.orderId}`);
     } catch (err) {
         alert('Failed to place order. Please try again.');
     }

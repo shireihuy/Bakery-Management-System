@@ -63,6 +63,15 @@ export interface TranslationSchema {
         loginPrompt: string;
         loginNow: string;
         maybeLater: string;
+        paymentTitle: string;
+        selectPayment: string;
+        payWithMoMo: string;
+        payWithZaloPay: string;
+        payWithCash: string;
+        scanQR: string;
+        confirmPayment: string;
+        processingPayment: string;
+        paymentSuccess: string;
     };
     auth: {
         welcomeBack: string;
@@ -320,7 +329,16 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             loginRequired: 'Login Required',
             loginPrompt: 'You need to be logged in to place an order. Join us for premium perks!',
             loginNow: 'Login Now',
-            maybeLater: 'Maybe Later'
+            maybeLater: 'Maybe Later',
+            paymentTitle: 'Secure Payment',
+            selectPayment: 'Select your preferred payment method',
+            payWithMoMo: 'Pay with MoMo',
+            payWithZaloPay: 'Pay with ZaloPay',
+            payWithCash: 'Pay at Shop (Cash)',
+            scanQR: 'Please scan the QR code to complete your payment',
+            confirmPayment: 'I have completed the payment',
+            processingPayment: 'Processing Payment...',
+            paymentSuccess: 'Payment Successful!'
         },
         auth: {
             welcomeBack: 'Welcome Back',
@@ -576,7 +594,16 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             loginRequired: 'ログインが必要です',
             loginPrompt: 'ログインして注文を確定しましょう。魅力的な特典をご用意しています！',
             loginNow: 'ログインする',
-            maybeLater: '後で'
+            maybeLater: '後で',
+            paymentTitle: '安全な決済',
+            selectPayment: 'お支払い方法を選択してください',
+            payWithMoMo: 'MoMoで支払う',
+            payWithZaloPay: 'ZaloPayで支払う',
+            payWithCash: '店頭支払い (現金)',
+            scanQR: 'QRコードをスキャンして支払いを完了してください',
+            confirmPayment: '支払いを完了しました',
+            processingPayment: '決済処理中...',
+            paymentSuccess: '決済が完了しました！'
         },
         auth: {
             welcomeBack: 'おかえりなさい',
@@ -832,7 +859,16 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             loginRequired: 'Yêu cầu đăng nhập',
             loginPrompt: 'Bạn cần đăng nhập để đặt hàng. Tham gia ngay để nhận ưu đãi cao cấp!',
             loginNow: 'Đăng nhập ngay',
-            maybeLater: 'Để sau'
+            maybeLater: 'Để sau',
+            paymentTitle: 'Thanh toán bảo mật',
+            selectPayment: 'Chọn phương thức thanh toán của bạn',
+            payWithMoMo: 'Thanh toán qua MoMo',
+            payWithZaloPay: 'Thanh toán qua ZaloPay',
+            payWithCash: 'Thanh toán tại quầy (Tiền mặt)',
+            scanQR: 'Vui lòng quét mã QR để hoàn tất thanh toán',
+            confirmPayment: 'Tôi đã hoàn tất thanh toán',
+            processingPayment: 'Đang xử lý thanh toán...',
+            paymentSuccess: 'Thanh toán thành công!'
         },
         auth: {
             welcomeBack: 'Chào mừng trở lại',
