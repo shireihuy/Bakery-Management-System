@@ -160,12 +160,6 @@ const openProductDetails = (product: Product) => {
     isProductDialogOpen.value = true;
 };
 
-const addToCartFromDialog = () => {
-    if (selectedProduct.value) {
-        addToCart(selectedProduct.value);
-        isProductDialogOpen.value = false;
-    }
-};
 
 const viewOrderDetails = (order: Order) => {
     viewingOrder.value = order;
@@ -183,6 +177,56 @@ const getStatusColor = (status: string) => {
     }
 };
 
+// Animation state
+const cartButtonRef = ref<HTMLElement | null>(null);
+const isCartBouncing = ref(false);
+const flyingItems = ref<{ id: number, x: number, y: number, targetX: number, targetY: number, image: string, flying: boolean }[]>([]);
+let flyIdCounter = 0;
+
+const handleAddToCart = (product: Product, event: MouseEvent | null) => {
+    addToCart(product);
+    
+    // Bounce effect
+    isCartBouncing.value = true;
+    setTimeout(() => {
+        isCartBouncing.value = false;
+    }, 600);
+
+    // Fly effect
+    if (cartButtonRef.value && event) {
+        const cartRect = cartButtonRef.value.getBoundingClientRect();
+        const id = flyIdCounter++;
+        
+        const newItem = {
+            id,
+            x: event.clientX - 20,
+            y: event.clientY - 20,
+            targetX: cartRect.left + 10,
+            targetY: cartRect.top + 10,
+            image: product.image,
+            flying: false
+        };
+        
+        flyingItems.value.push(newItem);
+        
+        setTimeout(() => {
+            const item = flyingItems.value.find(i => i.id === id);
+            if (item) item.flying = true;
+        }, 50);
+
+        setTimeout(() => {
+            flyingItems.value = flyingItems.value.filter(i => i.id !== id);
+        }, 1000);
+    }
+};
+
+const addToCartFromDialogExtended = (event: MouseEvent) => {
+    if (selectedProduct.value) {
+        handleAddToCart(selectedProduct.value, event);
+        isProductDialogOpen.value = false;
+    }
+};
+
 </script>
 
 <template>
@@ -197,7 +241,9 @@ const getStatusColor = (status: string) => {
         </div>
 
         <button
+            ref="cartButtonRef"
             @click="isCartOpen = true"
+            :class="[isCartBouncing ? 'animate-cart-bounce' : '']"
             class="relative group flex items-center gap-3 px-6 py-3 bg-white border border-bakery-100 rounded-2xl shadow-sm hover:shadow-xl hover:border-bakery-200 transition-all duration-300"
         >
             <div class="w-10 h-10 rounded-xl bg-bakery-50 flex items-center justify-center group-hover:bg-bakery-100 transition-colors">
@@ -336,8 +382,8 @@ const getStatusColor = (status: string) => {
                                 <button @click="openProductDetails(product)" class="w-12 h-12 rounded-2xl border border-bakery-100 text-bakery-600 hover:bg-bakery-50 transition-all flex items-center justify-center shadow-sm">
                                     <Info class="w-5 h-5" />
                                 </button>
-                                <button
-                                    @click="addToCart(product)"
+                                 <button
+                                    @click="(e) => handleAddToCart(product, e)"
                                     :disabled="product.stock === 0"
                                     class="h-12 px-6 rounded-2xl bg-bakery-600 text-white text-sm font-bold hover:bg-bakery-700 transition-all disabled:opacity-30 flex items-center shadow-lg shadow-bakery-100 active:scale-95"
                                 >
@@ -562,8 +608,8 @@ const getStatusColor = (status: string) => {
              </div>
              <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0">
                   <button @click="isProductDialogOpen = false" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition-colors">Close</button>
-                  <button 
-                    @click="addToCartFromDialog"
+                   <button 
+                    @click="(e) => addToCartFromDialogExtended(e)"
                     :disabled="selectedProduct.stock === 0" 
                     class="px-6 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 shadow-md transition-colors disabled:opacity-50"
                 >
@@ -729,6 +775,19 @@ const getStatusColor = (status: string) => {
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Flying animation overlay -->
+    <div v-for="fly in flyingItems" :key="fly.id" 
+        class="fly-to-cart w-12 h-12 rounded-full overflow-hidden border-2 border-bakery-500 shadow-2xl bg-white"
+        :style="{
+            left: (fly.flying ? fly.targetX : fly.x) + 'px',
+            top: (fly.flying ? fly.targetY : fly.y) + 'px',
+            opacity: fly.flying ? 0 : 1,
+            transform: fly.flying ? 'scale(0.2) rotate(720deg)' : 'scale(1) rotate(0deg)'
+        }"
+    >
+        <img :src="fly.image" class="w-full h-full object-cover">
     </div>
 </div>
 </template>

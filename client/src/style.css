@@ -31,6 +31,35 @@
       transform: translateY(-10px);
     }
   }
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+  
+  @keyframes cart-bounce {
+    0% { transform: translateY(0); }
+    25% { transform: translateY(-8px); }
+    50% { transform: translateY(0); }
+    75% { transform: translateY(-4px); }
+    100% { transform: translateY(0); }
+  }
+}
+
+.animate-pop {
+  animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.animate-cart-bounce {
+  animation: cart-bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fly-to-cart {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 @layer base {
