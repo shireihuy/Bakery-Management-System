@@ -14,7 +14,8 @@ import {
   History, 
   Clock, 
   XCircle, 
-  Eye 
+  Eye,
+  CreditCard
 } from 'lucide-vue-next';
 import { useProducts, type Product } from '../composables/useProducts';
 import { useOrders, type Order } from '../composables/useOrders';
@@ -23,7 +24,7 @@ import { useI18n } from '../composables/useI18n';
 
 // State
 const { products, fetchProducts } = useProducts();
-const { addOrder, orders, fetchMyOrders, fetchOrders } = useOrders();
+const { addOrder, orders, fetchMyOrders, fetchOrders, updateOrderStatus } = useOrders();
 const { user } = useAuth();
 const { t } = useI18n();
 const router = useRouter();
@@ -286,6 +287,22 @@ const addToCartFromDialogExtended = (event: MouseEvent) => {
     }
 };
 
+const handleCancelOrder = async (orderId: number) => {
+    if (confirm('Are you sure you want to cancel this order?')) {
+        try {
+            await updateOrderStatus(orderId, 'Cancelled');
+            if (isCashier.value) {
+                await fetchOrders();
+            } else {
+                await fetchMyOrders();
+            }
+            isOrderDetailsOpen.value = false;
+        } catch (err) {
+            alert('Failed to cancel order.');
+        }
+    }
+};
+
 </script>
 
 <template>
@@ -496,12 +513,29 @@ const addToCartFromDialogExtended = (event: MouseEvent) => {
                     <span class="text-sm font-medium text-gray-900">{{ t('shop.total') }}</span>
                     <span class="text-lg font-bold text-green-700">${{ order.total.toFixed(2) }}</span>
                  </div>
-                 <button 
-                    @click="viewOrderDetails(order)"
-                    class="w-full h-8 rounded-md border border-green-200 text-green-700 text-xs hover:bg-green-50 flex items-center justify-center transition-colors"
-                >
-                    <Eye class="w-3 h-3 mr-1" /> {{ t('shop.viewDetails') }}
-                 </button>
+                 <div class="grid grid-cols-1 gap-2 mt-auto">
+                    <button 
+                        @click="viewOrderDetails(order)"
+                        class="w-full h-9 rounded-xl border border-bakery-100 text-bakery-600 text-xs font-bold hover:bg-bakery-50 flex items-center justify-center transition-all"
+                    >
+                        <Eye class="w-3.5 h-3.5 mr-1.5" /> {{ t('shop.viewDetails') }}
+                    </button>
+                    
+                    <div v-if="order.status === 'Pending' && order.paymentStatus !== 'Paid'" class="grid grid-cols-2 gap-2">
+                        <button 
+                            @click="router.push(`/payment/${order.id}`)"
+                            class="h-9 rounded-xl bg-bakery-900 text-white text-xs font-bold hover:bg-black flex items-center justify-center transition-all shadow-lg shadow-bakery-100"
+                        >
+                            <CreditCard class="w-3.5 h-3.5 mr-1.5" /> Pay Now
+                        </button>
+                        <button 
+                            @click="handleCancelOrder(order.id)"
+                            class="h-9 rounded-xl bg-red-50 text-red-600 border border-red-100 text-xs font-bold hover:bg-red-100 flex items-center justify-center transition-all"
+                        >
+                            <Trash2 class="w-3.5 h-3.5 mr-1.5" /> Cancel
+                        </button>
+                    </div>
+                 </div>
             </div>
         </div>
     </div>
@@ -836,6 +870,20 @@ const addToCartFromDialogExtended = (event: MouseEvent) => {
             </div>
             
             <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
+                <div v-if="viewingOrder.status === 'Pending' && viewingOrder.paymentStatus !== 'Paid'" class="mr-auto flex gap-2">
+                    <button 
+                         @click="router.push(`/payment/${viewingOrder.id}`)"
+                         class="px-4 py-2 rounded-lg bg-bakery-900 text-white font-bold text-sm hover:bg-black shadow-lg transition-all flex items-center gap-2"
+                    >
+                        <CreditCard class="w-4 h-4" /> Pay Now
+                    </button>
+                    <button 
+                        @click="handleCancelOrder(viewingOrder.id)"
+                        class="px-4 py-2 rounded-lg bg-red-50 text-red-600 border border-red-100 font-bold text-sm hover:bg-red-100 transition-all flex items-center gap-2"
+                    >
+                        <Trash2 class="w-4 h-4" /> Cancel Order
+                    </button>
+                </div>
                 <button 
                     @click="isOrderDetailsOpen = false" 
                     class="px-6 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 shadow-md transition-colors"
