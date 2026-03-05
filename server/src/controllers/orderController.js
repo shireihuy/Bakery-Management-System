@@ -2,18 +2,63 @@ const { pool, query } = require('../config/db');
 const NotificationController = require('./notificationController');
 
 const createOrder = async (req, res) => {
-    const { customer_id, customer_name, total_price, items } = req.body;
-    console.log('Creating order:', { customer_id, customer_name, total_price, itemsCount: items?.length });
+    const { customer_id, customer_name, total_price, items, coupon_code } = req.body;
+    console.log('Creating order:', { customer_id, customer_name, total_price, itemsCount: items?.length, coupon_code });
 
     const client = await pool.connect();
 
     try {
         await client.query('BEGIN');
 
+        let couponId = null;
+        let discountAmount = 0;
+        let finalPrice = Number(total_price);
+
+        if (coupon_code) {
+            const couponRes = await client.query('SELECT * FROM coupons WHERE code = $1 FOR UPDATE', [coupon_code]);
+            if (couponRes.rows.length > 0) {
+                const coupon = couponRes.rows[0];
+                if (coupon.is_active) {
+                    const now = new Date();
+                    const validStart = !coupon.start_date || new Date(coupon.start_date) <= now;
+                    const validEnd = !coupon.end_date || new Date(coupon.end_date) >= now;
+                    const validUsage = !coupon.usage_limit || coupon.usage_count < coupon.usage_limit;
+
+                    if (validStart && validEnd && validUsage) {
+                        couponId = coupon.id;
+
+                        // We will trust the total_price from the frontend, but we should record the discount amount applied
+                        // The frontend subtracted discountAmount from subtotal to get total_price.
+                        // For safety, let's recalculate the discount amount just to record it or trust the frontend's finalPrice.
+                        // Let's rely on the frontend's valid subtotal, but we can compute discount based on total_price + discount ? No, let's just use what's passed or recalculate subtotal from items.
+
+                        let subtotal = 0;
+                        for (const item of items) {
+                            subtotal += Number(item.subtotal);
+                        }
+
+                        if (subtotal >= Number(coupon.min_purchase_amount)) {
+                            if (coupon.discount_type === 'percentage') {
+                                discountAmount = subtotal * (Number(coupon.discount_value) / 100);
+                            } else if (coupon.discount_type === 'fixed') {
+                                discountAmount = Number(coupon.discount_value);
+                            }
+                            discountAmount = Math.min(discountAmount, subtotal);
+                            finalPrice = subtotal - discountAmount;
+
+                            await client.query('UPDATE coupons SET usage_count = usage_count + 1 WHERE id = $1', [couponId]);
+                        } else {
+                            couponId = null; // invalid due to min purchase
+                        }
+                    }
+                }
+            }
+        }
+
         // 1. Insert into orders table
         const orderResult = await client.query(
-            'INSERT INTO orders (customer_id, customer_name, total_price, status) VALUES ($1, $2, $3, $4) RETURNING id',
-            [customer_id || 'GUEST', customer_name || 'Walk-in Customer', total_price, 'Pending']
+            'INSERT INTO orders (customer_id, customer_name, total_price, coupon_id, discount_amount, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
+            [customer_id || 'GUEST', customer_name || 'Walk-in Customer', finalPrice, couponId, discountAmount, 'Pending']
         );
 
         const orderId = orderResult.rows[0].id;
@@ -77,6 +122,8 @@ const getOrders = async (req, res) => {
                 u.phone_number as customer_phone,
                 u.address as customer_address,
                 o.total_price, 
+                o.coupon_id,
+                o.discount_amount,
                 o.status, 
                 o.order_date,
                 o.start_time,
@@ -121,7 +168,7 @@ const getMyOrders = async (req, res) => {
     const userId = req.user.id;
     try {
         const result = await query(`
-            SELECT id, total_price, status, order_date, start_time, completed_time, payment_status, payment_method
+            SELECT id, total_price, coupon_id, discount_amount, status, order_date, start_time, completed_time, payment_status, payment_method
             FROM orders
             WHERE customer_id = $1
             ORDER BY order_date DESC
@@ -205,6 +252,8 @@ const getOrderById = async (req, res) => {
                 o.customer_id, 
                 o.customer_name, 
                 o.total_price, 
+                o.coupon_id,
+                o.discount_amount,
                 o.status, 
                 o.order_date,
                 o.start_time,

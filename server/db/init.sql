@@ -47,12 +47,29 @@ CREATE TABLE IF NOT EXISTS inventory (
     updated_by UUID REFERENCES users(id)
 );
 
+-- Coupons Table
+CREATE TABLE IF NOT EXISTS coupons (
+    id SERIAL PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    discount_type VARCHAR(20) NOT NULL, -- 'percentage' or 'fixed'
+    discount_value DECIMAL(10, 2) NOT NULL,
+    min_purchase_amount DECIMAL(10, 2) DEFAULT 0.00,
+    usage_limit INTEGER DEFAULT NULL,
+    usage_count INTEGER DEFAULT 0,
+    start_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    end_date TIMESTAMP WITH TIME ZONE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Orders Table
 CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
     customer_id VARCHAR(255), -- UUID for registered users, 'GUEST' for walk-ins
     customer_name VARCHAR(255), -- Stores name for walk-ins or snapshot for users
     total_price DECIMAL(10, 2) NOT NULL,
+    coupon_id INTEGER REFERENCES coupons(id) DEFAULT NULL,
+    discount_amount DECIMAL(10, 2) DEFAULT 0.00,
     status VARCHAR(50) DEFAULT 'Pending', -- Pending, Baking, Ready, Completed, Cancelled
     order_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     start_time TIMESTAMP WITH TIME ZONE,

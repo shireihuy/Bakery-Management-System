@@ -59,6 +59,11 @@ const isOrderDetailsOpen = ref(false);
 const orderCustomerName = ref('');
 const showLoginPrompt = ref(false);
 
+const couponCodeInput = ref('');
+const appliedCoupon = ref<any>(null);
+const couponError = ref('');
+const isApplyingCoupon = ref(false);
+
 // Derived State
 const isCashier = computed(() => user.value?.role?.toLowerCase() === 'cashier');
 
@@ -91,7 +96,20 @@ const filteredAndSortedProducts = computed(() => {
 });
 
 const totalItems = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0));
-const totalPrice = computed(() => cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
+const subTotalPrice = computed(() => cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
+
+const discountAmount = computed(() => {
+    if (!appliedCoupon.value) return 0;
+    let discount = 0;
+    if (appliedCoupon.value.discount_type === 'percentage') {
+        discount = subTotalPrice.value * (Number(appliedCoupon.value.discount_value) / 100);
+    } else {
+        discount = Number(appliedCoupon.value.discount_value);
+    }
+    return Math.min(discount, subTotalPrice.value); // discount can't be more than subtotal
+});
+
+const totalPrice = computed(() => Math.max(0, subTotalPrice.value - discountAmount.value));
 
 // Actions
 const addToCart = (product: Product) => {
@@ -138,14 +156,18 @@ const handleCheckout = async () => {
             items: cart.value.map(item => ({
                 productId: parseInt(item.id),
                 quantity: item.quantity,
+                subtotal: (item.quantity * item.price).toFixed(2),
                 price: item.price
             })),
-            total: totalPrice.value
+            coupon_code: appliedCoupon.value?.code || null,
+            total_price: totalPrice.value
         });
 
         // Clear cart before redirecting
         cart.value = [];
         orderCustomerName.value = '';
+        appliedCoupon.value = null;
+        couponCodeInput.value = '';
         isCartOpen.value = false;
 
         // Redirect to payment view
@@ -158,6 +180,43 @@ const handleCheckout = async () => {
 const openProductDetails = (product: Product) => {
     selectedProduct.value = product;
     isProductDialogOpen.value = true;
+};
+
+const applyCoupon = async () => {
+    if (!couponCodeInput.value.trim()) return;
+    
+    isApplyingCoupon.value = true;
+    couponError.value = '';
+    
+    try {
+        const response = await fetch('http://localhost:3000/api/coupons/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: couponCodeInput.value.trim(), cartSubtotal: subTotalPrice.value })
+        });
+        
+        const data = await response.json();
+        if (response.ok && data.valid) {
+            appliedCoupon.value = {
+                code: couponCodeInput.value.trim(),
+                ...data
+            };
+        } else {
+            couponError.value = data.message || 'Invalid coupon code';
+            appliedCoupon.value = null;
+        }
+    } catch (err) {
+        couponError.value = 'Error validating coupon';
+        appliedCoupon.value = null;
+    } finally {
+        isApplyingCoupon.value = false;
+    }
+};
+
+const removeCoupon = () => {
+    appliedCoupon.value = null;
+    couponCodeInput.value = '';
+    couponError.value = '';
 };
 
 
@@ -526,14 +585,53 @@ const addToCartFromDialogExtended = (event: MouseEvent) => {
                               >
                          </div>
                          
-                         <div class="space-y-3">
-                             <div class="flex justify-between items-center text-bakery-500 font-medium">
-                                  <span>Subtotal</span>
-                                  <span>${{ totalPrice.toFixed(2) }}</span>
+                         <div class="space-y-4">
+                             <!-- Coupon Section -->
+                             <div class="space-y-2">
+                                 <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">Promo Code</label>
+                                 <div class="flex gap-2">
+                                      <input 
+                                          v-model="couponCodeInput" 
+                                          :disabled="!!appliedCoupon"
+                                          type="text" 
+                                          placeholder="Enter code..." 
+                                          class="flex-1 h-10 rounded-xl border border-bakery-100 px-3 focus:outline-none focus:ring-2 focus:ring-bakery-300 text-sm bg-bakery-50/50 uppercase"
+                                      >
+                                      <button 
+                                          v-if="!appliedCoupon"
+                                          @click="applyCoupon"
+                                          :disabled="isApplyingCoupon || !couponCodeInput"
+                                          class="px-4 h-10 bg-bakery-900 text-white text-sm font-bold rounded-xl hover:bg-bakery-800 disabled:opacity-50 transition-colors"
+                                      >
+                                          {{ isApplyingCoupon ? '...' : 'Apply' }}
+                                      </button>
+                                      <button 
+                                          v-else
+                                          @click="removeCoupon"
+                                          class="px-4 h-10 bg-red-100 text-red-700 text-sm font-bold rounded-xl hover:bg-red-200 transition-colors"
+                                      >
+                                          Remove
+                                      </button>
+                                 </div>
+                                 <p v-if="couponError" class="text-xs text-red-500 font-medium">{{ couponError }}</p>
+                                 <p v-if="appliedCoupon" class="text-xs text-green-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                                     Applied: -${{ discountAmount.toFixed(2) }} off
+                                 </p>
                              </div>
-                             <div class="flex justify-between items-center text-2xl font-black text-bakery-900">
-                                  <span>{{ t('shop.total') }}</span>
-                                  <span>${{ totalPrice.toFixed(2) }}</span>
+
+                             <div class="space-y-3 pt-3 border-t border-bakery-100">
+                                 <div class="flex justify-between items-center text-bakery-500 font-medium text-sm">
+                                      <span>Subtotal</span>
+                                      <span>${{ subTotalPrice.toFixed(2) }}</span>
+                                 </div>
+                                 <div v-if="appliedCoupon" class="flex justify-between items-center text-green-600 font-medium text-sm">
+                                      <span>Discount ({{ appliedCoupon.code }})</span>
+                                      <span>-${{ discountAmount.toFixed(2) }}</span>
+                                 </div>
+                                 <div class="flex justify-between items-center text-2xl font-black text-bakery-900 pt-2 border-t border-bakery-100">
+                                      <span>{{ t('shop.total') }}</span>
+                                      <span>${{ totalPrice.toFixed(2) }}</span>
+                                 </div>
                              </div>
                          </div>
 

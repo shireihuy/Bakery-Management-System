@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
 import { User, Save, Ticket, Key } from 'lucide-vue-next';
@@ -18,6 +18,85 @@ const isSaving = ref(false);
 const activeTab = ref<'profile' | 'coupons'>('profile');
 const message = ref({ text: '', type: '' as 'success' | 'error' | '' });
 
+const coupons = ref<any[]>([]);
+const isCouponsLoading = ref(false);
+const showCouponModal = ref(false);
+const currentCoupon = ref<any>({
+    code: '', discount_type: 'percentage', discount_value: 0, min_purchase_amount: 0,
+    usage_limit: null, start_date: '', end_date: '', is_active: true
+});
+
+const isAdminOrManager = computed(() => {
+    return ['admin', 'manager'].includes(user.value?.role?.toLowerCase() || '');
+});
+
+const loadCoupons = async () => {
+    isCouponsLoading.value = true;
+    try {
+        const response = await fetch('http://localhost:3000/api/coupons', {
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (response.ok) {
+            coupons.value = await response.json();
+        }
+    } catch(e) {
+        console.error('Failure loading coupons', e);
+    } finally {
+        isCouponsLoading.value = false;
+    }
+};
+
+const saveCoupon = async () => {
+    try {
+        const method = currentCoupon.value.id ? 'PUT' : 'POST';
+        const url = currentCoupon.value.id 
+            ? `http://localhost:3000/api/coupons/${currentCoupon.value.id}` 
+            : 'http://localhost:3000/api/coupons';
+        
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(currentCoupon.value)
+        });
+        
+        if(res.ok) {
+            await loadCoupons();
+            showCouponModal.value = false;
+        }
+    } catch(e) {
+        console.error('Failed to save coupon', e);
+    }
+};
+
+const deleteCoupon = async (id: string) => {
+    if(!confirm('Are you sure you want to delete this coupon?')) return;
+    try {
+        const res = await fetch(`http://localhost:3000/api/coupons/${id}`, { method: 'DELETE' });
+        if(res.ok) await loadCoupons();
+    } catch(e) {
+        console.error('Failed delete', e);
+    }
+};
+
+const toggleCouponStatus = async (coupon: any) => {
+    try {
+        const updated = { ...coupon, is_active: !coupon.is_active };
+        const res = await fetch(`http://localhost:3000/api/coupons/${coupon.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updated)
+        });
+        if(res.ok) await loadCoupons();
+    } catch(e) {
+        console.error('Failed status toggle', e);
+    }
+};
+
+const openAddCoupon = () => {
+    currentCoupon.value = { code: '', discount_type: 'percentage', discount_value: 0, min_purchase_amount: 0, usage_limit: null, start_date: '', end_date: '', is_active: true };
+    showCouponModal.value = true;
+};
+
 onMounted(() => {
     if (user.value) {
         formData.value = {
@@ -27,6 +106,7 @@ onMounted(() => {
             address: user.value.address || ''
         };
     }
+    loadCoupons();
 });
 
 const handleSave = async () => {
@@ -164,37 +244,118 @@ const handleSave = async () => {
                     </form>
                 </div>
 
-                <!-- Coupons Tab (Placeholder) -->
                 <div v-else class="md:col-span-2 space-y-6">
-                    <div class="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                    <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-200">
+                         <div>
+                             <h3 class="text-xl font-bold text-gray-900">{{ t('settings.coupons') || 'Coupon Management' }}</h3>
+                             <p class="text-sm text-gray-500">{{ isAdminOrManager ? 'Create and manage store discounts' : 'Available coupons for your orders' }}</p>
+                         </div>
+                         <button 
+                             v-if="isAdminOrManager"
+                             @click="openAddCoupon"
+                             class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 shadow-sm transition-colors"
+                         >
+                             <Ticket class="w-4 h-4" /> Add Coupon
+                         </button>
+                    </div>
+
+                    <div v-if="isCouponsLoading" class="text-center py-12">Loading...</div>
+                    <div v-else-if="coupons.length === 0" class="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
                         <div class="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
                             <Ticket class="w-8 h-8 text-green-500" />
                         </div>
-                        <h3 class="text-lg font-bold text-gray-900">{{ t('settings.coupons') }}</h3>
-                        <p class="text-gray-500 max-w-xs mx-auto mt-2">
-                            You don't have any active coupons right now. Keep an eye out for special bakery promotions!
-                        </p>
-                        <button class="mt-6 px-6 py-2 bg-green-100 text-green-700 font-semibold rounded-lg hover:bg-green-200 transition-colors">
-                            Explore Current Offers
-                        </button>
+                        <p class="text-gray-500 max-w-xs mx-auto">No coupons available at the moment.</p>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-4">
-                        <!-- Sample Placeholder Coupon Card -->
-                        <div class="group relative overflow-hidden bg-linear-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white shadow-lg opacity-60">
+                    <div v-else class="grid grid-cols-1 gap-4">
+                        <div v-for="coupon in coupons" :key="coupon.id" 
+                             class="group relative overflow-hidden rounded-xl p-4 text-white shadow-lg transition-all"
+                             :class="coupon.is_active ? 'bg-linear-to-br from-green-500 to-emerald-600' : 'bg-linear-to-br from-gray-400 to-gray-500 opacity-80'">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <div class="text-xs font-bold uppercase tracking-wider opacity-80">Welcome Offer</div>
-                                    <div class="text-2xl font-black">15% OFF</div>
+                                    <div class="text-xs font-bold uppercase tracking-wider opacity-80">{{ coupon.discount_type === 'percentage' ? 'Percentage' : 'Fixed Amount' }} Off</div>
+                                    <div class="text-2xl font-black">
+                                        {{ coupon.discount_type === 'percentage' ? coupon.discount_value + '%' : '$' + coupon.discount_value }} OFF
+                                    </div>
+                                    <div class="text-xs mt-1 bg-black/20 inline-block px-2 py-0.5 rounded backdrop-blur-sm">Min Spend: ${{ coupon.min_purchase_amount }}</div>
                                 </div>
-                                <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold">EXPIRED</div>
+                                <div class="flex gap-2 items-center">
+                                    <span v-if="!coupon.is_active" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold">INACTIVE</span>
+                                    <span v-else-if="coupon.end_date && new Date(coupon.end_date) < new Date()" class="bg-orange-500 text-white px-2 py-1 rounded text-[10px] font-bold">EXPIRED</span>
+                                    <span v-else class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold">ACTIVE</span>
+                                </div>
                             </div>
-                            <div class="mt-4 flex items-center gap-2 text-sm">
-                                <span class="font-mono bg-black/10 px-2 py-0.5 rounded">BAKERY15</span>
+                            <div class="mt-4 flex items-center justify-between text-sm">
+                                <span class="font-mono bg-black/20 shadow-inner px-3 py-1 text-lg rounded-lg font-black tracking-widest">{{ coupon.code }}</span>
+                                <div v-if="isAdminOrManager" class="flex gap-2">
+                                    <button @click="toggleCouponStatus(coupon)" class="px-3 py-1 bg-white/10 hover:bg-white/30 rounded backdrop-blur-sm transition-colors text-xs font-bold border border-white/20">
+                                        {{ coupon.is_active ? 'Disable' : 'Enable' }}
+                                    </button>
+                                    <button @click="deleteCoupon(coupon.id)" class="px-3 py-1 bg-red-500/80 hover:bg-red-600 rounded backdrop-blur-sm transition-colors text-xs font-bold">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-xs opacity-70 flex justify-between">
+                                <span>Used: {{ coupon.usage_count }}{{ coupon.usage_limit ? ' / ' + coupon.usage_limit : '' }}</span>
+                                <span v-if="coupon.end_date">Expires: {{ new Date(coupon.end_date).toLocaleDateString() }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Coupon Modal -->
+        <div v-if="showCouponModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+                 <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                     <h3 class="text-xl font-bold text-gray-900">{{ currentCoupon.id ? 'Edit' : 'Create' }} Coupon</h3>
+                     <button @click="showCouponModal = false" class="text-gray-400 hover:text-gray-600">×</button>
+                 </div>
+                 <div class="p-6 space-y-4">
+                     <div>
+                         <label class="block text-xs font-medium text-gray-700 mb-1">Coupon Code</label>
+                         <input v-model="currentCoupon.code" type="text" class="w-full px-3 py-2 border rounded-lg uppercase" placeholder="e.g. SUMMER20">
+                     </div>
+                     <div class="grid grid-cols-2 gap-4">
+                         <div>
+                             <label class="block text-xs font-medium text-gray-700 mb-1">Discount Type</label>
+                             <select v-model="currentCoupon.discount_type" class="w-full px-3 py-2 border rounded-lg">
+                                 <option value="percentage">Percentage (%)</option>
+                                 <option value="fixed">Fixed Amount ($)</option>
+                             </select>
+                         </div>
+                         <div>
+                             <label class="block text-xs font-medium text-gray-700 mb-1">Discount Value</label>
+                             <input v-model="currentCoupon.discount_value" type="number" step="0.01" class="w-full px-3 py-2 border rounded-lg">
+                         </div>
+                     </div>
+                     <div class="grid grid-cols-2 gap-4">
+                         <div>
+                             <label class="block text-xs font-medium text-gray-700 mb-1">Min. Purchase ($)</label>
+                             <input v-model="currentCoupon.min_purchase_amount" type="number" step="0.01" class="w-full px-3 py-2 border rounded-lg">
+                         </div>
+                         <div>
+                             <label class="block text-xs font-medium text-gray-700 mb-1">Usage Limit</label>
+                             <input v-model="currentCoupon.usage_limit" type="number" placeholder="Unlimited" class="w-full px-3 py-2 border rounded-lg">
+                         </div>
+                     </div>
+                     <div class="grid grid-cols-2 gap-4">
+                         <div>
+                             <label class="block text-xs font-medium text-gray-700 mb-1">Start Date</label>
+                             <input v-model="currentCoupon.start_date" type="datetime-local" class="w-full px-3 py-2 border rounded-lg text-sm">
+                         </div>
+                         <div>
+                             <label class="block text-xs font-medium text-gray-700 mb-1">End Date</label>
+                             <input v-model="currentCoupon.end_date" type="datetime-local" class="w-full px-3 py-2 border rounded-lg text-sm">
+                         </div>
+                     </div>
+                 </div>
+                 <div class="p-4 bg-gray-50 flex justify-end gap-3 border-t">
+                     <button @click="showCouponModal = false" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
+                     <button @click="saveCoupon" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold transition-all shadow-md">{{ currentCoupon.id ? 'Save Changes' : 'Create Coupon' }}</button>
+                 </div>
             </div>
         </div>
     </div>
