@@ -244,6 +244,7 @@ export interface TranslationSchema {
         profile: string;
         notifications: string;
         security: string;
+        coupons: string;
         fullName: string;
         emailAddress: string;
         phoneNumber: string;
@@ -511,6 +512,7 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             profile: 'Profile',
             notifications: 'Notifications',
             security: 'Security',
+            coupons: 'My Coupons',
             fullName: 'Full Name',
             emailAddress: 'Email Address',
             phoneNumber: 'Phone Number',
@@ -776,6 +778,7 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             profile: 'プロフィール',
             notifications: '通知',
             security: 'セキュリティ',
+            coupons: 'マイクーポン',
             fullName: '氏名',
             emailAddress: 'メールアドレス',
             phoneNumber: '電話番号',
@@ -1041,6 +1044,7 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             profile: 'Hồ sơ',
             notifications: 'Thông báo',
             security: 'Bảo mật',
+            coupons: 'Ưu đãi của tôi',
             fullName: 'Họ và tên',
             emailAddress: 'Địa chỉ Email',
             phoneNumber: 'Số điện thoại',

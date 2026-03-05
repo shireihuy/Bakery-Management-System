@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
-import { User, Save, Bell, Shield, Key } from 'lucide-vue-next';
+import { User, Save, Ticket, Key } from 'lucide-vue-next';
 
 const { user, updateProfile } = useAuth();
 const { t } = useI18n();
@@ -15,6 +15,7 @@ const formData = ref({
 });
 
 const isSaving = ref(false);
+const activeTab = ref<'profile' | 'coupons'>('profile');
 const message = ref({ text: '', type: '' as 'success' | 'error' | '' });
 
 onMounted(() => {
@@ -63,22 +64,26 @@ const handleSave = async () => {
             <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
                 <!-- Sidebar / Navigation for Settings (Visual only for now) -->
                 <div class="space-y-2">
-                    <button class="w-full flex items-center gap-3 px-4 py-2 bg-green-50 text-green-700 font-medium rounded-lg border border-green-200">
+                    <button 
+                        @click="activeTab = 'profile'"
+                        class="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all font-medium border"
+                        :class="activeTab === 'profile' ? 'bg-green-50 text-green-700 border-green-200 shadow-sm' : 'text-gray-600 hover:bg-gray-50 border-transparent'"
+                    >
                         <User class="w-4 h-4" />
                         {{ t('settings.profile') }}
                     </button>
-                    <button class="w-full flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                        <Bell class="w-4 h-4" />
-                        {{ t('settings.notifications') }}
-                    </button>
-                    <button class="w-full flex items-center gap-3 px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors">
-                        <Shield class="w-4 h-4" />
-                        {{ t('settings.security') }}
+                    <button 
+                        @click="activeTab = 'coupons'"
+                        class="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all font-medium border"
+                        :class="activeTab === 'coupons' ? 'bg-green-50 text-green-700 border-green-200 shadow-sm' : 'text-gray-600 hover:bg-gray-50 border-transparent'"
+                    >
+                        <Ticket class="w-4 h-4" />
+                        {{ t('settings.coupons') }}
                     </button>
                 </div>
 
-                <!-- Main Form -->
-                <div class="md:col-span-2 space-y-6">
+                <!-- Main Form (Profile Tab) -->
+                <div v-if="activeTab === 'profile'" class="md:col-span-2 space-y-6">
                     <form @submit.prevent="handleSave" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
@@ -157,6 +162,38 @@ const handleSave = async () => {
                             </button>
                         </div>
                     </form>
+                </div>
+
+                <!-- Coupons Tab (Placeholder) -->
+                <div v-else class="md:col-span-2 space-y-6">
+                    <div class="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                        <div class="bg-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                            <Ticket class="w-8 h-8 text-green-500" />
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900">{{ t('settings.coupons') }}</h3>
+                        <p class="text-gray-500 max-w-xs mx-auto mt-2">
+                            You don't have any active coupons right now. Keep an eye out for special bakery promotions!
+                        </p>
+                        <button class="mt-6 px-6 py-2 bg-green-100 text-green-700 font-semibold rounded-lg hover:bg-green-200 transition-colors">
+                            Explore Current Offers
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-4">
+                        <!-- Sample Placeholder Coupon Card -->
+                        <div class="group relative overflow-hidden bg-linear-to-br from-green-500 to-emerald-600 rounded-xl p-4 text-white shadow-lg opacity-60">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <div class="text-xs font-bold uppercase tracking-wider opacity-80">Welcome Offer</div>
+                                    <div class="text-2xl font-black">15% OFF</div>
+                                </div>
+                                <div class="bg-white/20 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold">EXPIRED</div>
+                            </div>
+                            <div class="mt-4 flex items-center gap-2 text-sm">
+                                <span class="font-mono bg-black/10 px-2 py-0.5 rounded">BAKERY15</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
