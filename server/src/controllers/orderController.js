@@ -53,7 +53,9 @@ const getOrders = async (req, res) => {
                 o.status, 
                 o.order_date,
                 o.start_time,
-                o.completed_time
+                o.completed_time,
+                o.payment_status,
+                o.payment_method
             FROM orders o
             LEFT JOIN users u ON o.customer_id::text = u.id::text
             ORDER BY o.order_date DESC
@@ -92,7 +94,7 @@ const getMyOrders = async (req, res) => {
     const userId = req.user.id;
     try {
         const result = await query(`
-            SELECT id, total_price, status, order_date, start_time, completed_time
+            SELECT id, total_price, status, order_date, start_time, completed_time, payment_status, payment_method
             FROM orders
             WHERE customer_id = $1
             ORDER BY order_date DESC

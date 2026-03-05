@@ -19,11 +19,13 @@ import {
 } from 'lucide-vue-next';
 import { useOrders, type Order } from '../composables/useOrders';
 import { useI18n } from '../composables/useI18n';
+import { usePayment } from '../composables/usePayment';
 
 const route = useRoute();
 const router = useRouter();
 const { orders, fetchMyOrders } = useOrders();
 const { t } = useI18n();
+const { initiatePayment, simulateSuccessCallback } = usePayment();
 
 const orderId = route.params.id as string;
 const order = ref<Order | null>(null);
@@ -38,11 +40,10 @@ onMounted(async () => {
     order.value = orders.value.find(o => String(o.id) === orderId) || null;
     
     if (!order.value) {
-        // If still not found, could be a guest order or just not in the first page of history
-        // For simulation, we'll create a dummy order if id is 'mock'
         if (orderId === 'mock') {
             order.value = {
                 id: 1234,
+                customerId: null,
                 customerName: 'Guest',
                 customerEmail: 'guest@example.com',
                 total: 25.50,
@@ -51,31 +52,51 @@ onMounted(async () => {
                 items: [
                     { productName: 'Artisan Sourdough', quantity: 2, price: 8.50, subtotal: 17.00 },
                     { productName: 'Croissant', quantity: 3, price: 2.50, subtotal: 7.50 }
-                ],
-                customerId: null
+                ]
             };
         }
     }
 });
 
-const handlePayment = () => {
-    if (!selectedMethod.value) return;
+const handlePayment = async () => {
+    if (!selectedMethod.value || !order.value) return;
     
-    if (selectedMethod.value === 'cash') {
-        completePayment();
-    } else {
-        showQR.value = true;
+    try {
+        // Initiate in backend
+        await initiatePayment(order.value.id, selectedMethod.value);
+        
+        if (selectedMethod.value === 'cash') {
+            completePayment();
+        } else {
+            showQR.value = true;
+        }
+    } catch (err) {
+        console.error('Failed to initiate payment:', err);
+        alert('Could not connect to payment service. Please try again.');
     }
 };
 
-const completePayment = () => {
+const completePayment = async () => {
+    if (!order.value) return;
+    
     paymentStatus.value = 'processing';
-    setTimeout(() => {
-        paymentStatus.value = 'success';
+    
+    try {
+        // Simulate the backend callback (normally this comes from outside)
+        // This actually updates the DB status in our mock setup
+        await simulateSuccessCallback(order.value.id);
+        
         setTimeout(() => {
-            router.push('/customer');
-        }, 3000);
-    }, 2000);
+            paymentStatus.value = 'success';
+            setTimeout(() => {
+                router.push('/customer');
+            }, 3000);
+        }, 1500);
+    } catch (err) {
+        console.error('Payment completion error:', err);
+        paymentStatus.value = 'idle';
+        alert('Payment verification failed.');
+    }
 };
 </script>
 

@@ -23,6 +23,8 @@ export interface Order {
     readonly phone?: string;
     readonly address?: string;
     readonly notes?: string;
+    readonly paymentStatus?: string;
+    readonly paymentMethod?: string;
 }
 
 const orders = ref<Order[]>([]);
@@ -58,6 +60,8 @@ export function useOrders() {
                 date: new Date(o.order_date).toLocaleString(),
                 startTime: o.start_time ? new Date(o.start_time).toLocaleString() : undefined,
                 completedTime: o.completed_time ? new Date(o.completed_time).toLocaleString() : undefined,
+                paymentStatus: o.payment_status,
+                paymentMethod: o.payment_method,
                 items: o.items.map((i: any) => ({
                     id: i.id,
                     productId: i.product_id,
@@ -96,6 +100,8 @@ export function useOrders() {
                 date: new Date(o.order_date).toLocaleString(),
                 startTime: o.start_time ? new Date(o.start_time).toLocaleString() : undefined,
                 completedTime: o.completed_time ? new Date(o.completed_time).toLocaleString() : undefined,
+                paymentStatus: o.payment_status,
+                paymentMethod: o.payment_method,
                 items: o.items.map((i: any) => ({
                     id: i.id,
                     productId: i.product_id,
