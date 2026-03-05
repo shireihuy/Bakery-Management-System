@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { 
     Search, 
     Plus, 
@@ -7,31 +7,43 @@ import {
     AlertTriangle, 
     History, 
     Filter,
-    MoreVertical,
     Edit,
     Trash2,
-    Minus,
-    ArrowUpRight,
     X,
     ClipboardList
 } from 'lucide-vue-next';
 import { useInventory, type InventoryItem } from '../composables/useInventory';
 import { useI18n } from '../composables/useI18n';
+import { useAuth } from '../composables/useAuth';
 
-const { inventory, lowStockItems, addItem, updateItem, deleteItem, adjustQuantity } = useInventory();
+const { inventory, lowStockItems, fetchInventory, addItem, updateItem, deleteItem } = useInventory();
 const { t } = useI18n();
+const { user } = useAuth();
 
 const searchQuery = ref('');
 const categoryFilter = ref('all');
 const isModalOpen = ref(false);
 const editingItem = ref<InventoryItem | null>(null);
 
+// Local state for inline quantity adjustments in the table
+const inlineQuantities = ref<Record<string, number>>({});
+
+const isBaker = computed(() => user.value?.role === 'Baker');
+
 const form = ref({
     name: '',
-    category: 'Ingredients' as InventoryItem['category'],
+    category: '' as InventoryItem['category'],
     quantity: 0,
     minQuantity: 0,
     unit: ''
+});
+
+onMounted(async () => {
+    await fetchInventory();
+    // Initialize inline quantities
+    inventory.value.forEach(item => {
+        inlineQuantities.value[item.id] = item.quantity;
+    });
 });
 
 const filteredInventory = computed(() => {
@@ -49,27 +61,41 @@ const getStockStatus = (item: InventoryItem) => {
 };
 
 const openAddModal = () => {
+    if (isBaker.value) return; 
     editingItem.value = null;
-    form.value = { name: '', category: 'Ingredients', quantity: 0, minQuantity: 0, unit: '' };
+    form.value = { name: '', category: '', quantity: 0, minQuantity: 0, unit: '' };
     isModalOpen.value = true;
 };
 
 const openEditModal = (item: InventoryItem) => {
     editingItem.value = item;
-    form.value = { ...item };
+    form.value = { 
+        name: item.name, 
+        category: item.category, 
+        quantity: item.quantity, 
+        minQuantity: item.minQuantity, 
+        unit: item.unit 
+    };
     isModalOpen.value = true;
 };
 
-const handleSubmit = () => {
+const handleInlineSave = async (id: string) => {
+    const newQty = inlineQuantities.value[id];
+    await updateItem(id, { quantity: newQty });
+};
+
+const handleSubmit = async () => {
     if (editingItem.value) {
-        updateItem(editingItem.value.id, form.value);
+        await updateItem(editingItem.value.id, form.value);
     } else {
-        addItem(form.value);
+        await addItem(form.value);
     }
     isModalOpen.value = false;
+    await fetchInventory();
 };
 
 const handleDelete = (id: string) => {
+    if (isBaker.value) return;
     if (confirm(t('users.confirmDeletion'))) {
         deleteItem(id);
     }
@@ -133,6 +159,7 @@ const handleDelete = (id: string) => {
                 <p class="text-sm text-green-600">{{ t('inventory.monitorAndManage') }}</p>
             </div>
             <button 
+                v-if="!isBaker"
                 @click="openAddModal"
                 class="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 shadow-md transition-all active:scale-95"
             >
@@ -214,29 +241,66 @@ const handleDelete = (id: string) => {
                                 {{ item.lastRestocked }}
                             </td>
                             <td class="px-6 py-4">
-                                <div class="flex justify-end items-center gap-2">
-                                    <div class="flex items-center border border-gray-200 rounded-lg overflow-hidden bg-white">
-                                        <button @click="adjustQuantity(item.id, -1)" class="p-1.5 hover:bg-red-50 text-gray-500 hover:text-red-500 transition-colors">
-                                            <Minus class="w-3 h-3" />
-                                        </button>
-                                        <button @click="adjustQuantity(item.id, 1)" class="p-1.5 hover:bg-green-50 text-gray-500 hover:text-green-500 transition-colors border-l border-gray-200">
-                                            <Plus class="w-3 h-3" />
-                                        </button>
-                                    </div>
-                                    <div class="relative group/actions">
-                                        <button class="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
-                                            <MoreVertical class="w-4 h-4" />
-                                        </button>
-                                        <div class="absolute right-0 bottom-full mb-2 hidden group-hover/actions:block w-32 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10">
-                                            <button @click="openEditModal(item)" class="w-full text-left px-3 py-1.5 text-xs text-gray-700 hover:bg-green-50 flex items-center gap-2">
-                                                <Edit class="w-3 h-3" /> {{ t('inventory.editItem') }}
+                                    <div class="flex items-center gap-3">
+                                        <!-- Inline Quantity Slider Card -->
+                                        <div class="flex items-center gap-3 bg-gray-50/50 p-2 rounded-2xl border border-gray-100 shadow-sm transition-all group-hover:bg-white group-hover:border-green-200 group-hover:shadow-md">
+                                            <div class="flex flex-col gap-1">
+                                                <div class="relative w-48 h-4 flex items-center">
+                                                    <input 
+                                                        v-model.number="inlineQuantities[item.id]" 
+                                                        type="range" 
+                                                        min="0" 
+                                                        :max="Math.max(item.minQuantity * 10, 100, item.quantity * 2)" 
+                                                        class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600 hover:accent-green-500 z-10"
+                                                    >
+                                                    <!-- Indicators for 1/4 and 1/2 -->
+                                                    <div class="absolute top-1/2 left-0 right-0 h-4 -translate-y-1/2 flex items-end pointer-events-none px-0.5 opacity-20">
+                                                        <div class="h-2.5 w-0.5 bg-gray-400"></div> <!-- 0 -->
+                                                        <div class="h-2 w-px bg-gray-400 ml-[25%] -translate-x-1/2"></div> <!-- 1/4 -->
+                                                        <div class="h-2.5 w-px bg-gray-400 ml-[25%] -translate-x-1/2"></div> <!-- 1/2 -->
+                                                        <div class="h-2 w-px bg-gray-400 ml-[25%] -translate-x-1/2"></div> <!-- 3/4 -->
+                                                        <div class="h-2.5 w-0.5 bg-gray-400 ml-auto"></div> <!-- 1 -->
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="flex items-center gap-2 border-l border-gray-200 pl-3">
+                                                <input 
+                                                    v-model.number="inlineQuantities[item.id]" 
+                                                    type="number" 
+                                                    class="w-10 text-center text-xs font-black bg-green-50/50 rounded-lg py-1 border-0 focus:ring-1 focus:ring-green-500"
+                                                >
+                                                <div class="w-[50px] flex justify-center">
+                                                    <button 
+                                                        @click="handleInlineSave(item.id)"
+                                                        v-show="inlineQuantities[item.id] !== item.quantity"
+                                                        class="px-3 py-1 bg-green-600 text-white text-[10px] font-bold rounded-lg shadow-sm hover:bg-green-700 transition-all active:scale-95 flex items-center gap-1"
+                                                    >
+                                                        {{ t('common.save') }}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Edit/Delete Action Icons -->
+                                        <div class="flex items-center gap-1 bg-gray-50/50 p-1 rounded-xl border border-gray-100 group-hover:bg-white transition-colors">
+                                            <button 
+                                                @click="openEditModal(item)" 
+                                                class="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                :title="t('inventory.editItem')"
+                                            >
+                                                <Edit class="w-4 h-4" />
                                             </button>
-                                            <button @click="handleDelete(item.id)" class="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2">
-                                                <Trash2 class="w-3 h-3" /> {{ t('common.delete') }}
+                                            <button 
+                                                v-if="!isBaker" 
+                                                @click="handleDelete(item.id)" 
+                                                class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                :title="t('common.delete')"
+                                            >
+                                                <Trash2 class="w-4 h-4" />
                                             </button>
                                         </div>
                                     </div>
-                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -259,21 +323,27 @@ const handleDelete = (id: string) => {
                 <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
                     <div class="space-y-1">
                         <label class="text-sm font-medium text-gray-700">{{ t('inventory.itemName') }}</label>
-                        <input v-model="form.name" type="text" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
+                        <input v-model="form.name" type="text" :disabled="isBaker" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">{{ t('inventory.category') }}</label>
-                            <select v-model="form.category" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-white font-medium">
-                                <option value="Ingredients">Ingredients</option>
-                                <option value="Supplies">Supplies</option>
+                            <input v-if="isBaker" v-model="form.category" disabled class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-gray-50 text-gray-500 font-medium">
+                            <select v-else v-model="form.category" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-white font-medium">
+                                <option value="Pastries">Pastries</option>
+                                <option value="Bread">Bread</option>
+                                <option value="Cakes">Cakes</option>
+                                <option value="Cookies">Cookies</option>
+                                <option value="Donuts">Donuts</option>
+                                <option value="Beverages">Beverages</option>
                                 <option value="Packaging">Packaging</option>
+                                <option value="Supplies">Supplies</option>
                             </select>
                         </div>
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">{{ t('inventory.unit') }}</label>
-                            <input v-model="form.unit" type="text" required placeholder="e.g. kg" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
+                            <input v-model="form.unit" type="text" :disabled="isBaker" required placeholder="e.g. kg" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
                         </div>
                     </div>
 
@@ -281,14 +351,22 @@ const handleDelete = (id: string) => {
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">{{ t('inventory.currentQuantity') }}</label>
                             <div class="relative">
-                                <input v-model.number="form.quantity" type="number" step="0.1" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
-                                <ArrowUpRight class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input 
+                                    v-model.number="form.quantity" 
+                                    type="number" 
+                                    step="0.1" 
+                                    required 
+                                    class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none font-bold"
+                                >
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                    {{ form.unit || 'pcs' }}
+                                </span>
                             </div>
                         </div>
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">{{ t('inventory.minStockAlert') }}</label>
                             <div class="relative">
-                                <input v-model.number="form.minQuantity" type="number" step="0.1" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none">
+                                <input v-model.number="form.minQuantity" type="number" :disabled="isBaker" step="0.1" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
                                 <AlertTriangle class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-400 opacity-50" />
                             </div>
                         </div>

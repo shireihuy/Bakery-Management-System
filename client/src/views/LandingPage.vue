@@ -278,9 +278,12 @@ const signatureProducts = [
                                     <h3 class="text-bakery-900 mb-2 font-black text-lg">{{product.name}}</h3>
                                     <p class="text-xs lg:text-sm text-bakery-500 mb-6 font-medium line-clamp-2">{{product.description}}</p>
                                     <div class="flex items-center justify-between mt-auto">
-                                        <span class="text-xl lg:text-2xl text-bakery-900 font-black">
-                                            ${{product.price.toFixed(2)}}
-                                        </span>
+                                        <div class="flex flex-col">
+                                            <span class="text-xl lg:text-2xl text-bakery-900 font-black">
+                                                ${{product.price.toFixed(2)}}
+                                            </span>
+                                            <span class="text-[10px] text-bakery-400 font-bold uppercase tracking-widest">{{ product.stock }} {{ t('inventory.unit') || 'left' }}</span>
+                                        </div>
                                         <button
                                             @click="onGetStarted"
                                             class="shrink-0 w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-bakery-50 flex items-center justify-center text-bakery-900 group-hover/card:bg-bakery-900 group-hover/card:text-white transition-all duration-300 shadow-sm"

@@ -1,115 +1,118 @@
-import { ref, readonly, computed } from 'vue';
+import { ref, computed } from 'vue';
+import { socketService } from '../services/socket';
 
 export interface InventoryItem {
     id: string;
     name: string;
-    category: 'Ingredients' | 'Supplies' | 'Packaging';
+    category: string;
     quantity: number;
     minQuantity: number;
     unit: string;
     lastRestocked: string;
+    isProduct: boolean; // Flag to differentiate between Baked Goods and Supplies
 }
 
-const inventory = ref<InventoryItem[]>([
-    {
-        id: '1',
-        name: 'Ceremonial Matcha Powder',
-        category: 'Ingredients',
-        quantity: 2.5,
-        minQuantity: 5,
-        unit: 'kg',
-        lastRestocked: '2024-05-15'
-    },
-    {
-        id: '2',
-        name: 'All-Purpose Flour',
-        category: 'Ingredients',
-        quantity: 50,
-        minQuantity: 20,
-        unit: 'kg',
-        lastRestocked: '2024-05-18'
-    },
-    {
-        id: '3',
-        name: 'Unsalted Butter',
-        category: 'Ingredients',
-        quantity: 15,
-        minQuantity: 10,
-        unit: 'kg',
-        lastRestocked: '2024-05-20'
-    },
-    {
-        id: '4',
-        name: 'Organic Sugar',
-        category: 'Ingredients',
-        quantity: 30,
-        minQuantity: 15,
-        unit: 'kg',
-        lastRestocked: '2024-05-18'
-    },
-    {
-        id: '5',
-        name: 'Cake Boxes (Medium)',
-        category: 'Packaging',
-        quantity: 120,
-        minQuantity: 50,
-        unit: 'pcs',
-        lastRestocked: '2024-05-10'
-    },
-    {
-        id: '6',
-        name: 'Pastry Brushes',
-        category: 'Supplies',
-        quantity: 8,
-        minQuantity: 2,
-        unit: 'pcs',
-        lastRestocked: '2024-04-01'
-    }
-]);
+const inventory = ref<InventoryItem[]>([]);
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+const getAuthHeader = (): Record<string, string> => {
+    const token = localStorage.getItem('token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
 
 export function useInventory() {
+    const fetchInventory = async () => {
+        try {
+            // 1. Fetch Products (Baked Goods)
+            const prodRes = await fetch(`${API_URL}/products`, { headers: getAuthHeader() });
+            const products = await prodRes.json();
+
+            // 2. Map Products to InventoryItems
+            const productItems: InventoryItem[] = products.map((p: any) => ({
+                id: p.id,
+                name: p.name,
+                category: p.category,
+                quantity: p.stock || 0,
+                minQuantity: p.min_stock || 5,
+                unit: p.unit || 'pcs',
+                lastRestocked: p.last_restocked ? new Date(p.last_restocked).toISOString().split('T')[0] : 'Never',
+                isProduct: true
+            }));
+
+            // TODO: In the future, fetch from /api/inventory for supplies
+            // For now, we only show Products as inventory
+            inventory.value = productItems;
+        } catch (err) {
+            console.error('Error fetching inventory:', err);
+        }
+    };
+
     const lowStockItems = computed(() =>
         inventory.value.filter(item => item.quantity <= item.minQuantity)
     );
 
-    const addItem = (item: Omit<InventoryItem, 'id' | 'lastRestocked'>) => {
-        const newItem: InventoryItem = {
-            id: Math.random().toString(36).substring(2, 9),
-            lastRestocked: new Date().toISOString().substring(0, 10),
-            ...item
-        };
-        inventory.value.push(newItem);
-        return newItem;
+    const addItem = async (_item: Omit<InventoryItem, 'id' | 'lastRestocked' | 'isProduct'>) => {
+        // This would traditionally be for Supplies. For Products, use useProducts.addProduct
+        console.warn('addItem not fully implemented for supplies yet');
     };
 
-    const updateItem = (id: string, updates: Partial<Omit<InventoryItem, 'id'>>) => {
+    const updateItem = async (id: string, updates: Partial<Omit<InventoryItem, 'id'>>) => {
         const item = inventory.value.find(i => i.id === id);
-        if (item) {
-            Object.assign(item, updates);
-            if ('quantity' in updates) {
-                item.lastRestocked = new Date().toISOString().substring(0, 10);
+        if (!item) return;
+
+        if (item.isProduct && 'quantity' in updates) {
+            try {
+                const response = await fetch(`${API_URL}/products/${id}/stock`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+                    body: JSON.stringify({ quantity: updates.quantity, reset: true })
+                });
+
+                if (!response.ok) throw new Error('Failed to update stock');
+                await fetchInventory();
+            } catch (err) {
+                console.error('Error updating product stock:', err);
             }
         }
     };
 
-    const deleteItem = (id: string) => {
-        inventory.value = inventory.value.filter(i => i.id !== id);
+    const deleteItem = async (_id: string) => {
+        // Not implemented for products via inventory view
     };
 
-    const adjustQuantity = (id: string, amount: number) => {
+    const adjustQuantity = async (id: string, amount: number) => {
         const item = inventory.value.find(i => i.id === id);
-        if (item) {
-            item.quantity = Math.max(0, item.quantity + amount);
-            item.lastRestocked = new Date().toISOString().substring(0, 10);
+        if (!item) return;
+
+        if (item.isProduct) {
+            try {
+                const response = await fetch(`${API_URL}/products/${id}/stock`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+                    body: JSON.stringify({ quantity: amount, reset: false })
+                });
+
+                if (!response.ok) throw new Error('Failed to update stock');
+                await fetchInventory();
+            } catch (err) {
+                console.error('Error adjusting product stock:', err);
+            }
         }
     };
 
     return {
-        inventory: readonly(inventory),
+        inventory,
         lowStockItems,
+        fetchInventory,
         addItem,
         updateItem,
         deleteItem,
         adjustQuantity
     };
 }
+
+// Global listener for inventory updates
+socketService.on('stock:updated', () => {
+    const { fetchInventory } = useInventory();
+    fetchInventory();
+});

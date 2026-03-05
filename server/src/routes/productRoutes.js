@@ -26,4 +26,7 @@ router.post('/', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cashier'
 router.put('/:id', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cashier'), upload.single('image'), productController.updateProduct);
 router.delete('/:id', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cashier'), productController.deleteProduct);
 
+// Inventory specific route (Baker can update stock)
+router.patch('/:id/stock', authenticateToken, authorizeRoles('Admin', 'Manager', 'Baker', 'Cashier'), productController.updateStock);
+
 module.exports = router;

@@ -1,4 +1,5 @@
 import { ref, readonly } from 'vue';
+import { socketService } from '../services/socket';
 
 export interface Product {
     readonly id: string;
@@ -117,3 +118,9 @@ export function useProducts() {
         deleteProduct
     };
 }
+
+// Global listener for product updates
+socketService.on('stock:updated', () => {
+    const { fetchProducts } = useProducts();
+    fetchProducts();
+});

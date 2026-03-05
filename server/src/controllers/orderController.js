@@ -18,18 +18,27 @@ const createOrder = async (req, res) => {
 
         const orderId = orderResult.rows[0].id;
 
-        // 2. Insert into order_details table
+        // 2. Insert into order_details table and update stock
         for (const item of items) {
             // item should have product_id, quantity, subtotal
             await client.query(
                 'INSERT INTO order_details (order_id, product_id, quantity, subtotal) VALUES ($1, $2, $3, $4)',
                 [orderId, item.product_id, item.quantity, item.subtotal]
             );
+
+            // Decrement Stock
+            await client.query(
+                'UPDATE products SET stock_quantity = stock_quantity - $1 WHERE id = $2',
+                [item.quantity, item.product_id]
+            );
         }
 
         await client.query('COMMIT');
 
-        // Create notification for admin/staff
+        // Emit real-time stock update for all clients
+        if (global.io) {
+            global.io.emit('stock:updated', { source: 'order', orderId });
+        }
         try {
             // Find an admin to notify (or notify a general channel if implemented)
             // For now, let's assume we notify the customer if they are logged in

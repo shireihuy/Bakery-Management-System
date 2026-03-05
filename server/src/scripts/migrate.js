@@ -28,6 +28,16 @@ async function migrate() {
         `);
         console.log('✅ Created notifications table');
 
+        // Add inventory-related columns to products
+        await query(`
+            ALTER TABLE products 
+            ADD COLUMN IF NOT EXISTS stock_quantity DECIMAL(10, 2) DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS min_stock_level DECIMAL(10, 2) DEFAULT 5,
+            ADD COLUMN IF NOT EXISTS unit VARCHAR(50) DEFAULT 'pcs',
+            ADD COLUMN IF NOT EXISTS last_restocked TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        `);
+        console.log('✅ Updated products table with inventory columns');
+
         console.log('--- Migration Completed Successfully ---');
         process.exit(0);
     } catch (err) {
