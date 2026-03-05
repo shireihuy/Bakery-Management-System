@@ -1,4 +1,5 @@
 const { query } = require('../config/db');
+const NotificationController = require('./notificationController');
 
 /**
  * Initiate a mock payment
@@ -97,6 +98,20 @@ const simulateCallback = async (req, res) => {
             'INSERT INTO payments (order_id, method, amount, status, transaction_id) VALUES ($1, $2, $3, $4, $5)',
             [orderId, order.payment_method || 'Unknown', order.total_price, nextPaymentStatus, transactionId || `TX_${Date.now()}`]
         );
+
+        // Notify customer on successful payment
+        if (status === 'success' && order.customer_id && order.customer_id !== 'GUEST') {
+            try {
+                await NotificationController.createNotification(
+                    order.customer_id,
+                    'Payment Successful',
+                    `Payment for order #${orderId} was successful. We've started baking!`,
+                    'success'
+                );
+            } catch (notifErr) {
+                console.error('Failed to send payment notification:', notifErr);
+            }
+        }
 
         res.status(200).json({ message: 'Callback processed successfully', payment_status: nextPaymentStatus });
     } catch (err) {

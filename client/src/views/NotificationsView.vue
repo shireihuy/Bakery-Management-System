@@ -44,8 +44,8 @@ const getIcon = (type: string) => {
     }
 };
 
-const getStyles = (type: string, isRead: boolean) => {
-    const base = isRead ? 'bg-white' : 'bg-green-50/30';
+const getStyles = (type: string, is_read: boolean) => {
+    const base = is_read ? 'bg-white' : 'bg-green-50/30';
     switch (type) {
         case 'success': return { bg: base, icon: 'text-green-500 bg-green-50' };
         case 'warning': return { bg: base, icon: 'text-orange-500 bg-orange-50' };
@@ -110,27 +110,27 @@ const getStyles = (type: string, isRead: boolean) => {
                 v-for="notif in filteredNotifications" 
                 :key="notif.id"
                 class="group bg-white rounded-xl border border-green-100 shadow-sm hover:shadow-md transition-all p-4 flex gap-4"
-                :class="{ 'opacity-70 bg-gray-50/50': notif.isRead }"
+                :class="{ 'opacity-70 bg-gray-50/50': notif.is_read }"
             >
-                <div :class="`p-3 rounded-xl h-fit border ${getStyles(notif.type, notif.isRead).icon} border-current/10`">
+                <div :class="`p-3 rounded-xl h-fit border ${getStyles(notif.type, notif.is_read).icon} border-current/10`">
                     <component :is="getIcon(notif.type)" class="w-5 h-5" />
                 </div>
                 
                 <div class="flex-1 space-y-1">
                     <div class="flex justify-between items-start">
-                        <h4 class="font-bold text-gray-900" :class="{ 'font-semibold': notif.isRead }">
+                        <h4 class="font-bold text-gray-900" :class="{ 'font-semibold': notif.is_read }">
                             {{ notif.title }}
-                            <span v-if="!notif.isRead" class="ml-2 inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                            <span v-if="!notif.is_read" class="ml-2 inline-block w-2 h-2 rounded-full bg-green-500"></span>
                         </h4>
                         <span class="text-xs text-gray-400 flex items-center gap-1">
-                            <Clock class="w-3 h-3" /> {{ formatFullDate(notif.timestamp) }}
+                            <Clock class="w-3 h-3" /> {{ formatFullDate(notif.created_at) }}
                         </span>
                     </div>
                     <p class="text-sm text-gray-600 leading-relaxed">{{ notif.message }}</p>
                     
                     <div class="pt-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
-                            v-if="!notif.isRead"
+                            v-if="!notif.is_read"
                             @click="markAsRead(notif.id)"
                             class="text-xs font-bold text-green-600 hover:text-green-800 flex items-center gap-1 pr-3 border-r border-gray-100"
                         >

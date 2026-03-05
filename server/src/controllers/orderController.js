@@ -1,4 +1,5 @@
 const { pool, query } = require('../config/db');
+const NotificationController = require('./notificationController');
 
 const createOrder = async (req, res) => {
     const { customer_id, customer_name, total_price, items } = req.body;
@@ -27,6 +28,23 @@ const createOrder = async (req, res) => {
         }
 
         await client.query('COMMIT');
+
+        // Create notification for admin/staff
+        try {
+            // Find an admin to notify (or notify a general channel if implemented)
+            // For now, let's assume we notify the customer if they are logged in
+            if (customer_id && customer_id !== 'GUEST') {
+                await NotificationController.createNotification(
+                    customer_id,
+                    'Order Confirmed',
+                    `Your order #${orderId} has been placed successfully.`,
+                    'success'
+                );
+            }
+        } catch (notifErr) {
+            console.error('Failed to create notification:', notifErr);
+        }
+
         res.status(201).json({ message: 'Order created successfully', orderId });
     } catch (err) {
         await client.query('ROLLBACK');
@@ -146,11 +164,23 @@ const updateOrderStatus = async (req, res) => {
 
         const result = await query(updateQuery, params);
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'Order not found' });
+        const order = result.rows[0];
+
+        // Create notification for the customer
+        try {
+            if (order.customer_id && order.customer_id !== 'GUEST') {
+                await NotificationController.createNotification(
+                    order.customer_id,
+                    'Order Status Updated',
+                    `Your order #${id} status is now: ${status}`,
+                    status === 'Completed' ? 'success' : 'info'
+                );
+            }
+        } catch (notifErr) {
+            console.error('Failed to create status notification:', notifErr);
         }
 
-        res.json(result.rows[0]);
+        res.json(order);
     } catch (err) {
         console.error('Error updating order status:', err);
         res.status(500).json({ message: 'Server error updating order status' });

@@ -1,7 +1,9 @@
-const { query } = require('../config/db');
+const { query, pool } = require('../config/db');
 
 async function migrate() {
     console.log('--- Database Migration Started ---');
+    console.log(`Targeting Database: ${process.env.DB_NAME} at ${process.env.DB_HOST}:${process.env.DB_PORT}`);
+
     try {
         // Add payment-related columns to orders if they don't exist
         await query(`
@@ -12,17 +14,28 @@ async function migrate() {
         `);
         console.log('✅ Updated orders table with payment columns');
 
-        // Ensure payments table has transaction_id too
+        // Create notifications table
         await query(`
-            ALTER TABLE payments
-            ADD COLUMN IF NOT EXISTS transaction_id VARCHAR(255)
+            CREATE TABLE IF NOT EXISTS notifications (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                title VARCHAR(255) NOT NULL,
+                message TEXT NOT NULL,
+                type VARCHAR(50) DEFAULT 'info',
+                is_read BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
         `);
-        console.log('✅ Updated payments table');
+        console.log('✅ Created notifications table');
 
         console.log('--- Migration Completed Successfully ---');
         process.exit(0);
     } catch (err) {
-        console.error('❌ Migration failed:', err);
+        console.error('❌ Migration failed:', err.message);
+        if (err.code === 'ENOTFOUND' && process.env.DB_HOST === 'db') {
+            console.log('\nTIP: It looks like you are running this script locally but your DB_HOST is set to "db" (for Docker).');
+            console.log('Try changing DB_HOST to "localhost" in your .env file temporarily or run this inside the container.');
+        }
         process.exit(1);
     }
 }

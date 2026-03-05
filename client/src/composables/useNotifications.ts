@@ -1,76 +1,132 @@
-import { ref, readonly, computed } from 'vue';
+import { ref, readonly, computed, onMounted } from 'vue';
+import { socketService } from '../services/socket';
 
 export interface Notification {
     id: string;
     title: string;
     message: string;
     type: 'info' | 'success' | 'warning' | 'error';
-    timestamp: string;
-    isRead: boolean;
+    created_at: string;
+    is_read: boolean;
+    user_id: string;
 }
 
-const notifications = ref<Notification[]>([
-    {
-        id: '1',
-        title: 'New Order Received',
-        message: 'Order #ORD-7742 has been placed by John Doe.',
-        type: 'info',
-        timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
-        isRead: false
-    },
-    {
-        id: '2',
-        title: 'Low Stock Alert',
-        message: 'Matcha Powder is running low (Current: 2kg).',
-        type: 'warning',
-        timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(), // 2 hours ago
-        isRead: false
-    },
-    {
-        id: '3',
-        title: 'Profile Updated',
-        message: 'Your account settings have been successfully updated.',
-        type: 'success',
-        timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-        isRead: true
+const notifications = ref<Notification[]>([]);
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+let isSocketInitialized = false;
+
+const handleNewNotification = (notification: Notification) => {
+    // Check for duplicate by ID before adding
+    const exists = notifications.value.some(n => n.id === notification.id);
+    if (!exists) {
+        console.log('New notification received via socket:', notification);
+        notifications.value.unshift(notification);
+
+        if (Notification.permission === 'granted') {
+            new Notification(notification.title, { body: notification.message });
+        }
     }
-]);
+};
 
 export function useNotifications() {
-    const unreadCount = computed(() => notifications.value.filter(n => !n.isRead).length);
+    const unreadCount = computed(() => notifications.value.filter(n => !n.is_read).length);
 
-    const markAsRead = (id: string) => {
-        const notification = notifications.value.find(n => n.id === id);
-        if (notification) {
-            notification.isRead = true;
+    const fetchNotifications = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const response = await fetch(`${API_URL}/notifications`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                notifications.value = data;
+            }
+        } catch (err) {
+            console.error('Failed to fetch notifications:', err);
         }
     };
 
-    const markAllAsRead = () => {
-        notifications.value.forEach(n => n.isRead = true);
+    const markAsRead = async (id: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/notifications/${id}/read`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const notification = notifications.value.find(n => n.id === id);
+                if (notification) {
+                    notification.is_read = true;
+                }
+            }
+        } catch (err) {
+            console.error('Failed to mark notification as read:', err);
+        }
     };
 
-    const addNotification = (notif: Omit<Notification, 'id' | 'timestamp' | 'isRead'>) => {
-        const newNotif: Notification = {
-            id: Math.random().toString(36).substring(2, 9),
-            timestamp: new Date().toISOString(),
-            isRead: false,
-            ...notif
-        };
-        notifications.value.unshift(newNotif);
-        return newNotif;
+    const markAllAsRead = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/notifications/read-all`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                notifications.value.forEach(n => n.is_read = true);
+            }
+        } catch (err) {
+            console.error('Failed to mark all notifications as read:', err);
+        }
     };
 
-    const deleteNotification = (id: string) => {
-        notifications.value = notifications.value.filter(n => n.id !== id);
+    const deleteNotification = async (id: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/notifications/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                notifications.value = notifications.value.filter(n => n.id !== id);
+            }
+        } catch (err) {
+            console.error('Failed to delete notification:', err);
+        }
     };
+
+    // Initialize listeners only once globally
+    if (!isSocketInitialized) {
+        socketService.on('notification:new', handleNewNotification);
+        isSocketInitialized = true;
+    }
+
+    // Initialize only if not already initialized
+    onMounted(() => {
+        if (notifications.value.length === 0) {
+            fetchNotifications();
+        }
+    });
 
     return {
         notifications: readonly(notifications),
         unreadCount,
         markAsRead,
         markAllAsRead,
-        addNotification,
-        deleteNotification
+        deleteNotification,
+        fetchNotifications
     };
 }

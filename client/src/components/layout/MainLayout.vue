@@ -136,7 +136,7 @@ const getNotifIconColor = (type: string) => {
                       :key="notif.id"
                       @click="markAsRead(notif.id)"
                       class="p-3 sm:p-4 border-b border-gray-50 hover:bg-green-50/30 cursor-pointer transition-colors"
-                      :class="{ 'bg-blue-50/20': !notif.isRead }"
+                      :class="{ 'bg-blue-50/20': !notif.is_read }"
                     >
                       <div class="flex gap-2 sm:gap-3">
                         <div :class="`p-1.5 sm:p-2 rounded-lg h-fit ${getNotifIconColor(notif.type)}`">
@@ -145,7 +145,7 @@ const getNotifIconColor = (type: string) => {
                         <div class="flex-1 min-w-0">
                           <div class="flex justify-between items-start mb-1 gap-2">
                             <span class="text-xs sm:text-sm font-bold text-gray-900 truncate">{{ notif.title }}</span>
-                            <span class="text-[10px] text-gray-400 shrink-0">{{ formatTime(notif.timestamp) }}</span>
+                            <span class="text-[10px] text-gray-400 shrink-0">{{ formatTime(notif.created_at) }}</span>
                           </div>
                           <p class="text-xs text-gray-600 leading-relaxed">{{ notif.message }}</p>
                         </div>
