@@ -23,7 +23,7 @@ import { usePayment } from '../composables/usePayment';
 
 const route = useRoute();
 const router = useRouter();
-const { orders, fetchMyOrders } = useOrders();
+const { orders, fetchOrderById } = useOrders();
 const { t } = useI18n();
 const { initiatePayment, simulateSuccessCallback } = usePayment();
 
@@ -34,10 +34,15 @@ const paymentStatus = ref<'idle' | 'processing' | 'success'>('idle');
 const showQR = ref(false);
 
 onMounted(async () => {
-    if (orders.value.length === 0) {
-        await fetchMyOrders();
+    // 1. Try to find in cache first
+    let found = orders.value.find(o => String(o.id) === orderId);
+    
+    // 2. If not found, fetch from server
+    if (!found && orderId !== 'mock') {
+        found = (await fetchOrderById(orderId)) || undefined;
     }
-    order.value = orders.value.find(o => String(o.id) === orderId) || null;
+    
+    order.value = found || null;
     
     if (!order.value) {
         if (orderId === 'mock') {
@@ -117,7 +122,13 @@ const completePayment = async () => {
         </div>
 
         <div class="container mx-auto px-4 sm:px-8 max-w-5xl z-10">
-            <div class="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-8 md:gap-12 animate-in fade-in slide-in-from-bottom-10 duration-700">
+            <!-- Loading State -->
+            <div v-if="!order" class="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+                <div class="w-16 h-16 border-4 border-bakery-200 border-t-bakery-900 rounded-full animate-spin"></div>
+                <p class="text-bakery-500 font-bold">Loading order details...</p>
+            </div>
+
+            <div v-else class="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-8 md:gap-12 animate-in fade-in slide-in-from-bottom-10 duration-700">
                 
                 <!-- Left: Order Summary -->
                 <div class="flex flex-col gap-6 lg:sticky lg:top-12 self-start">
@@ -253,7 +264,7 @@ const completePayment = async () => {
                                     
                                     <div class="flex items-center gap-5 relative">
                                         <div class="w-14 h-14 rounded-3xl bg-[#0088FF] flex items-center justify-center p-2 shadow-lg shadow-blue-200 group-hover:rotate-6 transition-transform">
-                                            <img src="https://static-znews.pstatic.vn/images/zalopay.png" alt="ZaloPay" class="w-full h-full object-contain brightness-0 invert">
+                                            <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-ZaloPay-V.png" alt="ZaloPay" class="w-full h-full object-contain brightness-0 invert">
                                         </div>
                                         <div class="text-left">
                                             <p class="font-black text-bakery-900 text-lg">{{ t('shop.payWithZaloPay') }}</p>
@@ -324,7 +335,7 @@ const completePayment = async () => {
                                     <div class="absolute -top-6 -right-6 w-20 h-20 rounded-4xl flex items-center justify-center shadow-2xl border-4 border-white animate-pop" 
                                         :class="selectedMethod === 'momo' ? 'bg-pink-500' : 'bg-blue-500'">
                                         <img v-if="selectedMethod === 'momo'" src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" class="w-10 h-10 object-contain brightness-0 invert">
-                                        <img v-if="selectedMethod === 'zalopay'" src="https://static-znews.pstatic.vn/images/zalopay.png" class="w-10 h-10 object-contain brightness-0 invert">
+                                        <img v-if="selectedMethod === 'zalopay'" src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-ZaloPay-V.png" class="w-10 h-10 object-contain brightness-0 invert">
                                     </div>
                                 </div>
                             </div>

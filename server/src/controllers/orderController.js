@@ -157,9 +157,57 @@ const updateOrderStatus = async (req, res) => {
     }
 };
 
+const getOrderById = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const result = await query(`
+            SELECT 
+                o.id, 
+                o.customer_id, 
+                o.customer_name, 
+                o.total_price, 
+                o.status, 
+                o.order_date,
+                o.start_time,
+                o.completed_time,
+                o.payment_status,
+                o.payment_method
+            FROM orders o
+            WHERE o.id = $1
+        `, [id]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        const order = result.rows[0];
+
+        const itemsResult = await query(`
+            SELECT
+                od.id,
+                od.product_id,
+                p.name as product_name,
+                od.quantity,
+                od.subtotal
+            FROM order_details od
+            JOIN products p ON od.product_id = p.id
+            WHERE od.order_id = $1
+        `, [id]);
+
+        res.json({
+            ...order,
+            items: itemsResult.rows
+        });
+    } catch (err) {
+        console.error('Error fetching order by ID:', err);
+        res.status(500).json({ message: 'Server error fetching order' });
+    }
+};
+
 module.exports = {
     createOrder,
     getOrders,
     getMyOrders,
+    getOrderById,
     updateOrderStatus
 };

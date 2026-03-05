@@ -83,9 +83,9 @@ const simulateCallback = async (req, res) => {
         const updateQuery = `
             UPDATE orders 
             SET payment_status = $1, 
-                status = $2, 
+                status = $2::varchar, 
                 transaction_id = $3,
-                start_time = CASE WHEN $2 = 'Baking' THEN CURRENT_TIMESTAMP ELSE start_time END
+                start_time = CASE WHEN $2::varchar = 'Baking' THEN CURRENT_TIMESTAMP ELSE start_time END
             WHERE id = $4 
             RETURNING *
         `;

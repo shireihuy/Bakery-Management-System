@@ -177,10 +177,53 @@ export function useOrders() {
         }
     };
 
+    const fetchOrderById = async (id: number | string): Promise<Order | null> => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/orders/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) return null;
+                throw new Error('Failed to fetch order');
+            }
+
+            const o = await response.json();
+            return {
+                id: o.id,
+                customerId: o.customer_id,
+                customerName: o.customer_name || 'Guest',
+                customerEmail: o.customer_email || 'walkin@example.com',
+                total: parseFloat(o.total_price),
+                status: o.status,
+                date: new Date(o.order_date).toLocaleString(),
+                startTime: o.start_time ? new Date(o.start_time).toLocaleString() : undefined,
+                completedTime: o.completed_time ? new Date(o.completed_time).toLocaleString() : undefined,
+                paymentStatus: o.payment_status,
+                paymentMethod: o.payment_method,
+                items: o.items.map((i: any) => ({
+                    id: i.id,
+                    productId: i.product_id,
+                    productName: i.product_name,
+                    quantity: i.quantity,
+                    price: parseFloat(i.subtotal) / i.quantity,
+                    subtotal: parseFloat(i.subtotal)
+                }))
+            };
+        } catch (err) {
+            console.error('Error fetching order by ID:', err);
+            return null;
+        }
+    };
+
     return {
         orders: readonly(orders),
         fetchOrders,
         fetchMyOrders,
+        fetchOrderById,
         addOrder,
         updateOrderStatus
     };
