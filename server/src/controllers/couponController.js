@@ -76,7 +76,7 @@ const validateCoupon = async (req, res) => {
     const { code, cartSubtotal } = req.body;
 
     try {
-        const result = await query('SELECT * FROM coupons WHERE code = $1', [code]);
+        const result = await query('SELECT * FROM coupons WHERE UPPER(code) = UPPER($1)', [code]);
         if (result.rows.length === 0) {
             return res.status(404).json({ valid: false, message: 'Invalid coupon code' });
         }

@@ -15,7 +15,7 @@ const createOrder = async (req, res) => {
         let finalPrice = Number(total_price);
 
         if (coupon_code) {
-            const couponRes = await client.query('SELECT * FROM coupons WHERE code = $1 FOR UPDATE', [coupon_code]);
+            const couponRes = await client.query('SELECT * FROM coupons WHERE UPPER(code) = UPPER($1) FOR UPDATE', [coupon_code]);
             if (couponRes.rows.length > 0) {
                 const coupon = couponRes.rows[0];
                 if (coupon.is_active) {
