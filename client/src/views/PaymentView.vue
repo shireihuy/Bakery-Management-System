@@ -175,11 +175,15 @@ const completePayment = async () => {
                             <div class="pt-8 border-t border-bakery-100/50 space-y-4">
                                 <div class="flex justify-between text-bakery-400 font-black uppercase tracking-[0.2em] text-[10px]">
                                     <span>Base Subtotal</span>
-                                    <span>${{ order.total.toFixed(2) }}</span>
+                                    <span>${{ ((order.total || 0) + (order.discountAmount || 0)).toFixed(2) }}</span>
                                 </div>
-                                <div class="flex justify-between items-center">
+                                <div v-if="order.discountAmount" class="flex justify-between text-green-600 font-black uppercase tracking-[0.2em] text-[10px]">
+                                    <span>Discount Applied</span>
+                                    <span>-${{ order.discountAmount.toFixed(2) }}</span>
+                                </div>
+                                <div class="flex justify-between items-center pt-2">
                                     <span class="text-lg font-black text-bakery-900">Amount to Pay</span>
-                                    <span class="text-4xl font-black text-bakery-900 tracking-tighter">${{ order.total.toFixed(2) }}</span>
+                                    <span class="text-4xl font-black text-bakery-900 tracking-tighter">${{ (order.total || 0).toFixed(2) }}</span>
                                 </div>
                             </div>
 

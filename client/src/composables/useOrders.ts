@@ -16,6 +16,8 @@ export interface Order {
     readonly customerEmail: string;
     readonly items: readonly OrderItem[];
     readonly total: number;
+    readonly discountAmount?: number;
+    readonly couponId?: number;
     status: 'Pending' | 'Baking' | 'Ready' | 'Completed' | 'Cancelled';
     readonly date: string;
     readonly startTime?: string;
@@ -55,7 +57,9 @@ export function useOrders() {
                 customerEmail: o.customer_email || 'walkin@example.com',
                 phone: o.customer_phone,
                 address: o.customer_address,
-                total: parseFloat(o.total_price),
+                total: parseFloat(o.total_price) || 0,
+                discountAmount: parseFloat(o.discount_amount) || 0,
+                couponId: o.coupon_id,
                 status: o.status,
                 date: new Date(o.order_date).toLocaleString(),
                 startTime: o.start_time ? new Date(o.start_time).toLocaleString() : undefined,
@@ -95,7 +99,9 @@ export function useOrders() {
                 customerId: o.customer_id,
                 customerName: 'Me', // We know it's us
                 customerEmail: '', // Not needed for history
-                total: parseFloat(o.total_price),
+                total: parseFloat(o.total_price) || 0,
+                discountAmount: parseFloat(o.discount_amount) || 0,
+                couponId: o.coupon_id,
                 status: o.status,
                 date: new Date(o.order_date).toLocaleString(),
                 startTime: o.start_time ? new Date(o.start_time).toLocaleString() : undefined,
@@ -128,11 +134,12 @@ export function useOrders() {
                 body: JSON.stringify({
                     customer_id: orderData.customerId,
                     customer_name: orderData.customerName,
-                    total_price: orderData.total,
+                    total_price: orderData.total_price || orderData.total,
+                    coupon_code: orderData.coupon_code,
                     items: orderData.items.map((item: any) => ({
                         product_id: item.productId,
                         quantity: item.quantity,
-                        subtotal: item.price * item.quantity
+                        subtotal: item.subtotal || (item.price * item.quantity)
                     }))
                 })
             });
@@ -197,7 +204,9 @@ export function useOrders() {
                 customerId: o.customer_id,
                 customerName: o.customer_name || 'Guest',
                 customerEmail: o.customer_email || 'walkin@example.com',
-                total: parseFloat(o.total_price),
+                total: parseFloat(o.total_price) || 0,
+                discountAmount: parseFloat(o.discount_amount) || 0,
+                couponId: o.coupon_id,
                 status: o.status,
                 date: new Date(o.order_date).toLocaleString(),
                 startTime: o.start_time ? new Date(o.start_time).toLocaleString() : undefined,
