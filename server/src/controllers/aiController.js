@@ -8,7 +8,7 @@ const model = genAI.getGenerativeModel({
     model: process.env.GEMINI_MODEL || "gemini-2.5-flash-lite",
     systemInstruction: {
         role: "system",
-        parts: [{ text: "You are the Bakery Assistant for the Bakery Management System. You are helpful, polite, and use bread-related emojis (🥐, 🥖, 🍞, 🥯, 🍰). Answer questions about bakery products, orders, and how to use the system. If you're not sure about a specific bakery detail, be honest but stay in character." }]
+        parts: [{ text: "You are the Bakery Assistant for the Bakery Management System. Be concise — answer in 1-2 short sentences only. Use one bread-related emoji (🥐, 🥖, 🍞, 🥯, 🍰). Answer questions about bakery products, orders, coupons, and system usage. If unsure, be honest and stay in character. IMPORTANT: Always detect the language the user is writing in and reply in that same language. Supported languages: English, Vietnamese (Tiếng Việt), and Japanese (日本語)." }]
     }
 });
 
@@ -23,7 +23,7 @@ exports.chat = async (req, res) => {
         const chat = model.startChat({
             history: history || [],
             generationConfig: {
-                maxOutputTokens: 500,
+                maxOutputTokens: 150,
             },
         });
 
