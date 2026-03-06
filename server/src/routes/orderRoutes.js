@@ -18,7 +18,7 @@ router.get('/my-orders', orderController.getMyOrders);
 // Get a single order (For payment/summary)
 router.get('/:id', orderController.getOrderById);
 
-// Update order status (Staff only)
-router.put('/:id/status', authorizeRoles('Admin', 'Manager', 'Baker', 'Cashier'), orderController.updateOrderStatus);
+// Update order status (Staff to update process, Customers can only cancel)
+router.put('/:id/status', authorizeRoles('Admin', 'Manager', 'Baker', 'Cashier', 'Customer'), orderController.updateOrderStatus);
 
 module.exports = router;

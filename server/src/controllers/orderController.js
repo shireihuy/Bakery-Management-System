@@ -205,7 +205,34 @@ const updateOrderStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
+    const client = await pool.connect();
     try {
+        await client.query('BEGIN');
+
+        // Fetch current order to check previous state
+        const orderRes = await client.query('SELECT * FROM orders WHERE id = $1', [id]);
+        if (orderRes.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ message: 'Order not found' });
+        }
+        const currentOrder = orderRes.rows[0];
+
+        // Ensure Customers can only cancel their own pending/unpaid orders.
+        if (req.user && req.user.role === 'Customer') {
+            if (currentOrder.customer_id !== req.user.id) {
+                await client.query('ROLLBACK');
+                return res.status(403).json({ message: 'Not authorized to modify this order' });
+            }
+            if (status !== 'Cancelled') {
+                await client.query('ROLLBACK');
+                return res.status(403).json({ message: 'Customers can only cancel orders' });
+            }
+            if (currentOrder.status !== 'Pending' || currentOrder.payment_status === 'Paid') {
+                await client.query('ROLLBACK');
+                return res.status(400).json({ message: 'Only pending, unpaid orders can be cancelled' });
+            }
+        }
+
         let updateQuery = 'UPDATE orders SET status = $1';
         const params = [status];
 
@@ -218,9 +245,39 @@ const updateOrderStatus = async (req, res) => {
         updateQuery += ' WHERE id = $2 RETURNING *';
         params.push(id);
 
-        const result = await query(updateQuery, params);
-
+        const result = await client.query(updateQuery, params);
         const order = result.rows[0];
+
+        // Handle Stock and Coupon restore on Cancellation
+        if (status === 'Cancelled' && currentOrder.status !== 'Cancelled') {
+            // Revert coupon usage
+            if (currentOrder.coupon_id) {
+                await client.query(
+                    'UPDATE coupons SET usage_count = GREATEST(0, usage_count - 1) WHERE id = $1',
+                    [currentOrder.coupon_id]
+                );
+            }
+
+            // Restore product stock
+            const itemsRes = await client.query(
+                'SELECT product_id, quantity FROM order_details WHERE order_id = $1',
+                [id]
+            );
+
+            for (const item of itemsRes.rows) {
+                await client.query(
+                    'UPDATE products SET stock_quantity = stock_quantity + $1 WHERE id = $2',
+                    [item.quantity, item.product_id]
+                );
+            }
+
+            // Emit real-time stock update
+            if (global.io) {
+                global.io.emit('stock:updated', { source: 'order_cancelled', orderId: id });
+            }
+        }
+
+        await client.query('COMMIT');
 
         // Create notification for the customer
         try {
@@ -229,7 +286,7 @@ const updateOrderStatus = async (req, res) => {
                     order.customer_id,
                     'Order Status Updated',
                     `Your order #${id} status is now: ${status}`,
-                    status === 'Completed' ? 'success' : 'info'
+                    status === 'Completed' ? 'success' : (status === 'Cancelled' ? 'error' : 'info')
                 );
             }
         } catch (notifErr) {
@@ -238,8 +295,11 @@ const updateOrderStatus = async (req, res) => {
 
         res.json(order);
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error('Error updating order status:', err);
         res.status(500).json({ message: 'Server error updating order status' });
+    } finally {
+        if (client) client.release();
     }
 };
 
