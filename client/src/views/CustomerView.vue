@@ -502,11 +502,19 @@ const handleCancelOrder = async (orderId: number) => {
                         <span class="capitalize">{{ order.status }}</span>
                      </span>
                  </div>
-                 <div class="border-t border-b border-green-100 py-3 mb-3 space-y-2">
+                  <div class="border-t border-b border-green-100 py-3 mb-3 space-y-2">
                      <p class="text-xs font-medium text-green-600 mb-2">{{ t('shop.items') }}</p>
                     <div v-for="(item, idx) in order.items" :key="idx" class="flex justify-between text-xs">
                         <span class="text-gray-700">{{ item.productName }} <span class="text-green-600 ml-1">x{{ item.quantity }}</span></span>
                         <span class="text-gray-900 font-medium">${{ (item.price * item.quantity).toFixed(2) }}</span>
+                    </div>
+                 </div>
+                 <!-- Discount Badge -->
+                 <div v-if="order.discountAmount && order.discountAmount > 0" class="mb-3 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-3 py-2">
+                    <span class="text-lg">🎟️</span>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs font-bold text-green-700 truncate">Coupon{{ order.couponCode ? ` "${order.couponCode}"` : '' }} Applied</p>
+                        <p class="text-xs text-green-600">You saved ${{ order.discountAmount.toFixed(2) }}</p>
                     </div>
                  </div>
                  <div class="flex justify-between items-center mb-4">
@@ -849,9 +857,17 @@ const handleCancelOrder = async (orderId: number) => {
                 <div class="space-y-3 pt-4 border-t border-gray-200">
                     <h3 class="font-semibold text-gray-900">Order Summary</h3>
                     <div class="space-y-2 p-4 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                        <!-- Subtotal row: items sum before discount -->
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Subtotal</span>
-                            <span class="font-medium text-gray-900">${{ viewingOrder.total.toFixed(2) }}</span>
+                            <span class="font-medium text-gray-900">${{ (viewingOrder.total + (viewingOrder.discountAmount || 0)).toFixed(2) }}</span>
+                        </div>
+                        <!-- Coupon / Discount row -->
+                        <div v-if="viewingOrder.discountAmount && viewingOrder.discountAmount > 0" class="flex justify-between text-sm">
+                            <span class="text-green-700 font-medium flex items-center gap-1">
+                                🎟️ Coupon<span v-if="viewingOrder.couponCode" class="font-bold"> "{{ viewingOrder.couponCode }}"</span>
+                            </span>
+                            <span class="font-bold text-green-700">-${{ viewingOrder.discountAmount.toFixed(2) }}</span>
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-gray-600">Tax (0%)</span>

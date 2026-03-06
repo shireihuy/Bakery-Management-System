@@ -124,6 +124,7 @@ const getOrders = async (req, res) => {
                 o.total_price, 
                 o.coupon_id,
                 o.discount_amount,
+                c.code as coupon_code,
                 o.status, 
                 o.order_date,
                 o.start_time,
@@ -132,6 +133,7 @@ const getOrders = async (req, res) => {
                 o.payment_method
             FROM orders o
             LEFT JOIN users u ON o.customer_id::text = u.id::text
+            LEFT JOIN coupons c ON o.coupon_id = c.id
             ORDER BY o.order_date DESC
         `);
 
@@ -168,10 +170,11 @@ const getMyOrders = async (req, res) => {
     const userId = req.user.id;
     try {
         const result = await query(`
-            SELECT id, total_price, coupon_id, discount_amount, status, order_date, start_time, completed_time, payment_status, payment_method
-            FROM orders
-            WHERE customer_id = $1
-            ORDER BY order_date DESC
+            SELECT o.id, o.total_price, o.coupon_id, o.discount_amount, c.code as coupon_code, o.status, o.order_date, o.start_time, o.completed_time, o.payment_status, o.payment_method
+            FROM orders o
+            LEFT JOIN coupons c ON o.coupon_id = c.id
+            WHERE o.customer_id = $1
+            ORDER BY o.order_date DESC
             `, [userId]);
 
         const orders = [];
@@ -314,6 +317,7 @@ const getOrderById = async (req, res) => {
                 o.total_price, 
                 o.coupon_id,
                 o.discount_amount,
+                c.code as coupon_code,
                 o.status, 
                 o.order_date,
                 o.start_time,
@@ -321,6 +325,7 @@ const getOrderById = async (req, res) => {
                 o.payment_status,
                 o.payment_method
             FROM orders o
+            LEFT JOIN coupons c ON o.coupon_id = c.id
             WHERE o.id = $1
         `, [id]);
 

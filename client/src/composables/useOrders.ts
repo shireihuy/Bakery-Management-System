@@ -18,6 +18,7 @@ export interface Order {
     readonly total: number;
     readonly discountAmount?: number;
     readonly couponId?: number;
+    readonly couponCode?: string;
     status: 'Pending' | 'Baking' | 'Ready' | 'Completed' | 'Cancelled';
     readonly date: string;
     readonly startTime?: string;
@@ -60,6 +61,7 @@ export function useOrders() {
                 total: parseFloat(o.total_price) || 0,
                 discountAmount: parseFloat(o.discount_amount) || 0,
                 couponId: o.coupon_id,
+                couponCode: o.coupon_code || undefined,
                 status: o.status,
                 date: new Date(o.order_date).toLocaleString(),
                 startTime: o.start_time ? new Date(o.start_time).toLocaleString() : undefined,
@@ -102,6 +104,7 @@ export function useOrders() {
                 total: parseFloat(o.total_price) || 0,
                 discountAmount: parseFloat(o.discount_amount) || 0,
                 couponId: o.coupon_id,
+                couponCode: o.coupon_code || undefined,
                 status: o.status,
                 date: new Date(o.order_date).toLocaleString(),
                 startTime: o.start_time ? new Date(o.start_time).toLocaleString() : undefined,
@@ -207,6 +210,7 @@ export function useOrders() {
                 total: parseFloat(o.total_price) || 0,
                 discountAmount: parseFloat(o.discount_amount) || 0,
                 couponId: o.coupon_id,
+                couponCode: o.coupon_code || undefined,
                 status: o.status,
                 date: new Date(o.order_date).toLocaleString(),
                 startTime: o.start_time ? new Date(o.start_time).toLocaleString() : undefined,
