@@ -2,7 +2,16 @@ const { query } = require('../config/db');
 
 const getProducts = async (req, res) => {
     try {
-        const result = await query('SELECT * FROM products WHERE is_active = TRUE ORDER BY id ASC');
+        const result = await query(`
+            SELECT p.*, 
+                   COALESCE(AVG(pr.rating), 0) as avg_rating,
+                   COUNT(pr.rating) as total_votes
+            FROM products p
+            LEFT JOIN product_ratings pr ON p.id = pr.product_id
+            WHERE p.is_active = TRUE
+            GROUP BY p.id
+            ORDER BY p.id ASC
+        `);
         const products = result.rows.map(p => ({
             id: p.id.toString(),
             name: p.name,
@@ -17,7 +26,8 @@ const getProducts = async (req, res) => {
             last_restocked: p.last_restocked,
             ingredients: Array.isArray(p.ingredients) ? p.ingredients : JSON.parse(p.ingredients || '[]'),
             allergens: Array.isArray(p.allergens) ? p.allergens : JSON.parse(p.allergens || '[]'),
-            rating: 4.5, // Keep mock rating for now
+            rating: parseFloat(p.avg_rating).toFixed(1),
+            totalVotes: parseInt(p.total_votes)
         }));
         res.json(products);
     } catch (err) {
@@ -29,11 +39,25 @@ const getProducts = async (req, res) => {
 const getProductById = async (req, res) => {
     const { id } = req.params;
     try {
-        const result = await query('SELECT * FROM products WHERE id = $1', [id]);
+        const result = await query(`
+            SELECT p.*, 
+                   COALESCE(AVG(pr.rating), 0) as avg_rating,
+                   COUNT(pr.rating) as total_votes
+            FROM products p
+            LEFT JOIN product_ratings pr ON p.id = pr.product_id
+            WHERE p.id = $1
+            GROUP BY p.id
+        `, [id]);
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
-        res.json(result.rows[0]);
+        const p = result.rows[0];
+        const product = {
+            ...p,
+            rating: parseFloat(p.avg_rating).toFixed(1),
+            totalVotes: parseInt(p.total_votes)
+        };
+        res.json(product);
     } catch (err) {
         console.error('Error fetching product:', err);
         res.status(500).json({ message: 'Server error fetching product' });
@@ -182,6 +206,75 @@ const getTags = async (req, res) => {
     }
 };
 
+const submitRating = async (req, res) => {
+    const { id: productId } = req.params;
+    const { rating } = req.body;
+    const userId = req.user.id;
+
+    if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ message: 'Invalid rating. Must be between 1 and 5.' });
+    }
+
+    try {
+        // Upsert rating
+        await query(`
+            INSERT INTO product_ratings (product_id, user_id, rating)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (product_id, user_id)
+            DO UPDATE SET rating = EXCLUDED.rating, created_at = CURRENT_TIMESTAMP
+        `, [productId, userId, rating]);
+
+        // Fetch updated average
+        const result = await query(`
+            SELECT COALESCE(AVG(rating), 0) as avg_rating, COUNT(*) as total_votes
+            FROM product_ratings
+            WHERE product_id = $1
+        `, [productId]);
+
+        const updated = result.rows[0];
+        
+        // Emit real-time update
+        if (global.io) {
+            global.io.emit('product:rating_updated', {
+                productId: productId,
+                rating: parseFloat(updated.avg_rating).toFixed(1),
+                totalVotes: parseInt(updated.total_votes)
+            });
+        }
+
+        res.json({ 
+            message: 'Rating submitted successfully',
+            rating: parseFloat(updated.avg_rating).toFixed(1),
+            totalVotes: parseInt(updated.total_votes)
+        });
+    } catch (err) {
+        console.error('Error submitting rating:', err);
+        res.status(500).json({ message: 'Server error submitting rating' });
+    }
+};
+
+const resetRatings = async (req, res) => {
+    const { id: productId } = req.params;
+
+    try {
+        await query('DELETE FROM product_ratings WHERE product_id = $1', [productId]);
+        
+        // Emit real-time update
+        if (global.io) {
+            global.io.emit('product:rating_updated', {
+                productId: productId,
+                rating: "0.0",
+                totalVotes: 0
+            });
+        }
+
+        res.json({ message: 'Ratings reset successfully' });
+    } catch (err) {
+        console.error('Error resetting ratings:', err);
+        res.status(500).json({ message: 'Server error resetting ratings' });
+    }
+};
+
 module.exports = {
     getProducts,
     getProductById,
@@ -189,5 +282,7 @@ module.exports = {
     updateProduct,
     deleteProduct,
     updateStock,
-    getTags
+    getTags,
+    submitRating,
+    resetRatings
 };

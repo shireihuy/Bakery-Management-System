@@ -5,13 +5,18 @@ import {
   Edit, 
   Trash2, 
   Search,
-  X 
+  X,
+  Star 
 } from 'lucide-vue-next';
-import { useProducts, type Product } from '../composables/useProducts';
+import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
+import { useProducts, type Product } from '../composables/useProducts';
 
-const { products, addProduct, updateProduct, deleteProduct, fetchProducts, fetchTags } = useProducts();
+const { products, addProduct, updateProduct, deleteProduct, fetchProducts, fetchTags, resetRatings } = useProducts();
+const { user } = useAuth();
 const { t } = useI18n();
+
+const isAdmin = computed(() => user.value?.role === 'Admin');
 
 const availableTags = ref<{ ingredients: string[], allergens: string[] }>({ ingredients: [], allergens: [] });
 
@@ -35,8 +40,7 @@ const formData = ref({
     image: '',
     description: '',
     ingredients: [] as string[],
-    allergens: [] as string[],
-    rating: ''
+    allergens: [] as string[]
 });
 
 const selectedFile = ref<File | null>(null);
@@ -64,8 +68,7 @@ const resetForm = () => {
         image: '', 
         description: '', 
         ingredients: [], 
-        allergens: [], 
-        rating: '' 
+        allergens: []
     };
     editingProduct.value = null;
     selectedFile.value = null;
@@ -84,8 +87,7 @@ const handleEdit = (product: Product) => {
         image: product.image,
         description: product.description || '',
         ingredients: [...(product.ingredients || [])],
-        allergens: [...(product.allergens || [])],
-        rating: product.rating?.toString() || ''
+        allergens: [...(product.allergens || [])]
     };
     imagePreview.value = product.image;
     isDialogOpen.value = true;
@@ -109,8 +111,7 @@ const handleSubmit = async () => {
         // Send file if selected, otherwise send existing image URL string
         image: selectedFile.value || formData.value.image,
         ingredients: formData.value.ingredients,
-        allergens: formData.value.allergens,
-        rating: formData.value.rating
+        allergens: formData.value.allergens
     };
 
     try {
@@ -140,6 +141,17 @@ const toggleTag = (type: 'ingredients' | 'allergens', tag: string) => {
         list.push(tag);
     } else {
         list.splice(index, 1);
+    }
+};
+
+const handleResetRatings = async (productId: string) => {
+    if (confirm('Are you sure you want to reset all ratings for this product?')) {
+        try {
+            await resetRatings(productId);
+            alert('Ratings reset successfully');
+        } catch (err) {
+            alert('Failed to reset ratings');
+        }
     }
 };
 </script>
@@ -213,13 +225,28 @@ const toggleTag = (type: 'ingredients' | 'allergens', tag: string) => {
                       </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2 text-sm">
-                      <div class="col-span-2">
+                      <div class="col-span-1">
                         <p class="text-green-600 text-xs">{{ t('products.price') }}</p>
                         <p class="text-green-900 font-medium">${{ product.price.toFixed(2) }}</p>
+                      </div>
+                      <div class="col-span-1">
+                        <p class="text-green-600 text-xs">{{ t('products.rating') }}</p>
+                        <div class="flex items-center gap-1">
+                            <Star class="w-3 h-3 fill-yellow-400 text-yellow-400" v-if="parseFloat(product.rating?.toString() || '0') > 0" />
+                            <p class="text-green-900 font-medium">{{ product.rating || '0.0' }} <span class="text-[10px] text-gray-400">({{ product.totalVotes || 0 }})</span></p>
+                        </div>
                       </div>
                       <div>
                         <p class="text-green-600 text-xs">{{ t('products.stock') }}</p>
                         <p class="text-green-900 font-medium">{{ product.stock }} {{ product.unit }}</p>
+                      </div>
+                      <div class="flex items-end justify-end" v-if="isAdmin">
+                         <button 
+                            @click="handleResetRatings(product.id)"
+                            class="text-[10px] text-red-500 hover:text-red-700 font-medium underline"
+                         >
+                            Reset Ratings
+                         </button>
                       </div>
                     </div>
                     <div v-if="product.ingredients?.length" class="flex flex-wrap gap-1">
@@ -407,18 +434,7 @@ const toggleTag = (type: 'ingredients' | 'allergens', tag: string) => {
                            </div>
                        </div>
                    </div>
-                   <div class="space-y-2">
-                    <label for="rating" class="text-sm font-medium text-gray-700">{{ t('products.rating') }} (0-5)</label>
-                    <input
-                      id="rating"
-                      v-model="formData.rating"
-                      type="number"
-                      step="0.1"
-                      max="5"
-                      required
-                      class="flex h-10 w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
-                    />
-                  </div>
+
                   
                     <button 
                     type="submit" 

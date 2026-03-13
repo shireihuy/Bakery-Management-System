@@ -14,6 +14,7 @@ export interface Product {
     readonly ingredients?: readonly string[];
     readonly allergens?: readonly string[];
     readonly rating?: number;
+    readonly totalVotes?: number;
 }
 
 const products = ref<Product[]>([]);
@@ -131,18 +132,59 @@ export function useProducts() {
         }
     };
 
+    const submitRating = async (id: string, rating: number) => {
+        try {
+            const response = await fetch(`${API_URL}/products/${id}/rate`, {
+                method: 'POST',
+                headers: {
+                    ...getAuthHeader(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ rating })
+            });
+
+            if (!response.ok) throw new Error('Failed to submit rating');
+            await fetchProducts();
+        } catch (err) {
+            console.error('Error submitting rating:', err);
+            throw err;
+        }
+    };
+
+    const resetRatings = async (id: string) => {
+        try {
+            const response = await fetch(`${API_URL}/products/${id}/ratings`, {
+                method: 'DELETE',
+                headers: getAuthHeader()
+            });
+
+            if (!response.ok) throw new Error('Failed to reset ratings');
+            await fetchProducts();
+        } catch (err) {
+            console.error('Error resetting ratings:', err);
+            throw err;
+        }
+    };
+
     return {
         products: readonly(products),
         fetchProducts,
         addProduct,
         updateProduct,
         deleteProduct,
-        fetchTags
+        fetchTags,
+        submitRating,
+        resetRatings
     };
 };
 
 // Global listener for product updates
 socketService.on('stock:updated', () => {
+    const { fetchProducts } = useProducts();
+    fetchProducts();
+});
+
+socketService.on('product:rating_updated', () => {
     const { fetchProducts } = useProducts();
     fetchProducts();
 });

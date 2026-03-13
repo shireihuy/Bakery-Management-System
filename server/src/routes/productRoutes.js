@@ -30,4 +30,8 @@ router.delete('/:id', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cas
 // Inventory specific route (Baker can update stock)
 router.patch('/:id/stock', authenticateToken, authorizeRoles('Admin', 'Manager', 'Baker', 'Cashier'), productController.updateStock);
 
+// Rating routes
+router.post('/:id/rate', authenticateToken, productController.submitRating);
+router.delete('/:id/ratings', authenticateToken, authorizeRoles('Admin'), productController.resetRatings);
+
 module.exports = router;

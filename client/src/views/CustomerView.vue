@@ -15,7 +15,9 @@ import {
   Clock, 
   XCircle, 
   Eye,
-  CreditCard
+  CreditCard,
+  Coffee,
+  ArrowRight
 } from 'lucide-vue-next';
 import { useProducts, type Product } from '../composables/useProducts';
 import { useOrders, type Order } from '../composables/useOrders';
@@ -23,7 +25,7 @@ import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
 
 // State
-const { products, fetchProducts } = useProducts();
+const { products, fetchProducts, submitRating } = useProducts();
 const { addOrder, orders, fetchMyOrders, fetchOrders, updateOrderStatus } = useOrders();
 const { user } = useAuth();
 const { t } = useI18n();
@@ -59,6 +61,10 @@ const isOrderDetailsOpen = ref(false);
 
 const orderCustomerName = ref('');
 const showLoginPrompt = ref(false);
+
+const userRating = ref(0);
+const hoverRating = ref(0);
+const isSubmittingRating = ref(false);
 
 const couponCodeInput = ref('');
 const appliedCoupon = ref<any>(null);
@@ -180,7 +186,27 @@ const handleCheckout = async () => {
 
 const openProductDetails = (product: Product) => {
     selectedProduct.value = product;
+    userRating.value = 0;
+    hoverRating.value = 0;
     isProductDialogOpen.value = true;
+};
+
+const handleRateProduct = async (rating: number) => {
+    if (!selectedProduct.value || !user.value) {
+        if (!user.value) showLoginPrompt.value = true;
+        return;
+    }
+    
+    isSubmittingRating.value = true;
+    try {
+        await submitRating(selectedProduct.value.id, rating);
+        userRating.value = rating;
+        // fetchProducts will be called by useProducts or socket
+    } catch (err) {
+        alert('Failed to submit rating');
+    } finally {
+        isSubmittingRating.value = false;
+    }
 };
 
 const applyCoupon = async () => {
@@ -445,6 +471,7 @@ const handleCancelOrder = async (orderId: number) => {
                         <div v-if="product.rating" class="flex items-center gap-1.5 bg-bakery-50 text-bakery-700 px-2 py-1 rounded-lg">
                              <Star class="w-4 h-4 fill-bakery-600 text-bakery-600" />
                              <span class="text-sm font-bold">{{ product.rating }}</span>
+                             <span class="text-[10px] text-bakery-400">({{ product.totalVotes || 0 }})</span>
                         </div>
                     </div>
 
@@ -713,7 +740,7 @@ const handleCancelOrder = async (orderId: number) => {
                         <div class="flex items-center gap-4">
                             <span class="text-2xl font-bold text-green-900">${{ selectedProduct.price.toFixed(2) }}</span>
                             <div v-if="selectedProduct.rating" class="flex items-center gap-1 text-sm font-medium bg-green-50 text-green-800 px-2 py-1 rounded">
-                                <Star class="w-4 h-4 fill-green-600 text-green-600" /> {{ selectedProduct.rating }} / 5.0
+                                <Star class="w-4 h-4 fill-green-600 text-green-600" /> {{ selectedProduct.rating }} / 5.0 ({{ selectedProduct.totalVotes || 0 }} votes)
                             </div>
                         </div>
                         <span class="text-sm text-gray-600 flex items-center gap-2">
@@ -725,6 +752,39 @@ const handleCancelOrder = async (orderId: number) => {
                     <div>
                         <h3 class="font-semibold text-gray-900 mb-2">Description</h3>
                         <p class="text-gray-600 leading-relaxed">{{ selectedProduct.description }}</p>
+                    </div>
+
+                    <!-- Rating Section -->
+                    <div class="bg-bakery-50/50 p-4 rounded-2xl border border-bakery-100">
+                        <h3 class="font-bold text-bakery-900 mb-2 flex items-center gap-2">
+                             Rate this treat
+                             <span v-if="isSubmittingRating" class="text-xs font-normal text-bakery-500 animate-pulse">Submitting...</span>
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <div class="flex gap-1">
+                                <button 
+                                    v-for="i in 5" 
+                                    :key="i"
+                                    @click="handleRateProduct(i)"
+                                    @mouseenter="hoverRating = i"
+                                    @mouseleave="hoverRating = 0"
+                                    class="transition-transform active:scale-90"
+                                >
+                                    <Star 
+                                        :class="[
+                                            'w-8 h-8 transition-colors',
+                                            (hoverRating || userRating) >= i 
+                                                ? 'fill-bakery-600 text-bakery-600' 
+                                                : 'text-bakery-200'
+                                        ]" 
+                                    />
+                                </button>
+                            </div>
+                            <span class="text-sm font-bold text-bakery-700 ml-2" v-if="hoverRating || userRating">
+                                {{ hoverRating || userRating }} / 5
+                            </span>
+                            <p v-else class="text-xs text-bakery-400 ml-2">Tap stars to vote</p>
+                        </div>
                     </div>
                     
                     <div v-if="selectedProduct.ingredients?.length">
