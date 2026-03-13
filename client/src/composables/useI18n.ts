@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 import { type Language, type TranslationSchema, defaultTranslations } from './translations';
+import { useCurrency, type Currency } from './useCurrency';
 
 // Singleton state
 const currentLocale = ref<Language>((localStorage.getItem('bakery-locale') as Language) || 'en');
@@ -8,10 +9,24 @@ const customTranslations = ref<Record<Language, TranslationSchema>>(
 );
 
 export function useI18n() {
+    const { setCurrency } = useCurrency();
+
+    const localeToCurrency: Record<Language, Currency> = {
+        en: 'USD',
+        jp: 'JPY',
+        vn: 'VND'
+    };
+
     const setLocale = (lang: Language) => {
         currentLocale.value = lang;
         localStorage.setItem('bakery-locale', lang);
         document.body.className = `antialiased lang-${lang}`;
+        
+        // Auto-update currency to match language
+        const targetCurrency = localeToCurrency[lang];
+        if (targetCurrency) {
+            setCurrency(targetCurrency);
+        }
     };
 
     const t = (path: string): string => {

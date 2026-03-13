@@ -11,11 +11,13 @@ import { useOrders } from '../composables/useOrders';
 import { useProducts } from '../composables/useProducts';
 import { useInventory } from '../composables/useInventory';
 import { useI18n } from '../composables/useI18n';
+import { useCurrency } from '../composables/useCurrency';
 
 const { orders, fetchOrders } = useOrders();
 const { products, fetchProducts } = useProducts();
 const { lowStockItems: inventoryLowStock } = useInventory();
 const { t } = useI18n();
+const { formatPrice } = useCurrency();
 
 onMounted(async () => {
     try {
@@ -31,7 +33,7 @@ onMounted(async () => {
 const stats = computed(() => [
   {
     title: t('dashboard.totalRevenue'),
-    value: `$${orders.value.reduce((sum, o) => sum + (o.status !== 'Cancelled' ? o.total : 0), 0).toLocaleString()}`,
+    value: formatPrice(orders.value.reduce((sum, o) => sum + (o.status !== 'Cancelled' ? o.total : 0), 0)),
     change: t('dashboard.fromOrders').replace('{n}', orders.value.length.toString()),
     icon: DollarSign,
     color: "text-green-600",
@@ -154,7 +156,7 @@ const lowStockDisplay = computed(() => {
                 <p class="text-sm text-bakery-500 font-medium">{{ order.customerName }}</p>
               </div>
               <div class="text-right">
-                <p class="text-lg font-black text-bakery-900">${{ order.total.toFixed(2) }}</p>
+                <p class="text-lg font-black text-bakery-900">{{ formatPrice(order.total) }}</p>
                 <p class="text-[10px] text-bakery-400 font-bold uppercase tracking-widest">{{ order.items.length }} {{ t('dashboard.items') }}</p>
               </div>
             </div>

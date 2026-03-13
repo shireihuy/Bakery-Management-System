@@ -13,9 +13,11 @@ import {
 } from 'lucide-vue-next';
 import { useOrders, type Order } from '../composables/useOrders';
 import { useI18n } from '../composables/useI18n';
+import { useCurrency } from '../composables/useCurrency';
 
 const { orders, updateOrderStatus, fetchOrders } = useOrders();
 const { t } = useI18n();
+const { formatPrice } = useCurrency();
 
 const searchQuery = ref('');
 const statusFilter = ref<'all' | 'Pending' | 'Baking' | 'Ready' | 'Completed' | 'Cancelled'>('all');
@@ -86,7 +88,7 @@ const changeStatus = async (order: Order, status: string) => {
             <div class="bg-white p-6 rounded-xl border border-green-100 shadow-sm flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-green-600">{{ t('reports.totalRevenue') }}</p>
-                    <p class="text-2xl font-bold text-green-900 mt-1">${{ stats.revenue.toFixed(2) }}</p>
+                    <p class="text-2xl font-bold text-green-900 mt-1">{{ formatPrice(stats.revenue) }}</p>
                 </div>
                 <div class="p-3 bg-green-50 rounded-lg">
                     <ArrowUpRight class="w-6 h-6 text-green-600" />
@@ -173,8 +175,8 @@ const changeStatus = async (order: Order, status: string) => {
                                 <div class="text-xs text-gray-500">{{ order.customerEmail }}</div>
                             </td>
                             <td class="px-6 py-4 text-gray-600">{{ order.date }}</td>
-                             <td class="px-6 py-4 text-gray-600">{{ order.items.length }} {{ t('orders.items').toLowerCase() }}</td>
-                            <td class="px-6 py-4 font-medium text-gray-900">${{ order.total.toFixed(2) }}</td>
+                            <td class="px-6 py-4 text-gray-600">{{ order.items.length }} {{ t('orders.items').toLowerCase() }}</td>
+                            <td class="px-6 py-4 font-medium text-gray-900">{{ formatPrice(order.total) }}</td>
                             <td class="px-6 py-4">
                                 <span :class="`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)} capitalize`">
                                     {{ order.status }}
@@ -287,14 +289,14 @@ const changeStatus = async (order: Order, status: string) => {
                                     <tr v-for="(item, idx) in viewingOrder.items" :key="idx">
                                         <td class="px-4 py-2 font-medium text-gray-900">{{ item.productName }}</td>
                                         <td class="px-4 py-2 text-center text-gray-600">{{ item.quantity }}</td>
-                                        <td class="px-4 py-2 text-right text-gray-600">${{ item.price.toFixed(2) }}</td>
-                                        <td class="px-4 py-2 text-right font-medium text-gray-900">${{ (item.price * item.quantity).toFixed(2) }}</td>
+                                        <td class="px-4 py-2 text-right text-gray-600">{{ formatPrice(item.price) }}</td>
+                                        <td class="px-4 py-2 text-right font-medium text-gray-900">{{ formatPrice(item.price * item.quantity) }}</td>
                                     </tr>
                                 </tbody>
                                 <tfoot class="bg-gray-50 font-bold text-gray-900">
                                     <tr>
                                         <td colspan="3" class="px-4 py-3 text-right">{{ t('orders.total') }}</td>
-                                        <td class="px-4 py-3 text-right text-green-700 text-lg">${{ viewingOrder.total.toFixed(2) }}</td>
+                                        <td class="px-4 py-3 text-right text-green-700 text-lg">{{ formatPrice(viewingOrder.total) }}</td>
                                     </tr>
                                 </tfoot>
                             </table>

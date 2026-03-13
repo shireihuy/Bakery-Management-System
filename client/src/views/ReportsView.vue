@@ -14,6 +14,7 @@ import {
     PieChart
 } from 'lucide-vue-next';
 import { useReports } from '../composables/useReports';
+import { useCurrency } from '../composables/useCurrency';
 
 const { 
     dailyHistory, 
@@ -27,13 +28,11 @@ const {
 import { useI18n } from '../composables/useI18n';
 
 const { t } = useI18n();
+const { formatPrice } = useCurrency();
 const selectedRange = ref('Last 7 Days');
 
 const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
-    }).format(value);
+    return formatPrice(value);
 };
 
 const handleExport = () => {
@@ -172,9 +171,9 @@ const handleExport = () => {
                                 :y="200 - (maxDailyRevenue > 0 ? (day.revenue / maxDailyRevenue) * 170 : 0) - 8"
                                 text-anchor="middle"
                                 class="text-[8px] font-black fill-emerald-800"
-                                style="font-size: 9px;"
+                                style="font-size: 8px;"
                             >
-                                ${{ Math.round(day.revenue) }}
+                                {{ formatPrice(day.revenue).replace('.00', '') }}
                             </text>
 
                             <!-- The Bar -->

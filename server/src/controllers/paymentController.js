@@ -2,6 +2,40 @@ const { query } = require('../config/db');
 const NotificationController = require('./notificationController');
 
 /**
+ * Fetch and cache exchange rate from USD to VND
+ * Rate is cached for 1 hour to optimize performance
+ */
+const queryExchangeRate = async (currency = 'VND') => {
+    try {
+        const settingKey = `exchange_rate_${currency.toLowerCase()}`;
+        const lastUpdate = await query('SELECT updated_at FROM system_settings WHERE key = $1', [settingKey]);
+        const oneHour = 60 * 60 * 1000;
+        
+        if (lastUpdate.rows.length > 0 && (new Date() - new Date(lastUpdate.rows[0].updated_at)) < oneHour) {
+            const current = await query('SELECT value FROM system_settings WHERE key = $1', [settingKey]);
+            return parseFloat(current.rows[0].value.rate);
+        }
+
+        // Using a free exchange rate API
+        const response = await fetch('https://open.er-api.com/v6/latest/USD');
+        const data = await response.json();
+        const rate = data.rates[currency] || (currency === 'VND' ? 25000 : 150);
+
+        await query(
+            'INSERT INTO system_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP',
+            [settingKey, JSON.stringify({ rate, base: 'USD', target: currency })]
+        );
+        return rate;
+    } catch (err) {
+        console.error(`Exchange rate error (${currency}):`, err);
+        const settingKey = `exchange_rate_${currency.toLowerCase()}`;
+        const current = await query('SELECT value FROM system_settings WHERE key = $1', [settingKey]);
+        const fallback = currency === 'VND' ? 25000 : 150;
+        return current.rows.length > 0 ? parseFloat(current.rows[0].value.rate) : fallback;
+    }
+};
+
+/**
  * Initiate a mock payment
  * POST /api/payment/initiate
  */
@@ -120,8 +154,82 @@ const simulateCallback = async (req, res) => {
     }
 };
 
+/**
+ * Get payment settings
+ * GET /api/payment/settings
+ */
+const getPaymentSettings = async (req, res) => {
+    try {
+        const result = await query('SELECT value FROM system_settings WHERE key = $1', ['payment_qr_config']);
+        const config = result.rows.length > 0 ? result.rows[0].value : {};
+        
+        // If rates aren't in config, fetch auto rates as fallback
+        if (!config.vndRate) {
+            config.vndRate = await queryExchangeRate('VND');
+        }
+        if (!config.jpyRate) {
+            config.jpyRate = await queryExchangeRate('JPY');
+        }
+
+        res.status(200).json(config);
+    } catch (err) {
+        console.error('Error fetching settings:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+/**
+ * Update payment settings
+ * POST /api/payment/settings
+ */
+const updatePaymentSettings = async (req, res) => {
+    const { bankId, accountNumber, accountName, messageTemplate, vndRate, jpyRate } = req.body;
+    
+    try {
+        // Sanity check: Fetch live rates to prevent extreme typos
+        const liveVND = await queryExchangeRate('VND');
+        const liveJPY = await queryExchangeRate('JPY');
+
+        const vRate = parseFloat(vndRate);
+        const jRate = parseFloat(jpyRate);
+
+        // Validation: Deviation cannot be more than 1 USD value (100% of market rate)
+        // This prevents setting VND to "25" instead of "25000"
+        if (vRate <= 0 || vRate > liveVND * 2) {
+            return res.status(400).json({ 
+                message: `VND rate is invalid. It must be between 1 and ${Math.round(liveVND * 2)} (Live market is ~${Math.round(liveVND)}).` 
+            });
+        }
+
+        if (jRate <= 0 || jRate > liveJPY * 2) {
+            return res.status(400).json({ 
+                message: `JPY rate is invalid. It must be between 1 and ${Math.round(liveJPY * 2)} (Live market is ~${Math.round(liveJPY)}).` 
+            });
+        }
+
+        const newValue = { 
+            bankId, 
+            accountNumber, 
+            accountName, 
+            messageTemplate,
+            vndRate: vRate,
+            jpyRate: jRate
+        };
+        await query(
+            'INSERT INTO system_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP',
+            ['payment_qr_config', JSON.stringify(newValue)]
+        );
+        res.status(200).json({ message: 'Settings updated successfully' });
+    } catch (err) {
+        console.error('Error updating settings:', err);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
 module.exports = {
     initiatePayment,
     verifyPayment,
-    simulateCallback
+    simulateCallback,
+    getPaymentSettings,
+    updatePaymentSettings
 };

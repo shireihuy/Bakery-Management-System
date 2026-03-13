@@ -26,6 +26,7 @@ const languages: { code: Language; name: string; native: string }[] = [
   { code: 'vn', name: 'Vietnamese', native: 'Tiếng Việt' }
 ];
 
+
 // Flat list of translation keys for the editor
 const flatTranslations = computed(() => {
   const result: { path: string; value: string; category: string }[] = [];
@@ -115,6 +116,9 @@ const handleUpdate = (path: string, event: Event) => {
             <div v-if="currentLocale === lang.code" class="w-2 h-2 rounded-full bg-accent-gold shadow-[0_0_12px_#DAA520]"></div>
           </button>
         </div>
+
+        <!-- Currency section removed as it is now auto-linked to language -->
+        <div class="h-px bg-bakery-100 mx-2 -mt-4 mb-2"></div>
 
         <template v-if="canEditTranslations">
           <div class="h-px bg-bakery-100 mx-2"></div>

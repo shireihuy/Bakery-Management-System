@@ -6,7 +6,7 @@ export function usePayment() {
     const isProcessing = ref(false);
     const error = ref<string | null>(null);
 
-    const initiatePayment = async (orderId: number, method: 'momo' | 'zalopay' | 'cash') => {
+    const initiatePayment = async (orderId: number, method: 'qr' | 'momo' | 'zalopay' | 'cash') => {
         isProcessing.value = true;
         error.value = null;
         try {

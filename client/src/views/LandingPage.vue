@@ -18,10 +18,12 @@ import {
 import { useAuth } from '../composables/useAuth';
 import { useProducts } from '../composables/useProducts';
 import { useI18n } from '../composables/useI18n';
+import { useCurrency } from '../composables/useCurrency';
 
 const router = useRouter();
 const { user } = useAuth();
 const { t } = useI18n();
+const { formatPrice } = useCurrency();
 
 const onGetStarted = () => {
     if (user.value) {
@@ -280,7 +282,7 @@ const signatureProducts = [
                                     <div class="flex items-center justify-between mt-auto">
                                         <div class="flex flex-col">
                                             <span class="text-xl lg:text-2xl text-bakery-900 font-black">
-                                                ${{product.price.toFixed(2)}}
+                                                {{ formatPrice(product.price) }}
                                             </span>
                                             <span class="text-[10px] text-bakery-400 font-bold uppercase tracking-widest">{{ product.stock }} {{ t('inventory.unit') || 'left' }}</span>
                                         </div>

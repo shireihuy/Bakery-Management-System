@@ -122,6 +122,23 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- System Settings Table
+CREATE TABLE IF NOT EXISTS system_settings (
+    key VARCHAR(255) PRIMARY KEY,
+    value JSONB NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Default Payment Settings
+INSERT INTO system_settings (key, value) VALUES
+('payment_qr_config', '{
+    "bankId": "vpb",
+    "accountNumber": "12345678",
+    "accountName": "THE ARTISAN BAKERY",
+    "messageTemplate": "Bakery Payment for #{orderId}"
+}')
+ON CONFLICT (key) DO NOTHING;
+
 -- Predefined Tags Table
 CREATE TABLE IF NOT EXISTS predefined_tags (
     id SERIAL PRIMARY KEY,

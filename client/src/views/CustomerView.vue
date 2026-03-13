@@ -23,12 +23,14 @@ import { useProducts, type Product } from '../composables/useProducts';
 import { useOrders, type Order } from '../composables/useOrders';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
+import { useCurrency } from '../composables/useCurrency';
 
 // State
 const { products, fetchProducts, submitRating } = useProducts();
 const { addOrder, orders, fetchMyOrders, fetchOrders, updateOrderStatus } = useOrders();
 const { user } = useAuth();
 const { t } = useI18n();
+const { formatPrice } = useCurrency();
 const router = useRouter();
 
 import { onMounted } from 'vue';
@@ -353,7 +355,7 @@ const handleCancelOrder = async (orderId: number) => {
             </div>
             <div class="text-left">
                 <p class="text-xs font-bold text-bakery-400 uppercase tracking-widest leading-none mb-1">{{ t('shop.yourBasket') }}</p>
-                <p class="text-sm font-bold text-bakery-900">${{ totalPrice.toFixed(2) }}</p>
+                <p class="text-sm font-bold text-bakery-900">{{ formatPrice(totalPrice) }}</p>
             </div>
             <span v-if="totalItems > 0" class="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-bakery-600 text-[10px] font-bold text-white shadow-lg animate-in zoom-in">
                 {{ totalItems }}
@@ -478,7 +480,7 @@ const handleCancelOrder = async (orderId: number) => {
                     <div class="mt-auto space-y-5">
                           <div class="flex justify-between items-center">
                              <div class="flex flex-col">
-                                <span class="text-2xl font-black text-bakery-900">${{ product.price.toFixed(2) }}</span>
+                                <span class="text-2xl font-black text-bakery-900">{{ formatPrice(product.price) }}</span>
                                 <span class="text-xs text-bakery-400 font-bold uppercase tracking-widest">{{ product.stock }} left</span>
                              </div>
                              <div class="flex gap-2">
@@ -546,7 +548,7 @@ const handleCancelOrder = async (orderId: number) => {
                  </div>
                  <div class="flex justify-between items-center mb-4">
                     <span class="text-sm font-medium text-gray-900">{{ t('shop.total') }}</span>
-                    <span class="text-lg font-bold text-green-700">${{ order.total.toFixed(2) }}</span>
+                    <span class="text-lg font-bold text-green-700">{{ formatPrice(order.total) }}</span>
                  </div>
                  <div class="grid grid-cols-1 gap-2 mt-auto">
                     <button 
@@ -630,7 +632,7 @@ const handleCancelOrder = async (orderId: number) => {
                                         </button>
                                     </div>
                                     <div class="flex items-center justify-between">
-                                        <p class="text-bakery-600 font-bold">${{ (item.price * item.quantity).toFixed(2) }}</p>
+                                        <p class="text-bakery-600 font-bold">{{ formatPrice(item.price * item.quantity) }}</p>
                                         <div class="flex items-center gap-3 bg-bakery-50 p-1 rounded-xl">
                                              <button @click="updateQuantity(item.id, -1)" class="w-7 h-7 rounded-lg bg-white border border-bakery-100 flex items-center justify-center hover:bg-bakery-100 transition-colors"><Minus class="w-3 h-3" /></button>
                                              <span class="text-sm w-4 text-center font-bold text-bakery-900">{{ item.quantity }}</span>
@@ -684,22 +686,22 @@ const handleCancelOrder = async (orderId: number) => {
                                  </div>
                                  <p v-if="couponError" class="text-xs text-red-500 font-medium">{{ couponError }}</p>
                                  <p v-if="appliedCoupon" class="text-xs text-green-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
-                                     Applied: -${{ discountAmount.toFixed(2) }} off
+                                     Applied: -{{ formatPrice(discountAmount) }} off
                                  </p>
                              </div>
 
                              <div class="space-y-3 pt-3 border-t border-bakery-100">
                                  <div class="flex justify-between items-center text-bakery-500 font-medium text-sm">
                                       <span>Subtotal</span>
-                                      <span>${{ subTotalPrice.toFixed(2) }}</span>
+                                      <span>{{ formatPrice(subTotalPrice) }}</span>
                                  </div>
                                  <div v-if="appliedCoupon" class="flex justify-between items-center text-green-600 font-medium text-sm">
                                       <span>Discount ({{ appliedCoupon.code }})</span>
-                                      <span>-${{ discountAmount.toFixed(2) }}</span>
+                                      <span>-{{ formatPrice(discountAmount) }}</span>
                                  </div>
                                  <div class="flex justify-between items-center text-2xl font-black text-bakery-900 pt-2 border-t border-bakery-100">
                                       <span>{{ t('shop.total') }}</span>
-                                      <span>${{ totalPrice.toFixed(2) }}</span>
+                                      <span>{{ formatPrice(totalPrice) }}</span>
                                  </div>
                              </div>
                          </div>
@@ -738,7 +740,7 @@ const handleCancelOrder = async (orderId: number) => {
                     
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-4">
-                            <span class="text-2xl font-bold text-green-900">${{ selectedProduct.price.toFixed(2) }}</span>
+                            <span class="text-2xl font-bold text-green-900">{{ formatPrice(selectedProduct.price) }}</span>
                             <div v-if="selectedProduct.rating" class="flex items-center gap-1 text-sm font-medium bg-green-50 text-green-800 px-2 py-1 rounded">
                                 <Star class="w-4 h-4 fill-green-600 text-green-600" /> {{ selectedProduct.rating }} / 5.0 ({{ selectedProduct.totalVotes || 0 }} votes)
                             </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { 
     CreditCard, 
@@ -20,18 +20,101 @@ import {
 import { useOrders, type Order } from '../composables/useOrders';
 import { useI18n } from '../composables/useI18n';
 import { usePayment } from '../composables/usePayment';
+import { useCurrency } from '../composables/useCurrency';
 
 const route = useRoute();
 const router = useRouter();
 const { orders, fetchOrderById } = useOrders();
 const { t } = useI18n();
-const { initiatePayment, simulateSuccessCallback } = usePayment();
+const { initiatePayment, simulateSuccessCallback, verifyPaymentStatus } = usePayment();
+const { formatPrice, convertFromUSD } = useCurrency();
 
 const orderId = route.params.id as string;
 const order = ref<Order | null>(null);
-const selectedMethod = ref<'momo' | 'zalopay' | 'cash' | null>(null);
+const selectedMethod = ref<'qr' | 'cash' | null>(null);
 const paymentStatus = ref<'idle' | 'processing' | 'success'>('idle');
 const showQR = ref(false);
+const showCounterWaiting = ref(false);
+const paymentConfig = ref({
+    bankId: 'vpb',
+    accountNumber: '',
+    accountName: '',
+    messageTemplate: 'Bakery Payment for #{orderId}'
+});
+const timeLeft = ref(900); // 15 minutes in seconds
+let timerInterval: any = null;
+let pollingInterval: any = null;
+
+const formattedTime = computed(() => {
+    const minutes = Math.floor(timeLeft.value / 60);
+    const seconds = timeLeft.value % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+});
+
+const startTimer = () => {
+    if (timerInterval) clearInterval(timerInterval);
+    timeLeft.value = 900;
+    timerInterval = setInterval(() => {
+        if (timeLeft.value > 0) {
+            timeLeft.value--;
+        } else {
+            clearInterval(timerInterval);
+            showQR.value = false;
+            alert('Payment window has expired. Please try again.');
+        }
+    }, 1000);
+};
+
+const startPolling = () => {
+    if (pollingInterval) clearInterval(pollingInterval);
+    pollingInterval = setInterval(async () => {
+        if (!order.value) return;
+        try {
+            const status = await verifyPaymentStatus(order.value.id);
+            if (status.payment_status === 'Paid') {
+                clearInterval(pollingInterval);
+                clearInterval(timerInterval);
+                paymentStatus.value = 'success';
+                setTimeout(() => {
+                    router.push('/customer');
+                }, 3000);
+            }
+        } catch (err) {
+            console.error('Polling error:', err);
+        }
+    }, 3000); // Check every 3 seconds
+};
+
+onUnmounted(() => {
+    if (timerInterval) clearInterval(timerInterval);
+    if (pollingInterval) clearInterval(pollingInterval);
+});
+
+// Watch showQR or showCounterWaiting to start/stop timer and polling
+watch([showQR, showCounterWaiting], ([newQR, newCounter]) => {
+    if (newQR || newCounter) {
+        if (newQR) startTimer();
+        startPolling();
+    } else {
+        if (timerInterval) clearInterval(timerInterval);
+        if (pollingInterval) clearInterval(pollingInterval);
+    }
+});
+
+const qrUrl = computed(() => {
+    if (!order.value || !paymentConfig.value.accountNumber) return '';
+    
+    const amountUSD = Math.max(0, (order.value.items?.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0) || 0) - (!isNaN(Number(order.value.discountAmount)) ? Number(order.value.discountAmount) : 0));
+    
+    // For VietQR, we MUST use VND. Even if the store display is JPY or USD.
+    const amountVND = convertFromUSD(amountUSD, 'VND');
+    
+    // Replace {orderId} in template
+    let description = paymentConfig.value.messageTemplate.replace('{orderId}', order.value.id.toString());
+    
+    // VietQR Format: https://img.vietqr.io/image/<BANK_ID>-<ACCOUNT_NO>-<TEMPLATE>.png?amount=<AMOUNT>&addInfo=<DESCRIPTION>&accountName=<NAME>
+    return `https://img.vietqr.io/image/${paymentConfig.value.bankId}-${paymentConfig.value.accountNumber}-compact2.png?amount=${Math.round(amountVND)}&addInfo=${encodeURIComponent(description)}&accountName=${encodeURIComponent(paymentConfig.value.accountName)}`;
+});
 
 onMounted(async () => {
     // 1. Try to find in cache first
@@ -43,6 +126,19 @@ onMounted(async () => {
     }
     
     order.value = found || null;
+    
+    // Fetch payment config
+    try {
+        const token = localStorage.getItem('token');
+        const configRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/payment/settings`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (configRes.ok) {
+            paymentConfig.value = await configRes.json();
+        }
+    } catch (e) {
+        console.error('Failed to load payment config', e);
+    }
     
     if (!order.value) {
         if (orderId === 'mock') {
@@ -71,7 +167,7 @@ const handlePayment = async () => {
         await initiatePayment(order.value.id, selectedMethod.value);
         
         if (selectedMethod.value === 'cash') {
-            completePayment();
+            showCounterWaiting.value = true;
         } else {
             showQR.value = true;
         }
@@ -83,6 +179,10 @@ const handlePayment = async () => {
 
 const completePayment = async () => {
     if (!order.value) return;
+    
+    // Clear intervals if manual confirmation is clicked
+    if (timerInterval) clearInterval(timerInterval);
+    if (pollingInterval) clearInterval(pollingInterval);
     
     paymentStatus.value = 'processing';
     
@@ -165,25 +265,25 @@ const completePayment = async () => {
                                         </div>
                                         <div>
                                             <p class="text-bakery-900 font-bold group-hover/item:text-bakery-600 transition-colors">{{ item.productName }}</p>
-                                            <p class="text-[10px] text-bakery-400 font-black tracking-wider uppercase">${{ Number(item.price || 0).toFixed(2) }} each</p>
+                                            <p class="text-[10px] text-bakery-400 font-black tracking-wider uppercase">{{ formatPrice(Number(item.price || 0)) }} each</p>
                                         </div>
                                     </div>
-                                    <span class="text-bakery-900 font-black tracking-tight">${{ Number(item.subtotal || 0).toFixed(2) }}</span>
+                                    <span class="text-bakery-900 font-black tracking-tight">{{ formatPrice(Number(item.subtotal || 0)) }}</span>
                                 </div>
                             </div>
 
                             <div class="pt-8 border-t border-bakery-100/50 space-y-4">
                                 <div class="flex justify-between text-bakery-400 font-black uppercase tracking-[0.2em] text-[10px]">
                                     <span>Base Subtotal</span>
-                                    <span>${{ (order.items?.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0) || 0).toFixed(2) }}</span>
+                                    <span>{{ formatPrice(order.items?.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0) || 0) }}</span>
                                 </div>
                                 <div v-if="(!isNaN(Number(order.discountAmount)) ? Number(order.discountAmount) : 0) > 0" class="flex justify-between text-green-600 font-black uppercase tracking-[0.2em] text-[10px]">
                                     <span>Discount Amount</span>
-                                    <span>-${{ (!isNaN(Number(order.discountAmount)) ? Number(order.discountAmount) : 0).toFixed(2) }}</span>
+                                    <span>-{{ formatPrice(!isNaN(Number(order.discountAmount)) ? Number(order.discountAmount) : 0) }}</span>
                                 </div>
                                 <div class="flex justify-between items-center pt-2">
                                     <span class="text-lg font-black text-bakery-900">Amount to Pay</span>
-                                    <span class="text-4xl font-black text-bakery-900 tracking-tighter">${{ Math.max(0, (order.items?.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0) || 0) - (!isNaN(Number(order.discountAmount)) ? Number(order.discountAmount) : 0)).toFixed(2) }}</span>
+                                    <span class="text-4xl font-black text-bakery-900 tracking-tighter">{{ formatPrice(Math.max(0, (order.items?.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0) || 0) - (!isNaN(Number(order.discountAmount)) ? Number(order.discountAmount) : 0))) }}</span>
                                 </div>
                             </div>
 
@@ -218,7 +318,7 @@ const completePayment = async () => {
                         <div class="absolute bottom-0 right-0 w-64 h-64 bg-bakery-50 blur-3xl opacity-30 -mr-20 -mb-20"></div>
 
                         <!-- IDLE State -->
-                        <div v-if="paymentStatus === 'idle' && !showQR" class="w-full space-y-12 animate-in fade-in zoom-in slide-in-from-right-10 duration-700">
+                        <div v-if="paymentStatus === 'idle' && !showQR && !showCounterWaiting" class="w-full space-y-12 animate-in fade-in zoom-in slide-in-from-right-10 duration-700">
                             <div class="text-center space-y-3">
                                 <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-bakery-900 text-white text-[10px] font-black uppercase tracking-[0.2em] mb-2">
                                     <Lock class="w-3 h-3" /> Checkout
@@ -228,58 +328,30 @@ const completePayment = async () => {
                             </div>
 
                             <div class="grid grid-cols-1 gap-4">
-                                <!-- MoMo -->
+                                <!-- QR Payment -->
                                 <button 
-                                    @click="selectedMethod = 'momo'"
+                                    @click="selectedMethod = 'qr'"
                                     :class="[
                                         'group relative w-full p-6 rounded-[2.5rem] border-2 transition-all duration-500 flex items-center justify-between overflow-hidden',
-                                        selectedMethod === 'momo' ? 'border-pink-500 bg-white shadow-2xl shadow-pink-100/50 scale-[1.02]' : 'border-bakery-100 bg-white hover:border-pink-300 hover:scale-[1.01]'
+                                        selectedMethod === 'qr' ? 'border-bakery-900 bg-white shadow-2xl shadow-bakery-100/50 scale-[1.02]' : 'border-bakery-100 bg-white hover:border-bakery-300 hover:scale-[1.01]'
                                     ]"
                                 >
-                                    <!-- Selection Indicator Blur -->
-                                    <div v-if="selectedMethod === 'momo'" class="absolute inset-0 bg-linear-to-r from-pink-500/5 to-transparent"></div>
+                                    <div v-if="selectedMethod === 'qr'" class="absolute inset-0 bg-linear-to-r from-bakery-900/5 to-transparent"></div>
                                     
                                     <div class="flex items-center gap-5 relative">
-                                        <div class="w-14 h-14 rounded-3xl bg-[#D82D8B] flex items-center justify-center p-2 shadow-lg shadow-pink-200 group-hover:rotate-6 transition-transform">
-                                            <img src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" alt="MoMo" class="w-full h-full object-contain brightness-0 invert">
+                                        <div class="w-14 h-14 rounded-3xl bg-bakery-900 flex items-center justify-center shadow-lg shadow-bakery-200 group-hover:rotate-6 transition-transform">
+                                            <QrCode class="w-7 h-7 text-white" />
                                         </div>
                                         <div class="text-left">
-                                            <p class="font-black text-bakery-900 text-lg">{{ t('shop.payWithMoMo') }}</p>
+                                            <p class="font-black text-bakery-900 text-lg">Scan QR to Pay</p>
                                             <div class="flex items-center gap-2">
-                                                <span class="text-[9px] font-black text-pink-600 uppercase tracking-widest bg-pink-50 px-2 py-0.5 rounded-md">Digital Wallet</span>
+                                                <span class="text-[9px] font-black text-bakery-600 uppercase tracking-widest bg-bakery-50 px-2 py-0.5 rounded-md">Mobile Banking & Wallets</span>
                                                 <span class="text-[9px] font-bold text-green-500 flex items-center gap-1"><CheckCircle2 class="w-2.5 h-2.5" /> Instant</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div :class="['w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-500 relative', selectedMethod === 'momo' ? 'bg-pink-500 border-pink-500' : 'border-bakery-100 group-hover:border-pink-300']">
-                                        <Check v-if="selectedMethod === 'momo'" class="w-5 h-5 text-white" />
-                                    </div>
-                                </button>
-
-                                <!-- ZaloPay -->
-                                <button 
-                                    @click="selectedMethod = 'zalopay'"
-                                    :class="[
-                                        'group relative w-full p-6 rounded-[2.5rem] border-2 transition-all duration-500 flex items-center justify-between overflow-hidden',
-                                        selectedMethod === 'zalopay' ? 'border-blue-500 bg-white shadow-2xl shadow-blue-100/50 scale-[1.02]' : 'border-bakery-100 bg-white hover:border-blue-300 hover:scale-[1.01]'
-                                    ]"
-                                >
-                                    <div v-if="selectedMethod === 'zalopay'" class="absolute inset-0 bg-linear-to-r from-blue-500/5 to-transparent"></div>
-                                    
-                                    <div class="flex items-center gap-5 relative">
-                                        <div class="w-14 h-14 rounded-3xl bg-[#0088FF] flex items-center justify-center p-2 shadow-lg shadow-blue-200 group-hover:rotate-6 transition-transform">
-                                            <img src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-ZaloPay-V.png" alt="ZaloPay" class="w-full h-full object-contain brightness-0 invert">
-                                        </div>
-                                        <div class="text-left">
-                                            <p class="font-black text-bakery-900 text-lg">{{ t('shop.payWithZaloPay') }}</p>
-                                            <div class="flex items-center gap-2">
-                                                <span class="text-[9px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-md">Cashless Pay</span>
-                                                <span class="text-[9px] font-bold text-green-500 flex items-center gap-1"><CheckCircle2 class="w-2.5 h-2.5" /> Fast</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div :class="['w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-500 relative', selectedMethod === 'zalopay' ? 'bg-blue-500 border-blue-500' : 'border-bakery-100 group-hover:border-blue-300']">
-                                        <Check v-if="selectedMethod === 'zalopay'" class="w-5 h-5 text-white" />
+                                    <div :class="['w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-500 relative', selectedMethod === 'qr' ? 'bg-bakery-900 border-bakery-900' : 'border-bakery-100 group-hover:border-bakery-300']">
+                                        <Check v-if="selectedMethod === 'qr'" class="w-5 h-5 text-white" />
                                     </div>
                                 </button>
 
@@ -294,18 +366,18 @@ const completePayment = async () => {
                                      <div v-if="selectedMethod === 'cash'" class="absolute inset-0 bg-linear-to-r from-bakery-800/5 to-transparent"></div>
                                     
                                     <div class="flex items-center gap-5 relative">
-                                        <div class="w-14 h-14 rounded-3xl bg-bakery-900 flex items-center justify-center shadow-lg shadow-bakery-200 group-hover:rotate-6 transition-transform">
+                                        <div class="w-14 h-14 rounded-3xl bg-amber-600 flex items-center justify-center shadow-lg shadow-amber-200 group-hover:rotate-6 transition-transform">
                                             <Wallet class="w-7 h-7 text-white" />
                                         </div>
                                         <div class="text-left">
-                                            <p class="font-black text-bakery-900 text-lg">{{ t('shop.payWithCash') }}</p>
+                                            <p class="font-black text-bakery-900 text-lg">Pay at Counter</p>
                                             <div class="flex items-center gap-2">
-                                                <span class="text-[9px] font-black text-bakery-600 uppercase tracking-widest bg-bakery-50 px-2 py-0.5 rounded-md">Traditional</span>
+                                                <span class="text-[9px] font-black text-amber-600 uppercase tracking-widest bg-amber-50 px-2 py-0.5 rounded-md">Cash / Physical Card</span>
                                                 <span class="text-[9px] font-bold text-amber-600 flex items-center gap-1"><Clock class="w-2.5 h-2.5" /> Pay at Pickup</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div :class="['w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-500 relative', selectedMethod === 'cash' ? 'bg-bakery-900 border-bakery-900' : 'border-bakery-100 group-hover:border-bakery-300']">
+                                    <div :class="['w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-500 relative', selectedMethod === 'cash' ? 'bg-amber-600 border-amber-600' : 'border-bakery-100 group-hover:border-bakery-300']">
                                         <Check v-if="selectedMethod === 'cash'" class="w-5 h-5 text-white" />
                                     </div>
                                 </button>
@@ -331,23 +403,28 @@ const completePayment = async () => {
                                     <h2 class="text-3xl font-black text-bakery-900 tracking-tight">{{ t('shop.scanQR') }}</h2>
                                     <div class="h-1.5 w-12 bg-bakery-200 rounded-full mt-2"></div>
                                 </div>
-                                <div class="relative inline-block mt-4 p-8 bg-white border-2 border-bakery-50 rounded-[4rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.1)] group">
-                                    <div class="absolute inset-8 border border-bakery-100 rounded-[3rem] opacity-50"></div>
-                                    <QrCode class="w-56 h-56 text-bakery-900 relative" />
-                                    
-                                    <!-- Dynamic Badge -->
-                                    <div class="absolute -top-6 -right-6 w-20 h-20 rounded-4xl flex items-center justify-center shadow-2xl border-4 border-white animate-pop" 
-                                        :class="selectedMethod === 'momo' ? 'bg-pink-500' : 'bg-blue-500'">
-                                        <img v-if="selectedMethod === 'momo'" src="https://upload.wikimedia.org/wikipedia/vi/f/fe/MoMo_Logo.png" class="w-10 h-10 object-contain brightness-0 invert">
-                                        <img v-if="selectedMethod === 'zalopay'" src="https://cdn.haitrieu.com/wp-content/uploads/2022/10/Logo-ZaloPay-V.png" class="w-10 h-10 object-contain brightness-0 invert">
+                                <div class="relative inline-block mt-4 overflow-hidden rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-white group border-4 border-white">
+                                    <img v-if="qrUrl" :src="qrUrl" class="w-80 h-80 object-contain relative" alt="Payment QR Code" />
+                                    <div v-else class="w-80 h-80 flex items-center justify-center bg-bakery-50">
+                                        <QrCode class="w-32 h-32 text-bakery-200" />
                                     </div>
+                                    
+                                    <!-- Scanning Overlay Effect -->
+                                    <div class="absolute inset-x-0 top-0 h-1 bg-bakery-900/50 blur-sm animate-[scan_3s_ease-in-out_infinite] pointer-events-none"></div>
+                                </div>
+                                
+                                <!-- Text Help for User -->
+                                <div class="mt-6 text-bakery-900 font-bold space-y-1">
+                                    <p class="text-sm opacity-60 uppercase tracking-widest font-black">Transfer Details</p>
+                                    <p class="text-lg">{{ paymentConfig.accountName }}</p>
+                                    <p class="text-bakery-500 font-mono">{{ paymentConfig.accountNumber }} ({{ paymentConfig.bankId.toUpperCase() }})</p>
                                 </div>
                             </div>
 
                             <div class="space-y-6 max-w-sm mx-auto">
                                 <div class="flex items-center justify-center gap-4 py-3 px-6 rounded-2xl bg-bakery-50/50 text-bakery-400 font-black text-xs uppercase tracking-widest border border-bakery-100/50">
                                     <Clock class="w-4 h-4 animate-pulse" />
-                                    <span>Transaction expires in 14:59</span>
+                                    <span>Transaction expires in {{ formattedTime }}</span>
                                 </div>
                                 
                                 <div class="flex gap-4">
@@ -365,6 +442,40 @@ const completePayment = async () => {
                                         <CheckCircle2 class="w-4 h-4" />
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Waiting at Counter State -->
+                        <div v-if="showCounterWaiting && paymentStatus === 'idle'" class="w-full text-center space-y-12 animate-in zoom-in slide-in-from-bottom-5 duration-500">
+                            <div class="space-y-6">
+                                <div class="inline-flex flex-col items-center">
+                                    <h2 class="text-3xl font-black text-bakery-900 tracking-tight">Pay at Counter</h2>
+                                    <div class="h-1.5 w-12 bg-amber-200 rounded-full mt-2"></div>
+                                </div>
+                                <div class="relative inline-block mt-4 p-12 bg-white border-2 border-amber-50 rounded-[4rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.1)]">
+                                    <div class="w-48 h-48 bg-amber-50 rounded-[3rem] flex items-center justify-center mb-4 mx-auto">
+                                        <Wallet class="w-24 h-24 text-amber-600" />
+                                    </div>
+                                    <p class="text-bakery-900 font-bold text-lg">Please proceed to the counter</p>
+                                    <p class="text-bakery-500 text-sm mt-2">Provide your Order ID: <span class="text-bakery-900 font-black">#{{ orderId }}</span></p>
+                                </div>
+                                
+                                <div class="mt-8 flex flex-col items-center gap-4">
+                                    <div class="flex items-center gap-3 px-6 py-3 rounded-2xl bg-amber-50 text-amber-600 font-black text-xs uppercase tracking-widest border border-amber-100">
+                                        <div class="w-2 h-2 rounded-full bg-amber-600 animate-pulse"></div>
+                                        Waiting for Cashier Confirmation...
+                                    </div>
+                                    <p class="text-[10px] text-bakery-400 font-bold max-w-xs uppercase tracking-widest">Your screen will update automatically once the cashier processes your payment.</p>
+                                </div>
+                            </div>
+
+                            <div class="max-w-xs mx-auto">
+                                <button 
+                                    @click="showCounterWaiting = false"
+                                    class="w-full h-14 rounded-2xl border-2 border-bakery-100 text-bakery-600 font-black hover:bg-bakery-50 transition-all text-sm"
+                                >
+                                    Change Payment Method
+                                </button>
                             </div>
                         </div>
 
@@ -436,5 +547,14 @@ const completePayment = async () => {
 .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+@keyframes scan {
+    0% { top: 0; }
+    50% { top: 100%; }
+    100% { top: 0; }
+}
+
+.animate-scan {
+    animation: scan 3s ease-in-out infinite;
 }
 </style>

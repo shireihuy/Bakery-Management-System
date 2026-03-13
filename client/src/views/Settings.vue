@@ -2,10 +2,12 @@
 import { ref, onMounted, computed } from 'vue';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
-import { User, Save, Ticket, Key } from 'lucide-vue-next';
+import { useCurrency } from '../composables/useCurrency';
+import { User, Save, Ticket, Key, CreditCard } from 'lucide-vue-next';
 
 const { user, updateProfile } = useAuth();
 const { t } = useI18n();
+const { formatPrice } = useCurrency();
 
 const formData = ref({
     name: '',
@@ -15,7 +17,7 @@ const formData = ref({
 });
 
 const isSaving = ref(false);
-const activeTab = ref<'profile' | 'coupons'>('profile');
+const activeTab = ref<'profile' | 'coupons' | 'payment'>('profile');
 const message = ref({ text: '', type: '' as 'success' | 'error' | '' });
 
 const coupons = ref<any[]>([]);
@@ -29,6 +31,59 @@ const currentCoupon = ref<any>({
 const isAdminOrManager = computed(() => {
     return ['admin', 'manager'].includes(user.value?.role?.toLowerCase() || '');
 });
+
+const paymentConfig = ref({
+    bankId: '',
+    accountNumber: '',
+    accountName: '',
+    messageTemplate: '',
+    vndRate: 25000,
+    jpyRate: 150
+});
+const isPaymentLoading = ref(false);
+
+const loadPaymentSettings = async () => {
+    if (!isAdminOrManager.value) return;
+    isPaymentLoading.value = true;
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/payment/settings`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            paymentConfig.value = await response.json();
+        }
+    } catch (e) {
+        console.error('Failed loading payment settings', e);
+    } finally {
+        isPaymentLoading.value = false;
+    }
+};
+
+const savePaymentSettings = async () => {
+    isSaving.value = true;
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/payment/settings`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(paymentConfig.value)
+        });
+        
+        if (res.ok) {
+            message.value = { text: 'Payment settings updated', type: 'success' };
+        } else {
+            throw new Error();
+        }
+    } catch (e) {
+        message.value = { text: 'Failed to update payment settings', type: 'error' };
+    } finally {
+        isSaving.value = false;
+    }
+};
 
 const loadCoupons = async () => {
     isCouponsLoading.value = true;
@@ -107,6 +162,7 @@ onMounted(() => {
         };
     }
     loadCoupons();
+    loadPaymentSettings();
 });
 
 const handleSave = async () => {
@@ -159,6 +215,15 @@ const handleSave = async () => {
                     >
                         <Ticket class="w-4 h-4" />
                         {{ t('settings.coupons') }}
+                    </button>
+                    <button 
+                        v-if="isAdminOrManager"
+                        @click="activeTab = 'payment'"
+                        class="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all font-medium border"
+                        :class="activeTab === 'payment' ? 'bg-green-50 text-green-700 border-green-200 shadow-sm' : 'text-gray-600 hover:bg-gray-50 border-transparent'"
+                    >
+                        <CreditCard class="w-4 h-4" />
+                        Card & QR Payments
                     </button>
                 </div>
 
@@ -244,7 +309,7 @@ const handleSave = async () => {
                     </form>
                 </div>
 
-                <div v-else class="md:col-span-2 space-y-6">
+                <div v-else-if="activeTab === 'coupons'" class="md:col-span-2 space-y-6">
                     <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl border border-gray-200">
                          <div>
                              <h3 class="text-xl font-bold text-gray-900">{{ t('settings.coupons') || 'Coupon Management' }}</h3>
@@ -275,9 +340,9 @@ const handleSave = async () => {
                                 <div>
                                     <div class="text-xs font-bold uppercase tracking-wider opacity-80">{{ coupon.discount_type === 'percentage' ? 'Percentage' : 'Fixed Amount' }} Off</div>
                                     <div class="text-2xl font-black">
-                                        {{ coupon.discount_type === 'percentage' ? coupon.discount_value + '%' : '$' + coupon.discount_value }} OFF
+                                        {{ coupon.discount_type === 'percentage' ? coupon.discount_value + '%' : formatPrice(coupon.discount_value) }} OFF
                                     </div>
-                                    <div class="text-xs mt-1 bg-black/20 inline-block px-2 py-0.5 rounded backdrop-blur-sm">Min Spend: ${{ coupon.min_purchase_amount }}</div>
+                                    <div class="text-xs mt-1 bg-black/20 inline-block px-2 py-0.5 rounded backdrop-blur-sm">Min Spend: {{ formatPrice(coupon.min_purchase_amount) }}</div>
                                 </div>
                                 <div class="flex gap-2 items-center">
                                     <span v-if="!coupon.is_active" class="bg-red-500 text-white px-2 py-1 rounded text-[10px] font-bold">INACTIVE</span>
@@ -303,6 +368,99 @@ const handleSave = async () => {
                         </div>
                     </div>
                 </div>
+
+                <!-- Payment Settings Tab -->
+                <div v-else-if="activeTab === 'payment' && isAdminOrManager" class="md:col-span-2 space-y-6">
+                    <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-3">
+                        <div class="text-amber-600 mt-0.5">ℹ️</div>
+                        <p class="text-xs text-amber-800 leading-relaxed">
+                            Configure your bakery's bank and wallet details. This information is used to generate <strong>Dynamic QR Codes</strong> for MoMo, ZaloPay, and Mobile Banking.
+                        </p>
+                    </div>
+
+                    <form @submit.prevent="savePaymentSettings" class="space-y-5">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Bank/Service Provider</label>
+                                <select v-model="paymentConfig.bankId" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500 bg-white">
+                                    <option value="vpb">VP Bank</option>
+                                    <option value="ocb">OCB (Orient Commercial Bank)</option>
+                                    <option value="momo">MoMo Wallet (Business)</option>
+                                    <option value="zalopay">ZaloPay Business</option>
+                                    <option value="vcb">Vietcombank</option>
+                                    <option value="tcb">Techcombank</option>
+                                    <option value="acb">ACB</option>
+                                </select>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Account Number / Phone</label>
+                                <input v-model="paymentConfig.accountNumber" type="text" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" placeholder="e.g. 09XXXXXXX">
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Account Holder Name</label>
+                            <input v-model="paymentConfig.accountName" type="text" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500 uppercase font-mono" placeholder="THE ARTISAN BAKERY">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Transaction Message Format</label>
+                            <input v-model="paymentConfig.messageTemplate" type="text" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" placeholder="Bakery Payment for #{orderId}">
+                            <p class="text-[10px] text-gray-400">Use <code>{orderId}</code> to automatically insert the order number.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-gray-100">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-green-600 uppercase tracking-wider flex items-center gap-1">
+                                    VND Exchange Rate (1 USD =)
+                                </label>
+                                <div class="relative">
+                                    <input 
+                                        v-model.number="paymentConfig.vndRate" 
+                                        type="number" 
+                                        step="1"
+                                        class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500 font-bold" 
+                                        placeholder="e.g. 25000"
+                                    >
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₫</span>
+                                </div>
+                                <p class="text-[10px] text-gray-400 italic">Recommended: Use clean values like 25000 or 25500</p>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1">
+                                    JPY Exchange Rate (1 USD =)
+                                </label>
+                                <div class="relative">
+                                    <input 
+                                        v-model.number="paymentConfig.jpyRate" 
+                                        type="number" 
+                                        step="1"
+                                        class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500 font-bold" 
+                                        placeholder="e.g. 150"
+                                    >
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">¥</span>
+                                </div>
+                                <p class="text-[10px] text-gray-400 italic">Recommended: Use clean values like 150 or 155</p>
+                            </div>
+                        </div>
+
+                        <div v-if="message.text" :class="`p-3 rounded-lg text-sm font-medium ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`">
+                            {{ message.text }}
+                        </div>
+
+                        <div class="flex justify-end pt-2">
+                             <button 
+                                type="submit" 
+                                :disabled="isSaving"
+                                class="flex items-center gap-2 px-8 py-3 bg-bakery-900 text-white font-black rounded-2xl hover:bg-black transition-all disabled:opacity-50"
+                            >
+                                <Save v-if="!isSaving" class="w-4 h-4" />
+                                <span v-if="isSaving" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                {{ isSaving ? 'Saving Settings...' : 'Update Payment Settings' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
 
@@ -323,7 +481,7 @@ const handleSave = async () => {
                              <label class="block text-xs font-medium text-gray-700 mb-1">Discount Type</label>
                              <select v-model="currentCoupon.discount_type" class="w-full px-3 py-2 border rounded-lg">
                                  <option value="percentage">Percentage (%)</option>
-                                 <option value="fixed">Fixed Amount ($)</option>
+                                 <option value="fixed">Fixed Amount (USD $)</option>
                              </select>
                          </div>
                          <div>
@@ -333,7 +491,7 @@ const handleSave = async () => {
                      </div>
                      <div class="grid grid-cols-2 gap-4">
                          <div>
-                             <label class="block text-xs font-medium text-gray-700 mb-1">Min. Purchase ($)</label>
+                             <label class="block text-xs font-medium text-gray-700 mb-1">Min. Purchase (USD $)</label>
                              <input v-model="currentCoupon.min_purchase_amount" type="number" step="0.01" class="w-full px-3 py-2 border rounded-lg">
                          </div>
                          <div>

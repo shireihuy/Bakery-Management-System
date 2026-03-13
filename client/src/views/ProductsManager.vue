@@ -11,10 +11,12 @@ import {
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
 import { useProducts, type Product } from '../composables/useProducts';
+import { useCurrency } from '../composables/useCurrency';
 
 const { products, addProduct, updateProduct, deleteProduct, fetchProducts, fetchTags, resetRatings } = useProducts();
 const { user } = useAuth();
 const { t } = useI18n();
+const { formatPrice } = useCurrency();
 
 const isAdmin = computed(() => user.value?.role === 'Admin');
 
@@ -227,7 +229,7 @@ const handleResetRatings = async (productId: string) => {
                     <div class="grid grid-cols-2 gap-2 text-sm">
                       <div class="col-span-1">
                         <p class="text-green-600 text-xs">{{ t('products.price') }}</p>
-                        <p class="text-green-900 font-medium">${{ product.price.toFixed(2) }}</p>
+                        <p class="text-green-900 font-medium">{{ formatPrice(product.price) }}</p>
                       </div>
                       <div class="col-span-1">
                         <p class="text-green-600 text-xs">{{ t('products.rating') }}</p>
@@ -306,7 +308,7 @@ const handleResetRatings = async (productId: string) => {
                     <input type="hidden" v-model="formData.cost" />
                     
                     <div class="space-y-2 col-span-2">
-                      <label for="price" class="text-sm font-medium text-gray-700">{{ t('products.price') }} ($)</label>
+                      <label for="price" class="text-sm font-medium text-gray-700">{{ t('products.price') }} (USD $)</label>
                       <input
                         id="price"
                         type="number"
