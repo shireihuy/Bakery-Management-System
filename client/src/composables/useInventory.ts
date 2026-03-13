@@ -60,12 +60,16 @@ export function useInventory() {
         const item = inventory.value.find(i => i.id === id);
         if (!item) return;
 
-        if (item.isProduct && 'quantity' in updates) {
+        if (item.isProduct && ('quantity' in updates || 'minQuantity' in updates)) {
             try {
                 const response = await fetch(`${API_URL}/products/${id}/stock`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-                    body: JSON.stringify({ quantity: updates.quantity, reset: true })
+                    body: JSON.stringify({ 
+                        quantity: updates.quantity ?? item.quantity, 
+                        minQuantity: updates.minQuantity ?? item.minQuantity,
+                        reset: true 
+                    })
                 });
 
                 if (!response.ok) throw new Error('Failed to update stock');

@@ -121,8 +121,16 @@ const updateStock = async (req, res) => {
         let params;
 
         if (reset) {
-            updateQuery = 'UPDATE products SET stock_quantity = $1, last_restocked = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *';
-            params = [quantity, id];
+            updateQuery = 'UPDATE products SET stock_quantity = $1, last_restocked = CURRENT_TIMESTAMP';
+            params = [quantity];
+            
+            if (req.body.minQuantity !== undefined) {
+                updateQuery += ', min_stock_level = $2';
+                params.push(req.body.minQuantity);
+            }
+            
+            updateQuery += ' WHERE id = $' + (params.length + 1) + ' RETURNING *';
+            params.push(id);
         } else {
             updateQuery = 'UPDATE products SET stock_quantity = stock_quantity + $1, last_restocked = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *';
             params = [quantity, id];

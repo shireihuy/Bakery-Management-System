@@ -323,13 +323,22 @@ const handleDelete = (id: string) => {
                 <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
                     <div class="space-y-1">
                         <label class="text-sm font-medium text-gray-700">{{ t('inventory.itemName') }}</label>
-                        <input v-model="form.name" type="text" :disabled="isBaker" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
+                        <input v-model="form.name" type="text" :disabled="isBaker || !!(editingItem && editingItem.isProduct)" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
+                    </div>
+
+                    <div v-if="editingItem && editingItem.isProduct" class="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-start gap-3">
+                        <div class="p-1 bg-blue-100 text-blue-600 rounded-lg">
+                            <Filter class="w-3 h-3" />
+                        </div>
+                        <p class="text-[11px] text-blue-700 leading-tight">
+                            <strong>Note:</strong> This is a shop product. Core details like name, category, and price are managed in the <strong>Product Management</strong> tab.
+                        </p>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">{{ t('inventory.category') }}</label>
-                            <input v-if="isBaker" v-model="form.category" disabled class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-gray-50 text-gray-500 font-medium">
+                            <input v-if="isBaker || !!(editingItem && editingItem.isProduct)" v-model="form.category" disabled class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-gray-50 text-gray-500 font-medium">
                             <select v-else v-model="form.category" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-white font-medium">
                                 <option value="Pastries">Pastries</option>
                                 <option value="Bread">Bread</option>
@@ -343,7 +352,7 @@ const handleDelete = (id: string) => {
                         </div>
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">{{ t('inventory.unit') }}</label>
-                            <input v-model="form.unit" type="text" :disabled="isBaker" required placeholder="e.g. kg" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
+                            <input v-model="form.unit" type="text" :disabled="isBaker || !!(editingItem && editingItem.isProduct)" required placeholder="e.g. kg" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
                         </div>
                     </div>
 
