@@ -24,6 +24,7 @@ import { useOrders, type Order } from '../composables/useOrders';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
 import { useCurrency } from '../composables/useCurrency';
+import { useCart } from '../composables/useCart';
 
 // State
 const { products, fetchProducts, submitRating } = useProducts();
@@ -31,12 +32,14 @@ const { addOrder, orders, fetchMyOrders, fetchOrders, updateOrderStatus } = useO
 const { user } = useAuth();
 const { t } = useI18n();
 const { formatPrice } = useCurrency();
+const { cart, fetchCart, addToCart, updateQuantity, removeFromCart, clearCart } = useCart();
 const router = useRouter();
 
 import { onMounted } from 'vue';
 
 onMounted(async () => {
     await fetchProducts();
+    await fetchCart();
     if (user.value) {
         if (isCashier.value) {
             await fetchOrders();
@@ -46,11 +49,7 @@ onMounted(async () => {
     }
 });
 
-interface CartItem extends Product {
-  quantity: number;
-}
-
-const cart = ref<CartItem[]>([]);
+// Cart state is from composable now
 const selectedCategory = ref('All');
 const isProductDialogOpen = ref(false);
 const selectedProduct = ref<Product | null>(null);
@@ -121,32 +120,6 @@ const discountAmount = computed(() => {
 const totalPrice = computed(() => Math.max(0, subTotalPrice.value - discountAmount.value));
 
 // Actions
-const addToCart = (product: Product) => {
-    const existingItem = cart.value.find(item => item.id === product.id);
-    if (existingItem) {
-        existingItem.quantity = Math.min(existingItem.quantity + 1, product.stock);
-    } else {
-        cart.value.push({ ...product, quantity: 1 });
-    }
-    // In a real app we'd show a toast here
-    console.log(`Added ${product.name} to cart`);
-};
-
-const updateQuantity = (productId: string, delta: number) => {
-    const item = cart.value.find(item => item.id === productId);
-    if (item) {
-        const newQuantity = item.quantity + delta;
-        item.quantity = Math.max(0, Math.min(newQuantity, item.stock));
-        if (item.quantity === 0) {
-            removeFromCart(productId);
-        }
-    }
-};
-
-const removeFromCart = (productId: string) => {
-    cart.value = cart.value.filter(item => item.id !== productId);
-};
-
 const handleCheckout = async () => {
     if (!user.value) {
         showLoginPrompt.value = true;
@@ -173,7 +146,7 @@ const handleCheckout = async () => {
         });
 
         // Clear cart before redirecting
-        cart.value = [];
+        await clearCart();
         orderCustomerName.value = '';
         appliedCoupon.value = null;
         couponCodeInput.value = '';

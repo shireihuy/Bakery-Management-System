@@ -191,3 +191,14 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- Reset serial sequence
 SELECT setval('products_id_seq', (SELECT MAX(id) FROM products));
+
+-- Cart Items Table
+CREATE TABLE IF NOT EXISTS cart_items (
+    id SERIAL PRIMARY KEY,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, product_id)
+);
