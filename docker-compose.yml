@@ -13,6 +13,13 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./server/db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Backend Server
   server:
@@ -29,22 +36,36 @@ services:
       - DB_PORT=5432
       - DB_NAME=${DB_NAME:-bakery_db}
       - JWT_SECRET=${JWT_SECRET:-your_super_secret_key_change_me}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     ports:
       - "3000:3000"
     volumes:
       - ./server/uploads:/app/uploads
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # Frontend Client
   client:
-    build: ./client
+    build: 
+      context: ./client
+      args:
+        - VITE_API_URL=${VITE_API_URL:-http://localhost:3000/api}
     container_name: bakery-web
     restart: always
     ports:
       - "8080:80"
     depends_on:
       - server
+    networks:
+      - backend
 
   # Database UI
   adminer:
@@ -55,6 +76,12 @@ services:
       - "8085:8080"
     depends_on:
       - db
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
 
 volumes:
   postgres_data:

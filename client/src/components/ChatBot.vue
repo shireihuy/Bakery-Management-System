@@ -143,7 +143,9 @@ const sendToAI = async (text: string) => {
   isBaking.value = true;
 
   try {
-    const response = await fetch('http://localhost:3000/api/ai/chat', {
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+    const baseUrl = API_URL.endsWith('/api') ? API_URL.replace('/api', '') : API_URL;
+    const response = await fetch(`${baseUrl}/api/ai/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
