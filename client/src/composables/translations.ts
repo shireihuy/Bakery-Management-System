@@ -90,6 +90,8 @@ export interface TranslationSchema {
         joinSubtitle: string;
         passMismatch: string;
         passTooShort: string;
+        captchaLabel: string;
+        captchaRequired: string;
     };
     dashboard: {
         managementSuite: string;
@@ -381,7 +383,9 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             joinTitle: 'Join the Family',
             joinSubtitle: 'Register for exclusive access and rewards',
             passMismatch: 'Passwords do not match',
-            passTooShort: 'Password must be at least 6 characters'
+            passTooShort: 'Password must be at least 6 characters',
+            captchaLabel: 'I am not a robot',
+            captchaRequired: 'Please verify that you are not a robot'
         },
         dashboard: {
             managementSuite: 'Management Suite',
@@ -671,7 +675,9 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             joinTitle: 'コミュニティに参加',
             joinSubtitle: '登録して限定アクセスと特典を受け取りましょう',
             passMismatch: 'パスワードが一致しません',
-            passTooShort: 'パスワードは6文字以上である必要があります'
+            passTooShort: 'パスワードは6文字以上である必要があります',
+            captchaLabel: '私はロボットではありません',
+            captchaRequired: 'ロボットでないことを確認してください'
         },
         dashboard: {
             managementSuite: '管理スイート',
@@ -961,7 +967,9 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             joinTitle: 'Tham gia gia đình',
             joinSubtitle: 'Đăng ký để nhận quyền truy cập và phần thưởng độc quyền',
             passMismatch: 'Mật khẩu không khớp',
-            passTooShort: 'Mật khẩu phải có ít nhất 6 ký tự'
+            passTooShort: 'Mật khẩu phải có ít nhất 6 ký tự',
+            captchaLabel: 'Tôi không phải là người máy',
+            captchaRequired: 'Vui lòng xác nhận bạn không phải là người máy'
         },
         dashboard: {
             managementSuite: 'Bộ Công Cụ Quản Lý',

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { Loader2, ArrowLeft, Phone, MapPin } from 'lucide-vue-next';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
+import SimpleCaptcha from '../components/SimpleCaptcha.vue';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -16,6 +17,11 @@ const phone = ref('');
 const address = ref('');
 const error = ref('');
 const isLoading = ref(false);
+const isCaptchaVerified = ref(false);
+
+const onCaptchaVerify = (status: boolean) => {
+    isCaptchaVerified.value = status;
+};
 
 const { register, login } = useAuth();
 
@@ -37,6 +43,11 @@ const handleSubmit = async () => {
 
     if (password.value.length < 6) {
       error.value = t('auth.passTooShort');
+      return;
+    }
+
+    if (!isCaptchaVerified.value) {
+      error.value = t('auth.captchaRequired');
       return;
     }
 
@@ -186,6 +197,8 @@ const handleSubmit = async () => {
                     </div>
                 </div>
             </div>
+            
+            <SimpleCaptcha @verify="onCaptchaVerify" />
 
             <button
               type="submit"
