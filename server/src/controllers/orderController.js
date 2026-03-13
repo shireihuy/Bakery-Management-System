@@ -206,7 +206,7 @@ const getMyOrders = async (req, res) => {
 
 const updateOrderStatus = async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, payment_status } = req.body;
 
     const client = await pool.connect();
     try {
@@ -236,16 +236,32 @@ const updateOrderStatus = async (req, res) => {
             }
         }
 
-        let updateQuery = 'UPDATE orders SET status = $1';
-        const params = [status];
+        let updateFields = [];
+        const params = [];
+        let paramCount = 1;
 
-        if (status === 'Baking') {
-            updateQuery += ', start_time = CURRENT_TIMESTAMP';
-        } else if (status === 'Completed') {
-            updateQuery += ', completed_time = CURRENT_TIMESTAMP';
+        if (status) {
+            updateFields.push(`status = $${paramCount++}`);
+            params.push(status);
+            
+            if (status === 'Baking') {
+                updateFields.push(`start_time = CURRENT_TIMESTAMP`);
+            } else if (status === 'Completed') {
+                updateFields.push(`completed_time = CURRENT_TIMESTAMP`);
+            }
         }
 
-        updateQuery += ' WHERE id = $2 RETURNING *';
+        if (payment_status) {
+            updateFields.push(`payment_status = $${paramCount++}`);
+            params.push(payment_status);
+        }
+
+        if (updateFields.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: 'No fields to update' });
+        }
+
+        const updateQuery = `UPDATE orders SET ${updateFields.join(', ')} WHERE id = $${paramCount} RETURNING *`;
         params.push(id);
 
         const result = await client.query(updateQuery, params);

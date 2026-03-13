@@ -160,7 +160,7 @@ export function useOrders() {
         }
     };
 
-    const updateOrderStatus = async (orderId: number, status: Order['status']) => {
+    const updateOrderStatus = async (orderId: number, status?: Order['status'], paymentStatus?: string) => {
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
@@ -169,7 +169,7 @@ export function useOrders() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ status })
+                body: JSON.stringify({ status, payment_status: paymentStatus })
             });
 
             if (!response.ok) {
@@ -179,7 +179,8 @@ export function useOrders() {
             // Update local state
             const order = orders.value.find(o => o.id === orderId);
             if (order) {
-                order.status = status;
+                if (status) order.status = status;
+                if (paymentStatus) (order as any).paymentStatus = paymentStatus;
             }
         } catch (err) {
             console.error('Error updating status:', err);

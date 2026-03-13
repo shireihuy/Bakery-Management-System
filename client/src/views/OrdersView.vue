@@ -215,6 +215,14 @@ const changeStatus = async (order: Order, status: string) => {
                         <span class="text-sm font-medium text-gray-700 flex items-center w-full sm:w-auto">{{ t('orders.updateStatus') }}:</span>
                         <div class="flex gap-2 flex-wrap">
                             <button 
+                                v-if="viewingOrder.paymentStatus !== 'Paid'"
+                                @click="updateOrderStatus(viewingOrder.id, undefined, 'Paid')"
+                                class="px-3 py-1.5 bg-bakery-900 text-white text-sm font-medium rounded hover:bg-black border border-bakery-900 transition-colors flex items-center gap-2"
+                            >
+                                <CheckCircle2 class="w-4 h-4" />
+                                Mark as Paid
+                            </button>
+                            <button 
                                 v-if="viewingOrder.status === 'Pending'"
                                 @click="changeStatus(viewingOrder, 'Baking')"
                                 class="px-3 py-1.5 bg-blue-100 text-blue-700 text-sm font-medium rounded hover:bg-blue-200 border border-blue-200 transition-colors"
@@ -266,6 +274,8 @@ const changeStatus = async (order: Order, status: string) => {
                              <h3 class="text-sm font-semibold text-gray-900 mb-2 uppercase tracking-wide">{{ t('orders.orderTimeline') }}</h3>
                             <div class="bg-white rounded-lg border border-gray-100 p-3 space-y-1 text-sm">
                                 <p><span class="text-gray-500 w-24 inline-block">Placed:</span> <span>{{ viewingOrder.date }} {{ viewingOrder.startTime ? '' : '(Pending)' }}</span></p>
+                                <p><span class="text-gray-500 w-24 inline-block">Payment:</span> <span :class="viewingOrder.paymentStatus === 'Paid' ? 'text-green-600 font-bold' : 'text-amber-600 font-bold'">{{ viewingOrder.paymentStatus || 'Unpaid' }}</span></p>
+                                <p v-if="viewingOrder.paymentMethod"><span class="text-gray-500 w-24 inline-block">Method:</span> <span class="capitalize">{{ viewingOrder.paymentMethod }}</span></p>
                                 <p v-if="viewingOrder.startTime"><span class="text-gray-500 w-24 inline-block">Started:</span> <span>{{ viewingOrder.startTime }}</span></p>
                                 <p v-if="viewingOrder.completedTime"><span class="text-gray-500 w-24 inline-block">Completed:</span> <span>{{ viewingOrder.completedTime }}</span></p>
                             </div>
