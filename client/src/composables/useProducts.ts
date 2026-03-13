@@ -51,7 +51,12 @@ export function useProducts() {
                 if (key === 'image' && value instanceof File) {
                     formData.append('image', value);
                 } else if (value !== undefined && value !== null) {
-                    formData.append(key, value.toString());
+                    // Send arrays as JSON strings
+                    if (Array.isArray(value)) {
+                        formData.append(key, JSON.stringify(value));
+                    } else {
+                        formData.append(key, value.toString());
+                    }
                 }
             });
 
@@ -77,7 +82,12 @@ export function useProducts() {
                 if (key === 'image' && value instanceof File) {
                     formData.append('image', value);
                 } else if (value !== undefined && value !== null) {
-                    formData.append(key, value.toString());
+                    // Send arrays as JSON strings
+                    if (Array.isArray(value)) {
+                        formData.append(key, JSON.stringify(value));
+                    } else {
+                        formData.append(key, value.toString());
+                    }
                 }
             });
 
@@ -110,14 +120,26 @@ export function useProducts() {
         }
     };
 
+    const fetchTags = async () => {
+        try {
+            const response = await fetch(`${API_URL}/products/tags`);
+            if (!response.ok) throw new Error('Failed to fetch tags');
+            return await response.json();
+        } catch (err) {
+            console.error('Error fetching tags:', err);
+            return { ingredients: [], allergens: [] };
+        }
+    };
+
     return {
         products: readonly(products),
         fetchProducts,
         addProduct,
         updateProduct,
-        deleteProduct
+        deleteProduct,
+        fetchTags
     };
-}
+};
 
 // Global listener for product updates
 socketService.on('stock:updated', () => {

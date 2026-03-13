@@ -19,6 +19,7 @@ const upload = multer({ storage: storage });
 
 // Public route to get all products
 router.get('/', productController.getProducts);
+router.get('/tags', productController.getTags);
 router.get('/:id', productController.getProductById);
 
 // Protected routes for management (Admin, Manager, Cashier)

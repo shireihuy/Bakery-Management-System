@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { 
   Plus, 
   Edit, 
@@ -10,13 +10,14 @@ import {
 import { useProducts, type Product } from '../composables/useProducts';
 import { useI18n } from '../composables/useI18n';
 
-const { products, addProduct, updateProduct, deleteProduct, fetchProducts } = useProducts();
+const { products, addProduct, updateProduct, deleteProduct, fetchProducts, fetchTags } = useProducts();
 const { t } = useI18n();
 
-import { onMounted } from 'vue';
+const availableTags = ref<{ ingredients: string[], allergens: string[] }>({ ingredients: [], allergens: [] });
 
 onMounted(async () => {
     await fetchProducts();
+    availableTags.value = await fetchTags();
 });
 
 const isDialogOpen = ref(false);
@@ -33,8 +34,8 @@ const formData = ref({
     unit: 'pcs',
     image: '',
     description: '',
-    ingredients: '',
-    allergens: '',
+    ingredients: [] as string[],
+    allergens: [] as string[],
     rating: ''
 });
 
@@ -62,8 +63,8 @@ const resetForm = () => {
         unit: 'pcs', 
         image: '', 
         description: '', 
-        ingredients: '', 
-        allergens: '', 
+        ingredients: [], 
+        allergens: [], 
         rating: '' 
     };
     editingProduct.value = null;
@@ -82,8 +83,8 @@ const handleEdit = (product: Product) => {
         unit: product.unit || 'pcs',
         image: product.image,
         description: product.description || '',
-        ingredients: product.ingredients?.join(', ') || '',
-        allergens: product.allergens?.join(', ') || '',
+        ingredients: [...(product.ingredients || [])],
+        allergens: [...(product.allergens || [])],
         rating: product.rating?.toString() || ''
     };
     imagePreview.value = product.image;
@@ -132,6 +133,15 @@ const filteredProducts = computed(() => {
         return matchesSearch && matchesCategory;
     });
 });
+const toggleTag = (type: 'ingredients' | 'allergens', tag: string) => {
+    const list = formData.value[type];
+    const index = list.indexOf(tag);
+    if (index === -1) {
+        list.push(tag);
+    } else {
+        list.splice(index, 1);
+    }
+};
 </script>
 
 <template>
@@ -211,7 +221,13 @@ const filteredProducts = computed(() => {
                         <p class="text-green-600 text-xs">{{ t('products.stock') }}</p>
                         <p class="text-green-900 font-medium">{{ product.stock }} {{ product.unit }}</p>
                       </div>
-                      <!-- Cost and Margin hidden for now as they are not supported by the DB yet -->
+                    </div>
+                    <div v-if="product.ingredients?.length" class="flex flex-wrap gap-1">
+                        <span v-for="tag in product.ingredients.slice(0, 3)" :key="tag" class="px-1.5 py-0.5 bg-green-50 text-green-600 rounded text-[10px] border border-green-100 italic">{{ tag }}</span>
+                        <span v-if="product.ingredients.length > 3" class="text-[10px] text-green-500 font-medium">+{{ product.ingredients.length - 3 }}</span>
+                    </div>
+                    <div v-if="product.allergens?.length" class="flex flex-wrap gap-1">
+                        <span v-for="tag in product.allergens" :key="tag" class="px-1.5 py-0.5 bg-red-50 text-red-600 rounded text-[10px] border border-red-100 font-medium">{{ tag }}</span>
                     </div>
                   </div>
                 </div>
@@ -335,9 +351,62 @@ const filteredProducts = computed(() => {
                       class="flex min-h-[80px] w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
                     />
                   </div>
-                   <!-- Ingredients and Allergens hidden: Not needed by DB yet, reserved for later implementation -->
-                   <input type="hidden" v-model="formData.ingredients" />
-                   <input type="hidden" v-model="formData.allergens" />
+                   <!-- Ingredients and Allergens Tags -->
+                   <div class="space-y-4 pt-2">
+                       <div class="space-y-2">
+                           <label class="text-sm font-medium text-gray-700">{{ t('products.ingredients') }}</label>
+                           <div class="flex flex-wrap gap-2 mb-2 min-h-[40px] p-2 border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
+                               <span v-for="tag in formData.ingredients" :key="tag" 
+                                   @click="toggleTag('ingredients', tag)"
+                                   class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs font-medium cursor-pointer hover:bg-green-200 transition-colors"
+                               >
+                                   {{ tag }} <X class="w-3 h-3" />
+                               </span>
+                               <span v-if="formData.ingredients.length === 0" class="text-xs text-gray-400 italic py-1">No ingredients selected</span>
+                           </div>
+                           <div class="flex flex-wrap gap-2">
+                               <button v-for="tag in availableTags.ingredients" :key="tag"
+                                   type="button"
+                                   @click="toggleTag('ingredients', tag)"
+                                   :class="[
+                                       'px-2 py-1 rounded-md text-xs border transition-all',
+                                       formData.ingredients.includes(tag) 
+                                           ? 'bg-green-600 border-green-600 text-white shadow-sm' 
+                                           : 'bg-white border-gray-200 text-gray-600 hover:border-green-300 hover:text-green-600'
+                                   ]"
+                               >
+                                   {{ tag }}
+                               </button>
+                           </div>
+                       </div>
+
+                       <div class="space-y-2">
+                           <label class="text-sm font-medium text-gray-700">{{ t('products.allergens') }}</label>
+                           <div class="flex flex-wrap gap-2 mb-2 min-h-[40px] p-2 border border-dashed border-gray-200 rounded-lg bg-gray-50/50">
+                               <span v-for="tag in formData.allergens" :key="tag" 
+                                   @click="toggleTag('allergens', tag)"
+                                   class="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-md text-xs font-medium cursor-pointer hover:bg-red-200 transition-colors"
+                               >
+                                   {{ tag }} <X class="w-3 h-3" />
+                               </span>
+                               <span v-if="formData.allergens.length === 0" class="text-xs text-gray-400 italic py-1">No allergens selected</span>
+                           </div>
+                           <div class="flex flex-wrap gap-2">
+                               <button v-for="tag in availableTags.allergens" :key="tag"
+                                   type="button"
+                                   @click="toggleTag('allergens', tag)"
+                                   :class="[
+                                       'px-2 py-1 rounded-md text-xs border transition-all',
+                                       formData.allergens.includes(tag) 
+                                           ? 'bg-red-600 border-red-600 text-white shadow-sm' 
+                                           : 'bg-white border-gray-200 text-gray-600 hover:border-red-300 hover:text-red-600'
+                                   ]"
+                               >
+                                   {{ tag }}
+                               </button>
+                           </div>
+                       </div>
+                   </div>
                    <div class="space-y-2">
                     <label for="rating" class="text-sm font-medium text-gray-700">{{ t('products.rating') }} (0-5)</label>
                     <input

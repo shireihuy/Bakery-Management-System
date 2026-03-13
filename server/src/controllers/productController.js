@@ -15,6 +15,8 @@ const getProducts = async (req, res) => {
             min_stock: parseFloat(p.min_stock_level || 5),
             unit: p.unit || 'pcs',
             last_restocked: p.last_restocked,
+            ingredients: Array.isArray(p.ingredients) ? p.ingredients : JSON.parse(p.ingredients || '[]'),
+            allergens: Array.isArray(p.allergens) ? p.allergens : JSON.parse(p.allergens || '[]'),
             rating: 4.5, // Keep mock rating for now
         }));
         res.json(products);
@@ -41,8 +43,12 @@ const getProductById = async (req, res) => {
 const createProduct = async (req, res) => {
     console.log('Create Product Request Body:', req.body);
     console.log('Create Product Request File:', req.file);
-    const { name, category, price, description, stock_quantity, min_stock_level, unit } = req.body;
+    const { name, category, price, description, stock_quantity, min_stock_level, unit, ingredients, allergens } = req.body;
     let image_url = req.body.image_url; // Default if provided as string
+
+    // Parse ingredients and allergens if they are strings (from FormData)
+    const parsedIngredients = typeof ingredients === 'string' ? JSON.parse(ingredients || '[]') : (ingredients || []);
+    const parsedAllergens = typeof allergens === 'string' ? JSON.parse(allergens || '[]') : (allergens || []);
 
     // If a file was uploaded by multer
     if (req.file) {
@@ -51,8 +57,8 @@ const createProduct = async (req, res) => {
 
     try {
         const result = await query(
-            'INSERT INTO products (name, category, price, description, image_url, stock_quantity, min_stock_level, unit) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
-            [name, category, price, description, image_url, stock_quantity || 0, min_stock_level || 5, unit || 'pcs']
+            'INSERT INTO products (name, category, price, description, image_url, stock_quantity, min_stock_level, unit, ingredients, allergens) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
+            [name, category, price, description, image_url, stock_quantity || 0, min_stock_level || 5, unit || 'pcs', JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens)]
         );
         console.log('Product created successfully:', result.rows[0]);
         res.status(201).json(result.rows[0]);
@@ -66,22 +72,26 @@ const updateProduct = async (req, res) => {
     console.log('Update Product Request Body:', req.body);
     console.log('Update Product Request File:', req.file);
     const { id } = req.params;
-    const { name, category, price, description, stock_quantity, min_stock_level, unit } = req.body;
+    const { name, category, price, description, stock_quantity, min_stock_level, unit, ingredients, allergens } = req.body;
     let image_url = req.body.image_url;
+
+    // Parse ingredients and allergens if they are strings (from FormData)
+    const parsedIngredients = typeof ingredients === 'string' ? JSON.parse(ingredients || '[]') : (ingredients || []);
+    const parsedAllergens = typeof allergens === 'string' ? JSON.parse(allergens || '[]') : (allergens || []);
 
     if (req.file) {
         image_url = `/uploads/${req.file.filename}`;
     }
 
     try {
-        let updateQuery = 'UPDATE products SET name = $1, category = $2, price = $3, description = $4, stock_quantity = $5, min_stock_level = $6, unit = $7';
-        let params = [name, category, price, description, stock_quantity, min_stock_level, unit, id];
+        let updateQuery = 'UPDATE products SET name = $1, category = $2, price = $3, description = $4, stock_quantity = $5, min_stock_level = $6, unit = $7, ingredients = $8, allergens = $9';
+        let params = [name, category, price, description, stock_quantity, min_stock_level, unit, JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens), id];
 
         if (image_url) {
-            updateQuery += ', image_url = $8 WHERE id = $9';
-            params = [name, category, price, description, stock_quantity, min_stock_level, unit, image_url, id];
+            updateQuery += ', image_url = $10 WHERE id = $11';
+            params = [name, category, price, description, stock_quantity, min_stock_level, unit, JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens), image_url, id];
         } else {
-            updateQuery += ' WHERE id = $8';
+            updateQuery += ' WHERE id = $10';
         }
 
         const result = await query(updateQuery + ' RETURNING *', params);
@@ -158,11 +168,26 @@ const updateStock = async (req, res) => {
     }
 };
 
+const getTags = async (req, res) => {
+    try {
+        const result = await query('SELECT * FROM predefined_tags ORDER BY name ASC');
+        const tags = {
+            ingredients: result.rows.filter(t => t.type === 'ingredient').map(t => t.name),
+            allergens: result.rows.filter(t => t.type === 'allergen').map(t => t.name)
+        };
+        res.json(tags);
+    } catch (err) {
+        console.error('Error fetching tags:', err);
+        res.status(500).json({ message: 'Server error fetching tags' });
+    }
+};
+
 module.exports = {
     getProducts,
     getProductById,
     createProduct,
     updateProduct,
     deleteProduct,
-    updateStock
+    updateStock,
+    getTags
 };

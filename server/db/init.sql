@@ -29,7 +29,9 @@ CREATE TABLE IF NOT EXISTS products (
     description TEXT,
     image_url TEXT,
     is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    ingredients JSONB DEFAULT '[]',
+    allergens JSONB DEFAULT '[]'
 );
 
 -- Ingredients Table
@@ -105,6 +107,34 @@ CREATE TABLE IF NOT EXISTS notifications (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Predefined Tags Table
+CREATE TABLE IF NOT EXISTS predefined_tags (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL,
+    type VARCHAR(50) NOT NULL -- 'ingredient' or 'allergen'
+);
+
+-- Seed Initial Tags
+INSERT INTO predefined_tags (name, type) VALUES
+('Flour', 'ingredient'),
+('Sugar', 'ingredient'),
+('Butter', 'ingredient'),
+('Eggs', 'ingredient'),
+('Milk', 'ingredient'),
+('Yeast', 'ingredient'),
+('Salt', 'ingredient'),
+('Matcha Powder', 'ingredient'),
+('Chocolate Chips', 'ingredient'),
+('Vanilla Extract', 'ingredient'),
+('Milk', 'allergen'),
+('Eggs', 'allergen'),
+('Nuts', 'allergen'),
+('Wheat', 'allergen'),
+('Soy', 'allergen'),
+('Dairy', 'allergen'),
+('Gluten', 'allergen')
+ON CONFLICT (name) DO NOTHING;
 
 -- Initial Data (Optional - Admin Account)
 -- Password is 'admin123' (hashed version should be used in production)
