@@ -106,12 +106,32 @@ export function useAuth() {
         }
     };
 
+    const setupSessionSync = () => {
+        window.addEventListener('storage', (event) => {
+            if (event.key === 'token') {
+                if (!event.newValue || event.newValue !== event.oldValue) {
+                    // Token changed or removed: full reload to reset all states
+                    window.location.reload();
+                }
+            }
+            if (event.key === 'user' && event.newValue) {
+                try {
+                    // User data updated: update reactive state
+                    user.value = JSON.parse(event.newValue);
+                } catch (e) {
+                    console.error('Failed to parse updated user from storage', e);
+                }
+            }
+        });
+    };
+
     return {
         user: readonly(user),
         login,
         register,
         logout,
         autoLogin,
-        updateProfile
+        updateProfile,
+        setupSessionSync
     };
 }
