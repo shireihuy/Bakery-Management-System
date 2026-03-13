@@ -13,7 +13,7 @@ const model = genAI.getGenerativeModel({
 });
 
 exports.chat = async (req, res) => {
-    const { prompt, history } = req.body;
+    const { prompt, history, language } = req.body;
 
     if (!prompt) {
         return res.status(400).json({ error: "Prompt is required" });
@@ -27,7 +27,11 @@ exports.chat = async (req, res) => {
             },
         });
 
-        const result = await chat.sendMessage(prompt);
+        const finalPrompt = language 
+            ? `(User preferred language: ${language}) ${prompt}`
+            : prompt;
+
+        const result = await chat.sendMessage(finalPrompt);
         const response = await result.response;
         const text = response.text();
 

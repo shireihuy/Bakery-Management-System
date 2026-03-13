@@ -265,6 +265,30 @@ export interface TranslationSchema {
         caughtUp: string;
         markAsRead: string;
     };
+    chatbot: {
+        title: string;
+        status: string;
+        placeholder: string;
+        baking: string;
+        resetTitle: string;
+        poweredBy: string;
+        chooseTopic: string;
+        backToTopics: string;
+        welcome: string;
+        howElse: string;
+        tellMeAbout: string;
+        commonQuestions: string;
+        errorAI: string;
+        errorGeneric: string;
+        hideTopics: string;
+        showTopics: string;
+        categories: {
+            aboutUs: string;
+            howto: string;
+            coupons: string;
+            employeeGuide: string;
+        };
+    };
 }
 
 export const defaultTranslations: Record<Language, TranslationSchema> = {
@@ -533,6 +557,30 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             caughtUp: "You're all caught up! Check back later for updates.",
             markAsRead: 'Mark as read',
         },
+        chatbot: {
+            title: 'Bakery Assistant',
+            status: 'Always Baking Answers',
+            placeholder: 'Ask anything about our bakery...',
+            baking: 'Baking response...',
+            resetTitle: 'Reset Chat',
+            poweredBy: 'Powered by Gemini AI • v2.0',
+            chooseTopic: 'Choose a topic',
+            backToTopics: 'Back to Topics',
+            welcome: "Hello! I'm your Bakery AI Assistant 🥐 Choose a topic or ask me anything!",
+            howElse: 'How else can I help you? Choose a topic below:',
+            tellMeAbout: 'Tell me about {category}',
+            commonQuestions: 'Here are common questions about {category}:',
+            errorAI: "Sorry, I'm having trouble right now. 🥖",
+            errorGeneric: "Oops! Please try again later. 🥯",
+            hideTopics: 'Hide topics',
+            showTopics: 'Show topics',
+            categories: {
+                aboutUs: 'About Us',
+                howto: 'How-to',
+                coupons: 'Coupons',
+                employeeGuide: 'Employee Guide',
+            },
+        },
     },
     jp: {
         common: {
@@ -798,6 +846,30 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             noNotifications: '通知はありません',
             caughtUp: 'すべて確認済みです！後で更新を確認してください。',
             markAsRead: '既読にする',
+        },
+        chatbot: {
+            title: 'ベーカリー・アシスタント',
+            status: 'いつでも回答を準備中',
+            placeholder: 'ベーカリーについて何でも聞いてください...',
+            baking: '回答を準備中...',
+            resetTitle: 'チャットをリセット',
+            poweredBy: 'Powered by Gemini AI • v2.0',
+            chooseTopic: 'トピックを選択',
+            backToTopics: 'トピック一覧に戻る',
+            welcome: 'こんにちは！ベーカリーAIアシスタントです🥐 トピックを選ぶか、何でも聞いてください！',
+            howElse: '他にお手伝いできることはありますか？以下のトピックから選んでください：',
+            tellMeAbout: '{category}について教えて',
+            commonQuestions: '{category}に関するよくある質問：',
+            errorAI: '申し訳ありません、現在トラブルが発生しています。🥖',
+            errorGeneric: 'おっと！後でもう一度お試しください。🥯',
+            hideTopics: 'トピックを隠す',
+            showTopics: 'トピックを表示',
+            categories: {
+                aboutUs: '私たちについて',
+                howto: '使い方',
+                coupons: 'クーポン',
+                employeeGuide: '従業員ガイド',
+            },
         },
     },
     vn: {
@@ -1065,5 +1137,29 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             caughtUp: 'Bạn đã xem hết thông báo! Hãy quay lại sau.',
             markAsRead: 'Đánh dấu đã đọc',
         },
+        chatbot: {
+            title: 'Trợ Lý Bakery',
+            status: 'Luôn sẵn sàng giải đáp',
+            placeholder: 'Hỏi bất cứ điều gì về tiệm bánh...',
+            baking: 'Đang chuẩn bị câu trả lời...',
+            resetTitle: 'Đặt lại trò chuyện',
+            poweredBy: 'Cung cấp bởi Gemini AI • v2.0',
+            chooseTopic: 'Chọn một chủ đề',
+            backToTopics: 'Quay lại chủ đề',
+            welcome: 'Xin chào! Tôi là Trợ lý AI của Bakery 🥐 Hãy chọn một chủ đề hoặc hỏi tôi bất cứ điều gì!',
+            howElse: 'Tôi có thể giúp gì thêm cho bạn không? Hãy chọn một chủ đề bên dưới:',
+            tellMeAbout: 'Cho tôi biết về {category}',
+            commonQuestions: 'Dưới đây là các câu hỏi thường gặp về {category}:',
+            errorAI: 'Xin lỗi, tôi đang gặp một chút trục trặc. 🥖',
+            errorGeneric: 'Rất tiếc! Vui lòng thử lại sau. 🥯',
+            hideTopics: 'Ẩn chủ đề',
+            showTopics: 'Hiện chủ đề',
+            categories: {
+                aboutUs: 'Về chúng tôi',
+                howto: 'Hướng dẫn',
+                coupons: 'Mã giảm giá',
+                employeeGuide: 'Dành cho nhân viên',
+            },
+        },
     }
-};
+}

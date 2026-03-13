@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue';
+import { ref, computed, watch, nextTick, onMounted } from 'vue';
+import { useI18n } from '../composables/useI18n';
+
+const { t, currentLocale } = useI18n();
 
 interface Message {
   id: number;
@@ -8,95 +11,66 @@ interface Message {
 }
 
 interface QnA {
+  id: string;
   question: string;
   answer: string;
   category: string;
 }
 
-const qnaData: QnA[] = [
-  // About Us
-  {
-    category: 'About Us',
-    question: 'What is the Bakery Management System?',
-    answer: 'An all-in-one platform for bakeries to manage products, orders, customers, and staff efficiently.'
-  },
-  {
-    category: 'About Us',
-    question: 'What are the main features?',
-    answer: 'Key features include real-time order tracking, inventory management, sales reports, and seamless customer checkout.'
-  },
-  {
-    category: 'About Us',
-    question: 'Who can use this system?',
-    answer: 'Both customers (to order online) and staff or managers (to manage products, orders, and reports).'
-  },
+const qnaData = computed<QnA[]>(() => {
+  const categories = {
+    about: t('chatbot.categories.aboutUs'),
+    howto: t('chatbot.categories.howto'),
+    coupons: t('chatbot.categories.coupons'),
+    employee: t('chatbot.categories.employeeGuide')
+  };
 
-  // How-to
-  {
-    category: 'How-to',
-    question: 'How do I place an order?',
-    answer: 'Browse the menu, add items to your cart, and proceed to checkout. Choose "Order at Shop" or delivery.'
-  },
-  {
-    category: 'How-to',
-    question: 'How do I see the product menu?',
-    answer: 'Scroll to the "Our Menu" section on the landing page or click the "Shop Now" button.'
-  },
-  {
-    category: 'How-to',
-    question: 'How do I track my order?',
-    answer: 'Go to "My Orders" in your account to see real-time status updates for all your orders.'
-  },
-  {
-    category: 'How-to',
-    question: 'How do I pay for my order?',
-    answer: 'After placing an order, go to "My Orders", open the unpaid order, and click "Pay Now" to complete payment via QR code.'
-  },
+  if (currentLocale.value === 'jp') {
+    return [
+      { id: 'about_1', category: categories.about, question: 'ベーカリー管理システムとは何ですか？', answer: 'パン屋さんが商品、注文、顧客、スタッフを効率的に管理するためのオールインワン・プラットフォームです。' },
+      { id: 'about_2', category: categories.about, question: '主な機能は何ですか？', answer: 'リアルタイムの注文追跡、在庫管理、売上レポート、シームレスな顧客チェックアウトなどが含まれます。' },
+      { id: 'about_3', category: categories.about, question: '誰がこのシステムを使えますか？', answer: 'お客様（オンライン注文用）とスタッフまたはマネージャー（管理用）の両方が利用できます。' },
+      { id: 'howto_1', category: categories.howto, question: '注文はどうすればいいですか？', answer: 'メニューを閲覧し、商品をカートに追加してチェックアウトに進んでください。「店舗で注文」または配送を選択できます。' },
+      { id: 'howto_2', category: categories.howto, question: '商品メニューはどこで見られますか？', answer: 'ランディングページの「メニュー」セクションまでスクロールするか、「今すぐ購入」ボタンをクリックしてください。' },
+      { id: 'howto_3', category: categories.howto, question: '注文の追跡はできますか？', answer: 'アカウントの「マイオーダー」から、すべての注文のリアルタイムなステータスを確認できます。' },
+      { id: 'howto_4', category: categories.howto, question: '支払い方法を教えてください。', answer: '注文後、「マイオーダー」から未払いの注文を開き、「今すぐ支払う」をクリックしてQRコードで支払いを完了してください。' },
+      { id: 'coupon_1', category: categories.coupons, question: '利用可能なクーポンはどこにありますか？', answer: 'アカウント設定の「クーポン」タブから、利用可能なすべての割引コードを確認できます。' },
+      { id: 'coupon_2', category: categories.coupons, question: 'クーポンの使い方は？', answer: 'チェックアウト時に割引フィールドにクーポンコードを入力し、「適用」をクリックすると割引が反映されます。' },
+      { id: 'coupon_3', category: categories.coupons, question: 'クーポンが使えません。', answer: 'コードが正しいか、有効期限が切れていないか、最低注文金額などの条件を満たしているか確認してください。' },
+      { id: 'employee_1', category: categories.employee, question: '新商品の追加方法は？', answer: 'ダッシュボードの「商品管理」から「商品を追加」をクリックし、詳細を入力して画像をアップロードしてください。' },
+      { id: 'employee_2', category: categories.employee, question: '今日の売上を確認したいです。', answer: 'ダッシュボードの「レポート」セクションで、売上と収益のリアルタイムな概要を確認できます。' }
+    ];
+  } else if (currentLocale.value === 'vn') {
+    return [
+      { id: 'about_1', category: categories.about, question: 'Hệ thống quản lý tiệm bánh là gì?', answer: 'Là nền tảng tất cả trong một giúp tiệm bánh quản lý sản phẩm, đơn hàng, khách hàng và nhân viên hiệu quả.' },
+      { id: 'about_2', category: categories.about, question: 'Các tính năng chính là gì?', answer: 'Bao gồm theo dõi đơn hàng thời gian thực, quản lý kho, báo cáo bán hàng và thanh toán nhanh chóng.' },
+      { id: 'about_3', category: categories.about, question: 'Ai có thể sử dụng hệ thống này?', answer: 'Cả khách hàng (để đặt hàng) và nhân viên hoặc quản lý (để quản lý hoạt động).' },
+      { id: 'howto_1', category: categories.howto, question: 'Làm thế nào để đặt hàng?', answer: 'Xem thực đơn, thêm món vào giỏ hàng và thanh toán. Chọn "Đặt tại quầy" hoặc giao hàng.' },
+      { id: 'howto_2', category: categories.howto, question: 'Xem menu sản phẩm ở đâu?', answer: 'Cuộn xuống phần "Thực đơn" trên trang chủ hoặc nhấn nút "Mua ngay".' },
+      { id: 'howto_3', category: categories.howto, question: 'Làm sao để theo dõi đơn hàng?', answer: 'Vào phần "Đơn hàng của tôi" trong tài khoản để xem trạng thái cập nhật thời gian thực.' },
+      { id: 'howto_4', category: categories.howto, question: 'Thanh toán đơn hàng như thế nào?', answer: 'Sau khi đặt hàng, vào "Đơn hàng của tôi", mở đơn chưa thanh toán và nhấn "Thanh toán ngay" qua mã QR.' },
+      { id: 'coupon_1', category: categories.coupons, question: 'Tìm mã giảm giá ở đâu?', answer: 'Vào Cài đặt tài khoản và mở tab "Ưu đãi của tôi" để xem các mã giảm giá hiện có.' },
+      { id: 'coupon_2', category: categories.coupons, question: 'Cách sử dụng mã giảm giá?', answer: 'Khi thanh toán, nhập mã vào ô giảm giá và nhấn "Áp dụng" để thấy số tiền được giảm.' },
+      { id: 'employee_1', category: categories.employee, question: 'Làm thế nào để thêm sản phẩm mới?', answer: 'Vào "Quản lý sản phẩm", nhấn "Thêm sản phẩm", điền thông tin và tải ảnh lên.' },
+      { id: 'employee_2', category: categories.employee, question: 'Xem doanh thu hôm nay ở đâu?', answer: 'Truy cập phần "Báo cáo" để xem tóm tắt doanh thu và doanh số bán hàng.' }
+    ];
+  }
 
-  // Coupons
-  {
-    category: 'Coupons',
-    question: 'How do I find available coupons?',
-    answer: 'Go to Account Settings and open the "Coupon" tab to view all available discount codes.'
-  },
-  {
-    category: 'Coupons',
-    question: 'How do I use a coupon?',
-    answer: 'During checkout, enter your coupon code in the discount field and click "Apply" to see the discount reflected.'
-  },
-  {
-    category: 'Coupons',
-    question: 'Why is my coupon not working?',
-    answer: 'Check that the coupon code is correct, not expired, and meets any minimum order requirements.'
-  },
-  {
-    category: 'Coupons',
-    question: 'Can I use multiple coupons at once?',
-    answer: 'Only one coupon can be applied per order at this time.'
-  },
-
-  // Employee Guide
-  {
-    category: 'Employee Guide',
-    question: 'How do I add a new product?',
-    answer: 'Go to "Products Manager" in the dashboard, click "Add Product", fill in the details, and upload an image.'
-  },
-  {
-    category: 'Employee Guide',
-    question: 'How can I see today\'s revenue?',
-    answer: 'Visit the "Reports" section in the dashboard for a real-time summary of sales and revenue.'
-  },
-  {
-    category: 'Employee Guide',
-    question: 'How to manage order status?',
-    answer: 'In the "Orders" dashboard view, update each order from "Pending" → "Baking" → "Completed".'
-  },
-  {
-    category: 'Employee Guide',
-    question: 'How do I manage inventory?',
-    answer: 'Use the "Inventory" section to view stock levels and adjust quantities using the inline slider or edit modal.'
-  },
-];
+  // Default English
+  return [
+    { id: 'about_1', category: categories.about, question: 'What is the Bakery Management System?', answer: 'An all-in-one platform for bakeries to manage products, orders, customers, and staff efficiently.' },
+    { id: 'about_2', category: categories.about, question: 'What are the main features?', answer: 'Key features include real-time order tracking, inventory management, sales reports, and seamless customer checkout.' },
+    { id: 'about_3', category: categories.about, question: 'Who can use this system?', answer: 'Both customers (to order online) and staff or managers (to manage products, orders, and reports).' },
+    { id: 'howto_1', category: categories.howto, question: 'How do I place an order?', answer: 'Browse the menu, add items to your cart, and proceed to checkout. Choose "Order at Shop" or delivery.' },
+    { id: 'howto_2', category: categories.howto, question: 'How do I see the product menu?', answer: 'Scroll to the "Our Menu" section on the landing page or click the "Shop Now" button.' },
+    { id: 'howto_3', category: categories.howto, question: 'How do I track my order?', answer: 'Go to "My Orders" in your account to see real-time status updates for all your orders.' },
+    { id: 'howto_4', category: categories.howto, question: 'How do I pay for my order?', answer: 'After placing an order, go to "My Orders", open the unpaid order, and click "Pay Now" to complete payment via QR code.' },
+    { id: 'coupon_1', category: categories.coupons, question: 'How do I find available coupons?', answer: 'Go to Account Settings and open the "Coupon" tab to view all available discount codes.' },
+    { id: 'coupon_2', category: categories.coupons, question: 'How do I use a coupon?', answer: 'During checkout, enter your coupon code in the discount field and click "Apply" to see the discount reflected.' },
+    { id: 'employee_1', category: categories.employee, question: 'How do I add a new product?', answer: 'Go to "Products Manager" in the dashboard, click "Add Product", fill in the details, and upload an image.' },
+    { id: 'employee_2', category: categories.employee, question: 'How can I see today\'s revenue?', answer: 'Visit the "Reports" section in the dashboard for a real-time summary of sales and revenue.' }
+  ];
+});
 
 const isOpen = ref(false);
 const userInput = ref('');
@@ -105,17 +79,22 @@ const isBaking = ref(false);
 const questionAsked = ref(false);
 const showQnA = ref(true);
 
-const messages = ref<Message[]>([
-  { id: 1, type: 'bot', text: 'Hello! I\'m your Bakery AI Assistant 🥐 Choose a topic or ask me anything!' }
-]);
+const messages = ref<Message[]>([]);
+
+// Initialize messages on mount
+onMounted(() => {
+  messages.value = [
+    { id: 1, type: 'bot', text: t('chatbot.welcome') }
+  ];
+});
 const messageContainer = ref<HTMLElement | null>(null);
 
-const categories = computed(() => [...new Set(qnaData.map(item => item.category))]);
+const categories = computed(() => [...new Set(qnaData.value.map(item => item.category))]);
 const currentCategory = ref<string | null>(null);
 
 const filteredQuestions = computed(() => {
   if (!currentCategory.value) return [];
-  return qnaData.filter(item => item.category === currentCategory.value);
+  return qnaData.value.filter(item => item.category === currentCategory.value);
 });
 
 const toggleQnA = () => {
@@ -131,14 +110,14 @@ const selectCategory = (category: string) => {
   messages.value.push({
     id: Date.now(),
     type: 'user',
-    text: `Tell me about ${category}`
+    text: t('chatbot.tellMeAbout').replace('{category}', category)
   });
 
   setTimeout(() => {
     messages.value.push({
       id: Date.now() + 1,
       type: 'bot',
-      text: `Here are common questions about ${category}:`
+      text: t('chatbot.commonQuestions').replace('{category}', category)
     });
   }, 400);
 };
@@ -169,6 +148,7 @@ const sendToAI = async (text: string) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prompt: text,
+        language: currentLocale.value,
         history: (() => {
           let h = messages.value.slice(-6).map(m => ({
             role: m.type === 'user' ? 'user' : 'model',
@@ -185,7 +165,7 @@ const sendToAI = async (text: string) => {
     messages.value.push({
       id: Date.now() + 1,
       type: 'bot',
-      text: data.text || "Sorry, I'm having trouble right now. 🥖"
+      text: data.text || t('chatbot.errorAI')
     });
 
   } catch (error) {
@@ -193,7 +173,7 @@ const sendToAI = async (text: string) => {
     messages.value.push({
       id: Date.now() + 1,
       type: 'bot',
-      text: "Oops! Please try again later. 🥯"
+      text: t('chatbot.errorGeneric')
     });
   } finally {
     isBaking.value = false;
@@ -209,7 +189,7 @@ const resetChat = () => {
   questionAsked.value = false;
   showQnA.value = true;
   messages.value = [
-    { id: Date.now(), type: 'bot', text: 'How else can I help you? Choose a topic below:' }
+    { id: Date.now(), type: 'bot', text: t('chatbot.howElse') }
   ];
 };
 
@@ -226,6 +206,7 @@ const scrollToBottom = async () => {
 watch(messages, () => { scrollToBottom(); }, { deep: true });
 watch(currentCategory, () => { scrollToBottom(); });
 watch(isOpen, (newVal) => { if (newVal) scrollToBottom(); });
+watch(currentLocale, () => { resetChat(); });
 </script>
 
 <template>
@@ -263,13 +244,13 @@ watch(isOpen, (newVal) => { if (newVal) scrollToBottom(); });
             🥐
           </div>
           <div>
-            <h3 class="font-black text-sm uppercase tracking-widest">Bakery Assistant</h3>
+            <h3 class="font-black text-sm uppercase tracking-widest">{{ t('chatbot.title') }}</h3>
             <div class="flex items-center gap-2">
               <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              <span class="text-[10px] font-bold opacity-70">Always Baking Answers</span>
+              <span class="text-[10px] font-bold opacity-70">{{ t('chatbot.status') }}</span>
             </div>
           </div>
-          <button @click="resetChat" class="ml-auto p-2 hover:bg-white/10 rounded-xl transition-colors" title="Reset Chat">
+          <button @click="resetChat" class="ml-auto p-2 hover:bg-white/10 rounded-xl transition-colors" :title="t('chatbot.resetTitle')">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
           </button>
         </div>
@@ -296,7 +277,7 @@ watch(isOpen, (newVal) => { if (newVal) scrollToBottom(); });
           <!-- Baking Loader -->
           <div v-if="isBaking" class="flex justify-start">
             <div class="bg-white text-bakery-400 p-4 rounded-3xl rounded-tl-none shadow-sm border border-bakery-100 flex items-center gap-2">
-              <span class="text-xs font-medium italic">Baking response...</span>
+              <span class="text-xs font-medium italic">{{ t('chatbot.baking') }}</span>
               <div class="flex gap-1">
                 <span class="w-1.5 h-1.5 bg-bakery-300 rounded-full animate-bounce"></span>
                 <span class="w-1.5 h-1.5 bg-bakery-300 rounded-full animate-bounce [animation-delay:0.2s]"></span>
@@ -318,7 +299,7 @@ watch(isOpen, (newVal) => { if (newVal) scrollToBottom(); });
           <div v-if="showQnA" class="p-6 pt-0 bg-white/50 space-y-3">
             <!-- Category Selection -->
             <div v-if="!currentCategory" class="flex flex-col gap-2">
-              <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400 px-2 mb-1">Choose a topic</p>
+              <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400 px-2 mb-1">{{ t('chatbot.chooseTopic') }}</p>
               <button
                 v-for="cat in categories"
                 :key="cat"
@@ -326,9 +307,9 @@ watch(isOpen, (newVal) => { if (newVal) scrollToBottom(); });
                 class="w-full text-left p-4 rounded-2xl bg-white border border-bakery-100 hover:border-bakery-600 hover:bg-bakery-50 transition-all text-xs font-bold text-bakery-700 flex items-center justify-between group"
               >
                 <span class="flex items-center gap-2">
-                  <span v-if="cat === 'Coupons'">🏷️</span>
-                  <span v-else-if="cat === 'How-to'">📖</span>
-                  <span v-else-if="cat === 'About Us'">🏪</span>
+                  <span v-if="cat === t('chatbot.categories.coupons')">🏷️</span>
+                  <span v-else-if="cat === t('chatbot.categories.howto')">📖</span>
+                  <span v-else-if="cat === t('chatbot.categories.aboutUs')">🏪</span>
                   <span v-else>👷</span>
                   {{ cat }}
                 </span>
@@ -352,7 +333,7 @@ watch(isOpen, (newVal) => { if (newVal) scrollToBottom(); });
                   @click="currentCategory = null"
                   class="w-full text-center p-3 text-[10px] font-black uppercase tracking-widest text-bakery-400 hover:text-bakery-600"
                 >
-                  ← Back to Topics
+                  ← {{ t('chatbot.backToTopics') }}
                 </button>
               </div>
             </div>
@@ -367,7 +348,7 @@ watch(isOpen, (newVal) => { if (newVal) scrollToBottom(); });
               v-if="questionAsked"
               type="button"
               @click="toggleQnA"
-              :title="showQnA ? 'Hide topics' : 'Show topics'"
+              :title="showQnA ? t('chatbot.hideTopics') : t('chatbot.showTopics')"
               class="shrink-0 p-2.5 rounded-2xl border transition-all text-xs font-bold"
               :class="showQnA
                 ? 'bg-bakery-600 text-white border-bakery-600'
@@ -378,7 +359,7 @@ watch(isOpen, (newVal) => { if (newVal) scrollToBottom(); });
             <input
               v-model="userInput"
               type="text"
-              placeholder="Ask anything about our bakery..."
+              :placeholder="t('chatbot.placeholder')"
               class="w-full bg-bakery-50/50 border border-bakery-100 rounded-2xl py-3 px-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-bakery-600/20 focus:border-bakery-600 transition-all"
               :disabled="isBaking"
             />
@@ -394,7 +375,7 @@ watch(isOpen, (newVal) => { if (newVal) scrollToBottom(); });
 
         <!-- Footer -->
         <div class="px-6 py-3 bg-bakery-50/50 border-t border-bakery-100 flex items-center justify-between">
-          <p class="text-[9px] font-black uppercase tracking-[0.2em] text-bakery-300">Powered by Gemini AI • v2.0</p>
+          <p class="text-[9px] font-black uppercase tracking-[0.2em] text-bakery-300">{{ t('chatbot.poweredBy') }}</p>
         </div>
       </div>
     </Transition>
