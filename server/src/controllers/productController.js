@@ -68,7 +68,7 @@ const createProduct = async (req, res) => {
     console.log('Create Product Request Body:', req.body);
     console.log('Create Product Request File:', req.file);
     const { name, category, price, description, stock_quantity, min_stock_level, unit, ingredients, allergens } = req.body;
-    let image_url = req.body.image_url; // Default if provided as string
+    let image_url = req.body.image_url || req.body.image; // Default if provided as string
 
     // Parse ingredients and allergens if they are strings (from FormData)
     const parsedIngredients = typeof ingredients === 'string' ? JSON.parse(ingredients || '[]') : (ingredients || []);
@@ -97,7 +97,7 @@ const updateProduct = async (req, res) => {
     console.log('Update Product Request File:', req.file);
     const { id } = req.params;
     const { name, category, price, description, stock_quantity, min_stock_level, unit, ingredients, allergens } = req.body;
-    let image_url = req.body.image_url;
+    let image_url = req.body.image_url || req.body.image;
 
     // Parse ingredients and allergens if they are strings (from FormData)
     const parsedIngredients = typeof ingredients === 'string' ? JSON.parse(ingredients || '[]') : (ingredients || []);
@@ -111,7 +111,7 @@ const updateProduct = async (req, res) => {
         let updateQuery = 'UPDATE products SET name = $1, category = $2, price = $3, description = $4, stock_quantity = $5, min_stock_level = $6, unit = $7, ingredients = $8, allergens = $9';
         let params = [name, category, price, description, stock_quantity, min_stock_level, unit, JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens), id];
 
-        if (image_url) {
+        if (image_url !== undefined) {
             updateQuery += ', image_url = $10 WHERE id = $11';
             params = [name, category, price, description, stock_quantity, min_stock_level, unit, JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens), image_url, id];
         } else {
