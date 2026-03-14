@@ -3,7 +3,10 @@ const router = express.Router();
 const paymentController = require('../controllers/paymentController');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
-// All payment routes require authentication
+// Public routes (e.g. for fetching currency rates)
+router.get('/settings', paymentController.getPaymentSettings);
+
+// All other payment routes require authentication
 router.use(authenticateToken);
 
 // Initiate a payment session
@@ -15,8 +18,7 @@ router.get('/verify/:orderId', paymentController.verifyPayment);
 // Callback simulation
 router.post('/simulate-callback', paymentController.simulateCallback);
 
-// Payment Settings
-router.get('/settings', paymentController.getPaymentSettings);
+// Update Payment Settings (Admin/Manager only)
 router.post('/settings', authorizeRoles('Admin', 'Manager'), paymentController.updatePaymentSettings);
 
 module.exports = router;

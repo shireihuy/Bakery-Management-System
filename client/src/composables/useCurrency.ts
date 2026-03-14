@@ -1,4 +1,4 @@
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 
 export type Currency = 'USD' | 'VND' | 'JPY';
 
@@ -18,8 +18,13 @@ const currencies = ref<Record<Currency, CurrencyConfig>>({
 const currentCurrency = ref<Currency>((localStorage.getItem('bakery-currency') as Currency) || 'USD');
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+let isFetching = false;
+let hasFetched = false;
+
 export function useCurrency() {
     const fetchRates = async () => {
+        if (hasFetched || isFetching) return;
+        isFetching = true;
         try {
             // First try to get current rates from our API
             const response = await fetch(`${API_URL}/payment/settings`);
@@ -31,9 +36,12 @@ export function useCurrency() {
                 if (data.jpyRate) {
                     currencies.value.JPY.rate = data.jpyRate;
                 }
+                hasFetched = true;
             }
         } catch (err) {
             console.error('Error fetching exchange rates:', err);
+        } finally {
+            isFetching = false;
         }
     };
 
@@ -64,9 +72,8 @@ export function useCurrency() {
         return amountInUSD * config.rate;
     };
 
-    onMounted(() => {
-        fetchRates();
-    });
+    // Initialize if needed
+    fetchRates();
 
     return {
         currencies,
