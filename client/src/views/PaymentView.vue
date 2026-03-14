@@ -15,7 +15,8 @@ import {
     Cookie,
     Cake,
     Coffee,
-    Lock
+    Lock,
+    ExternalLink
 } from 'lucide-vue-next';
 import { useOrders, type Order } from '../composables/useOrders';
 import { useI18n } from '../composables/useI18n';
@@ -41,6 +42,14 @@ const paymentConfig = ref({
     accountName: '',
     messageTemplate: 'Bakery Payment for #{orderId}'
 });
+const payosUrl = ref('');
+const payosData = ref<{
+    amount?: number,
+    accountNumber?: string,
+    bin?: string,
+    description?: string,
+    accountName?: string
+} | null>(null);
 const timeLeft = ref(900); // 15 minutes in seconds
 let timerInterval: any = null;
 let pollingInterval: any = null;
@@ -102,17 +111,20 @@ watch([showQR, showCounterWaiting], ([newQR, newCounter]) => {
 });
 
 const qrUrl = computed(() => {
-    if (!order.value || !paymentConfig.value.accountNumber) return '';
+    if (!order.value) return '';
+    
+    // If we have real PayOS data back from the server, use it EXCLUSIVELY
+    if (payosData.value && payosData.value.accountNumber) {
+        return `https://img.vietqr.io/image/${payosData.value.bin}-${payosData.value.accountNumber}-compact2.png?amount=${payosData.value.amount}&addInfo=${encodeURIComponent(payosData.value.description || '')}&accountName=${encodeURIComponent(payosData.value.accountName || '')}`;
+    }
+
+    // Fallback for Cash or if PayOS is not yet initiated (should not happen in QR view)
+    if (!paymentConfig.value.accountNumber) return '';
     
     const amountUSD = Math.max(0, (order.value.items?.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0) || 0) - (!isNaN(Number(order.value.discountAmount)) ? Number(order.value.discountAmount) : 0));
-    
-    // For VietQR, we MUST use VND. Even if the store display is JPY or USD.
     const amountVND = convertFromUSD(amountUSD, 'VND');
-    
-    // Replace {orderId} in template
     let description = paymentConfig.value.messageTemplate.replace('{orderId}', order.value.id.toString());
     
-    // VietQR Format: https://img.vietqr.io/image/<BANK_ID>-<ACCOUNT_NO>-<TEMPLATE>.png?amount=<AMOUNT>&addInfo=<DESCRIPTION>&accountName=<NAME>
     return `https://img.vietqr.io/image/${paymentConfig.value.bankId}-${paymentConfig.value.accountNumber}-compact2.png?amount=${Math.round(amountVND)}&addInfo=${encodeURIComponent(description)}&accountName=${encodeURIComponent(paymentConfig.value.accountName)}`;
 });
 
@@ -164,7 +176,19 @@ const handlePayment = async () => {
     
     try {
         // Initiate in backend
-        await initiatePayment(order.value.id, selectedMethod.value);
+        const res = await initiatePayment(order.value.id, selectedMethod.value);
+        
+        if (selectedMethod.value === 'qr') {
+            if (res.paymentUrl) payosUrl.value = res.paymentUrl;
+            // Store all payos details to sync the displayed QR perfectly
+            payosData.value = {
+                amount: res.amount,
+                accountNumber: res.accountNumber,
+                bin: res.bin,
+                description: res.description,
+                accountName: res.accountName
+            };
+        }
         
         if (selectedMethod.value === 'cash') {
             showCounterWaiting.value = true;
@@ -426,6 +450,16 @@ const completePayment = async () => {
                                     <Clock class="w-4 h-4 animate-pulse" />
                                     <span>Transaction expires in {{ formattedTime }}</span>
                                 </div>
+
+                                <a 
+                                    v-if="payosUrl"
+                                    :href="payosUrl" 
+                                    target="_blank"
+                                    class="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-blue-50 text-blue-600 font-black text-sm uppercase tracking-widest border border-blue-100 hover:bg-blue-100 transition-all mb-4"
+                                >
+                                    <ExternalLink class="w-4 h-4" />
+                                    Open Payment Page
+                                </a>
                                 
                                 <div class="flex gap-4">
                                     <button 

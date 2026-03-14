@@ -6,6 +6,9 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 // Public routes (e.g. for fetching currency rates)
 router.get('/settings', paymentController.getPaymentSettings);
 
+// Webhook for PayOS (Note: No authentication because PayOS verifies signatures)
+router.post('/payos-webhook', paymentController.handlePayOSWebhook);
+
 // All other payment routes require authentication
 router.use(authenticateToken);
 

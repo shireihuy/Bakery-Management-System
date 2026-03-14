@@ -1,5 +1,12 @@
 const { query } = require('../config/db');
 const NotificationController = require('./notificationController');
+const { PayOS } = require('@payos/node');
+
+const payos = new PayOS(
+    process.env.PAYOS_CLIENT_ID || '',
+    process.env.PAYOS_API_KEY || '',
+    process.env.PAYOS_CHECKSUM_KEY || ''
+);
 
 /**
  * Fetch and cache exchange rate from USD to VND
@@ -57,10 +64,49 @@ const initiatePayment = async (req, res) => {
             [method, 'Pending', orderId]
         );
 
-        // 3. Return mock payment data
-        // In a real app, this would return a URL to redirect the user to MoMo/ZaloPay
+        // 3. Create PayOS Payment Link if method is QR
+        if (method === 'qr' && process.env.PAYOS_CLIENT_ID !== 'your_client_id_here') {
+            try {
+                // Fetch payment config for manual rates and account info
+                const configRes = await query('SELECT value FROM system_settings WHERE key = $1', ['payment_qr_config']);
+                const paymentConfig = configRes.rows.length > 0 ? configRes.rows[0].value : {};
+
+                // Use manual rate if set, otherwise fetch live rate
+                let vndRate = paymentConfig.vndRate;
+                if (!vndRate) {
+                    vndRate = await queryExchangeRate('VND');
+                }
+
+                const amountVND = Math.round(order.total_price * vndRate);
+
+                const paymentData = {
+                    orderCode: Number(orderId),
+                    amount: amountVND,
+                    description: `Bakery Payment #${orderId}`,
+                    cancelUrl: `http://localhost:8080/payment/${orderId}?status=cancelled`,
+                    returnUrl: `http://localhost:8080/payment/${orderId}?status=success`,
+                };
+
+                const paymentLink = await payos.paymentRequests.create(paymentData);
+                return res.status(200).json({
+                    message: 'PayOS link created',
+                    paymentUrl: paymentLink.checkoutUrl,
+                    qrCode: paymentLink.qrCode,
+                    bin: paymentLink.bin,
+                    accountNumber: paymentLink.accountNumber,
+                    amount: paymentLink.amount,
+                    description: paymentLink.description,
+                    accountName: paymentConfig.accountName || paymentLink.accountName
+                });
+            } catch (payosErr) {
+                console.error('PayOS integration error:', payosErr);
+                // Fallback to mock if PayOS fails (for dev convenience)
+            }
+        }
+
+        // 4. Return mock payment data (Fallback if PayOS not configured or errors out)
         res.status(200).json({
-            message: 'Payment initiated',
+            message: 'Payment initiated (Mock)',
             paymentUrl: `http://localhost:8080/mock-payment-gateway?orderId=${orderId}&method=${method}`,
             app_trans_id: `MOCK_${Date.now()}_${orderId}`
         });
@@ -79,7 +125,7 @@ const verifyPayment = async (req, res) => {
 
     try {
         const result = await query(
-            'SELECT id, status, payment_status, payment_method, total_price FROM orders WHERE id = $1',
+            'SELECT id, status, payment_status, payment_method, total_price, customer_id FROM orders WHERE id = $1',
             [orderId]
         );
 
@@ -87,7 +133,58 @@ const verifyPayment = async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
-        res.status(200).json(result.rows[0]);
+        let order = result.rows[0];
+
+        // 🚀 FAIL-SAFE POLLING: If local DB says 'Pending' but method is 'qr'
+        // we check PayOS directly in case the webhook was blocked (e.g. localhost)
+        if (order.payment_status === 'Pending' && (order.payment_method === 'qr' || order.payment_method === 'QR (PayOS)')) {
+            try {
+                const payosInfo = await payos.paymentRequests.get(orderId);
+                
+                if (payosInfo && payosInfo.status === 'PAID') {
+                    console.log(`Fail-safe: PayOS confirmed order #${orderId} is PAID. Updating DB...`);
+                    
+                    // Update DB exactly like the webhook does
+                    const updateQuery = `
+                        UPDATE orders 
+                        SET payment_status = $1, 
+                            status = $2::varchar, 
+                            transaction_id = $3,
+                            start_time = CURRENT_TIMESTAMP
+                        WHERE id = $4
+                        RETURNING *
+                    `;
+                    const updatedResult = await query(updateQuery, ['Paid', 'Baking', payosInfo.id, orderId]);
+                    order = updatedResult.rows[0];
+
+                    // Record payment
+                    await query(
+                        'INSERT INTO payments (order_id, method, amount, status, transaction_id) VALUES ($1, $2, $3, $4, $5)',
+                        [orderId, 'QR (PayOS)', order.total_price, 'Paid', payosInfo.id]
+                    );
+
+                    // Notify via socket
+                    if (global.io) {
+                        global.io.emit('order_paid', { orderId });
+                    }
+                    
+                    // Create notification
+                    if (order.customer_id && order.customer_id !== 'GUEST') {
+                        await NotificationController.createNotification(
+                            order.customer_id,
+                            'Payment Successful',
+                            `Payment for order #${orderId} was successful via auto-verify.`,
+                            'success'
+                        );
+                    }
+                }
+            } catch (err) {
+                // Ignore PayOS check errors (might be because link was never created or has expired)
+                // console.log('PayOS status check skipped:', err.message);
+            }
+        }
+
+        res.status(200).json(order);
     } catch (err) {
         console.error('Error verifying payment:', err);
         res.status(500).json({ message: 'Server error verifying payment' });
@@ -152,6 +249,50 @@ const simulateCallback = async (req, res) => {
         console.error('Error processing mock callback:', err);
         res.status(500).json({ message: 'Server error processing callback' });
     }
+};
+
+/**
+ * Handle Real PayOS Webhook
+ * POST /api/payment/payos-webhook
+ */
+const handlePayOSWebhook = async (req, res) => {
+    const webhookData = payos.webhooks.verify(req.body);
+    
+    if (webhookData.desc === 'success' || webhookData.code === '00') {
+        const orderId = webhookData.orderCode;
+        
+        try {
+            // Update order status exactly like simulateCallback
+            const updateQuery = `
+                UPDATE orders 
+                SET payment_status = $1, 
+                    status = $2::varchar, 
+                    transaction_id = $3,
+                    start_time = CURRENT_TIMESTAMP
+                WHERE id = $4 AND payment_status != 'Paid'
+                RETURNING *
+            `;
+            const result = await query(updateQuery, ['Paid', 'Baking', webhookData.paymentLinkId, orderId]);
+            
+            if (result.rows.length > 0) {
+                const order = result.rows[0];
+                // Record payment
+                await query(
+                    'INSERT INTO payments (order_id, method, amount, status, transaction_id) VALUES ($1, $2, $3, $4, $5)',
+                    [orderId, 'QR (PayOS)', order.total_price, 'Paid', webhookData.paymentLinkId]
+                );
+
+                // Notify UI via socket if global.io exists
+                if (global.io) {
+                    global.io.emit('order_paid', { orderId });
+                }
+            }
+        } catch (err) {
+            console.error('Webhook processing error:', err);
+        }
+    }
+
+    return res.json({ success: true });
 };
 
 /**
@@ -230,6 +371,7 @@ module.exports = {
     initiatePayment,
     verifyPayment,
     simulateCallback,
+    handlePayOSWebhook,
     getPaymentSettings,
     updatePaymentSettings
 };
