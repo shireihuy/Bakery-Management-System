@@ -14,6 +14,7 @@ const model = genAI.getGenerativeModel({
 
 exports.chat = async (req, res) => {
     const { prompt, history, language } = req.body;
+    console.log(`Chat request received: prompt="${prompt}", language="${language}"`);
 
     if (!prompt) {
         return res.status(400).json({ error: "Prompt is required" });
