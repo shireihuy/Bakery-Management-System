@@ -122,11 +122,29 @@ class DeliveryService {
         if (result.rows.length === 0) return null;
         const delivery = result.rows[0];
 
+        // Fetch user_id for notification
+        const orderResult = await query(
+            'SELECT user_id FROM orders WHERE id = $1',
+            [delivery.order_id]
+        );
+        const userId = orderResult.rows[0]?.user_id;
+
         if (status === 'Delivered') {
             await query(
                 'UPDATE orders SET status = $1, completed_time = CURRENT_TIMESTAMP WHERE id = $2',
                 ['Completed', delivery.order_id]
             );
+        }
+
+        // Create persistent notification
+        if (userId) {
+            try {
+                const title = `Delivery Update: #${delivery.order_id}`;
+                const message = `Your order status has been updated to: ${status}`;
+                await NotificationController.createNotification(userId, title, message, 'delivery');
+            } catch (notifyError) {
+                console.error('[MockDelivery] Failed to create notification:', notifyError);
+            }
         }
 
         if (global.io) {

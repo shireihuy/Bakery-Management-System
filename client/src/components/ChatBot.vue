@@ -38,7 +38,10 @@ const qnaData = computed<QnA[]>(() => {
       { id: 'coupon_2', category: categories.coupons, question: 'クーポンの使い方は？', answer: 'チェックアウト時に割引フィールドにクーポンコードを入力し、「適用」をクリックすると割引が反映されます。' },
       { id: 'coupon_3', category: categories.coupons, question: 'クーポンが使えません。', answer: 'コードが正しいか、有効期限が切れていないか、最低注文金額などの条件を満たしているか確認してください。' },
       { id: 'employee_1', category: categories.employee, question: '新商品の追加方法は？', answer: 'ダッシュボードの「商品管理」から「商品を追加」をクリックし、詳細を入力して画像をアップロードしてください。' },
-      { id: 'employee_2', category: categories.employee, question: '今日の売上を確認したいです。', answer: 'ダッシュボードの「レポート」セクションで、売上と収益のリアルタイムな概要を確認できます。' }
+      { id: 'employee_2', category: categories.employee, question: '今日の売上を確認したいです。', answer: 'ダッシュボードの「レポート」セクションで、売上と収益のリアルタイムな概要を確認できます。' },
+      { id: 'howto_5', category: categories.howto, question: '配送状況はどうやって確認しますか？', answer: '「注文履歴」から該当する注文を選択すると、リアルタイムの配送ステータスと追跡番号を確認できます。' },
+      { id: 'howto_6', category: categories.howto, question: 'プロフィールにはどうやってアクセスしますか？', answer: 'ナビゲーションメニューの「アカウント」または「プロフィール」をクリックして、設定を管理できます。' },
+      { id: 'about_4', category: categories.about, question: 'マネージャーに連絡するにはどうすればいいですか？', answer: 'manager@theartisanbakery.com までメールをお送りいただくか、「ストーリー」ページの問い合わせフォームをご利用ください。' }
     ];
   } else if (currentLocale.value === 'vn') {
     return [
@@ -52,7 +55,10 @@ const qnaData = computed<QnA[]>(() => {
       { id: 'coupon_1', category: categories.coupons, question: 'Tìm mã giảm giá ở đâu?', answer: 'Vào Cài đặt tài khoản và mở tab "Ưu đãi của tôi" để xem các mã giảm giá hiện có.' },
       { id: 'coupon_2', category: categories.coupons, question: 'Cách sử dụng mã giảm giá?', answer: 'Khi thanh toán, nhập mã vào ô giảm giá và nhấn "Áp dụng" để thấy số tiền được giảm.' },
       { id: 'employee_1', category: categories.employee, question: 'Làm thế nào để thêm sản phẩm mới?', answer: 'Vào "Quản lý sản phẩm", nhấn "Thêm sản phẩm", điền thông tin và tải ảnh lên.' },
-      { id: 'employee_2', category: categories.employee, question: 'Xem doanh thu hôm nay ở đâu?', answer: 'Truy cập phần "Báo cáo" để xem tóm tắt doanh thu và doanh số bán hàng.' }
+      { id: 'employee_2', category: categories.employee, question: 'Xem doanh thu hôm nay ở đâu?', answer: 'Truy cập phần "Báo cáo" để xem tóm tắt doanh thu và doanh số bán hàng.' },
+      { id: 'howto_5', category: categories.howto, question: 'Làm thế nào để kiểm tra quá trình giao hàng?', answer: 'Vào "Đơn hàng của tôi", chọn đơn hàng của bạn để xem trạng thái giao hàng và mã vận đơn thời gian thực.' },
+      { id: 'howto_6', category: categories.howto, question: 'Làm thế nào để truy cập hồ sơ của tôi?', answer: 'Nhấn vào "Tài khoản" hoặc "Hồ sơ" trên thanh điều hướng để quản lý thông tin cá nhân.' },
+      { id: 'about_4', category: categories.about, question: 'Làm sao để liên hệ với quản lý tiệm bánh?', answer: 'Bạn có thể gửi email đến manager@theartisanbakery.com hoặc sử dụng biểu mẫu liên hệ trong trang "Câu chuyện".' }
     ];
   }
 
@@ -68,7 +74,10 @@ const qnaData = computed<QnA[]>(() => {
     { id: 'coupon_1', category: categories.coupons, question: 'How do I find available coupons?', answer: 'Go to Account Settings and open the "Coupon" tab to view all available discount codes.' },
     { id: 'coupon_2', category: categories.coupons, question: 'How do I use a coupon?', answer: 'During checkout, enter your coupon code in the discount field and click "Apply" to see the discount reflected.' },
     { id: 'employee_1', category: categories.employee, question: 'How do I add a new product?', answer: 'Go to "Products Manager" in the dashboard, click "Add Product", fill in the details, and upload an image.' },
-    { id: 'employee_2', category: categories.employee, question: 'How can I see today\'s revenue?', answer: 'Visit the "Reports" section in the dashboard for a real-time summary of sales and revenue.' }
+    { id: 'employee_2', category: categories.employee, question: 'How can I see today\'s revenue?', answer: 'Visit the "Reports" section in the dashboard for a real-time summary of sales and revenue.' },
+    { id: 'howto_5', category: categories.howto, question: 'How do I check my delivery status?', answer: 'Go to "My Orders", select your order, and you will see the real-time delivery status and tracking number.' },
+    { id: 'howto_6', category: categories.howto, question: 'How do I access my profile?', answer: 'Click on the "Account" or "Profile" link in the top navigation menu to manage your settings.' },
+    { id: 'about_4', category: categories.about, question: 'How do I contact the bakery manager?', answer: 'You can contact the manager by emailing manager@theartisanbakery.com or using the contact form in our "Our Story" page.' }
   ];
 });
 
