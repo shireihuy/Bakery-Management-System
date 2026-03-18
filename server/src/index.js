@@ -62,6 +62,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const couponRoutes = require('./routes/couponRoutes');
 const systemRoutes = require('./routes/systemRoutes');
 const cartRoutes = require('./routes/cartRoutes');
+const deliveryRoutes = require('./routes/deliveryRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -74,6 +75,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/deliveries', deliveryRoutes);
 
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

@@ -205,3 +205,19 @@ CREATE TABLE IF NOT EXISTS cart_items (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, product_id)
 );
+
+-- Deliveries Table
+CREATE TABLE IF NOT EXISTS deliveries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE UNIQUE,
+    status VARCHAR(50) DEFAULT 'Pending', -- Pending, Assigned, Dispatched, In Transit, Delivered, Failed
+    tracking_number VARCHAR(100),
+    driver_name VARCHAR(255),
+    driver_phone VARCHAR(20),
+    delivery_fee DECIMAL(10, 2) DEFAULT 0.00,
+    estimated_time TIMESTAMP WITH TIME ZONE,
+    actual_time TIMESTAMP WITH TIME ZONE,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

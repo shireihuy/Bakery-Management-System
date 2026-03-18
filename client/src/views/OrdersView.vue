@@ -12,6 +12,7 @@ import {
     Utensils
 } from 'lucide-vue-next';
 import { useOrders, type Order } from '../composables/useOrders';
+import DeliveryTracker from '../components/DeliveryTracker.vue';
 import { useI18n } from '../composables/useI18n';
 import { useCurrency } from '../composables/useCurrency';
 
@@ -158,6 +159,7 @@ const changeStatus = async (order: Order, status: string) => {
                             <th class="px-6 py-3">{{ t('orders.date') }}</th>
                             <th class="px-6 py-3">{{ t('orders.items') }}</th>
                             <th class="px-6 py-3">{{ t('orders.total') }}</th>
+                            <th class="px-6 py-3">Type</th>
                             <th class="px-6 py-3">{{ t('orders.status') }}</th>
                             <th class="px-6 py-3 text-right">{{ t('orders.actions') }}</th>
                         </tr>
@@ -177,6 +179,11 @@ const changeStatus = async (order: Order, status: string) => {
                             <td class="px-6 py-4 text-gray-600">{{ order.date }}</td>
                             <td class="px-6 py-4 text-gray-600">{{ order.items.length }} {{ t('orders.items').toLowerCase() }}</td>
                             <td class="px-6 py-4 font-medium text-gray-900">{{ formatPrice(order.total) }}</td>
+                            <td class="px-6 py-4">
+                                <span :class="`px-2 py-1 rounded-md text-[10px] font-black uppercase border transition-all ${order.deliveryType === 'Delivery' ? 'bg-bakery-900 text-white border-bakery-900 shadow-sm' : 'bg-bakery-100 text-bakery-950 border-bakery-200'}`">
+                                    {{ order.deliveryType || 'Pick-up' }}
+                                </span>
+                            </td>
                             <td class="px-6 py-4">
                                 <span :class="`px-2.5 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)} capitalize`">
                                     {{ order.status }}
@@ -210,6 +217,10 @@ const changeStatus = async (order: Order, status: string) => {
                 </div>
 
                 <div class="p-6 overflow-y-auto space-y-6">
+                    <!-- Live Tracker Section -->
+                    <div v-if="viewingOrder.deliveryType === 'Delivery'" class="animate-in fade-in slide-in-from-top-4 duration-700">
+                        <DeliveryTracker :order-id="viewingOrder.id" :active="isDetailOpen" />
+                    </div>
                     <!-- Workflow Actions -->
                     <div class="flex flex-wrap gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
                         <span class="text-sm font-medium text-gray-700 flex items-center w-full sm:w-auto">{{ t('orders.updateStatus') }}:</span>

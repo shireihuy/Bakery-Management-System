@@ -29,6 +29,7 @@ export interface Order {
     readonly notes?: string;
     readonly paymentStatus?: string;
     readonly paymentMethod?: string;
+    deliveryType?: 'Pick-up' | 'Delivery';
 }
 
 const orders = ref<Order[]>([]);
@@ -69,6 +70,7 @@ export function useOrders() {
                 completedTime: o.completed_time ? new Date(o.completed_time).toLocaleString() : undefined,
                 paymentStatus: o.payment_status,
                 paymentMethod: o.payment_method,
+                deliveryType: o.delivery_type,
                 items: o.items.map((i: any) => ({
                     id: i.id,
                     productId: i.product_id,
@@ -114,6 +116,7 @@ export function useOrders() {
                 completedTime: o.completed_time ? new Date(o.completed_time).toLocaleString() : undefined,
                 paymentStatus: o.payment_status,
                 paymentMethod: o.payment_method,
+                deliveryType: o.delivery_type,
                 phone: o.customer_phone,
                 items: o.items.map((i: any) => ({
                     id: i.id,
@@ -145,6 +148,7 @@ export function useOrders() {
                     customer_email: orderData.customerEmail,
                     customer_phone: orderData.customerPhone,
                     customer_address: orderData.customerAddress,
+                    delivery_type: orderData.deliveryType || 'Pick-up',
                     total_price: orderData.total_price || orderData.total,
                     coupon_code: orderData.coupon_code,
                     items: orderData.items.map((item: any) => ({
@@ -228,6 +232,7 @@ export function useOrders() {
                 paymentMethod: o.payment_method,
                 phone: o.customer_phone,
                 address: o.customer_address,
+                deliveryType: o.delivery_type,
                 items: o.items.map((i: any) => ({
                     id: i.id,
                     productId: i.product_id,

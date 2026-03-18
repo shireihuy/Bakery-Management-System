@@ -17,9 +17,12 @@ import {
   Eye,
   CreditCard,
   Coffee,
-  ArrowRight
+  ArrowRight,
+  Truck,
+  MapPin
 } from 'lucide-vue-next';
 import { useProducts, type Product } from '../composables/useProducts';
+import DeliveryTracker from '../components/DeliveryTracker.vue';
 import { useOrders, type Order } from '../composables/useOrders';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
@@ -71,6 +74,8 @@ const couponCodeInput = ref('');
 const appliedCoupon = ref<any>(null);
 const couponError = ref('');
 const isApplyingCoupon = ref(false);
+const selectedDeliveryType = ref<'Pick-up' | 'Delivery'>('Pick-up');
+const DELIVERY_FEE = 0.50;
 
 // Derived State
 const isCashier = computed(() => user.value?.role?.toLowerCase() === 'cashier');
@@ -117,7 +122,10 @@ const discountAmount = computed(() => {
     return Math.min(discount, subTotalPrice.value); // discount can't be more than subtotal
 });
 
-const totalPrice = computed(() => Math.max(0, subTotalPrice.value - discountAmount.value));
+const totalPrice = computed(() => {
+    const base = Math.max(0, subTotalPrice.value - discountAmount.value);
+    return selectedDeliveryType.value === 'Delivery' ? base + DELIVERY_FEE : base;
+});
 
 // Actions
 const handleCheckout = async () => {
@@ -138,6 +146,7 @@ const handleCheckout = async () => {
             customerEmail: isCashier.value ? 'walkin@example.com' : user.value.email,
             customerPhone: isCashier.value ? null : user.value.phone,
             customerAddress: isCashier.value ? null : user.value.address,
+            deliveryType: selectedDeliveryType.value,
             items: cart.value.map(item => ({
                 productId: parseInt(item.id),
                 quantity: item.quantity,
@@ -639,6 +648,36 @@ const handleCancelOrder = async (orderId: number) => {
                               >
                          </div>
                          
+                         <!-- Delivery Option Toggle -->
+                         <div class="space-y-3">
+                              <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">Delivery Choice</label>
+                              <div class="grid grid-cols-2 gap-2 bg-bakery-50 p-1.5 rounded-2xl border border-bakery-100">
+                                   <button 
+                                        @click="selectedDeliveryType = 'Pick-up'"
+                                        :class="[selectedDeliveryType === 'Pick-up' ? 'bg-white text-bakery-900 shadow-sm' : 'text-bakery-400 hover:text-bakery-600']"
+                                        class="h-10 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+                                   >
+                                        <MapPin class="w-3.5 h-3.5" /> Pick-up
+                                   </button>
+                                   <button 
+                                        @click="selectedDeliveryType = 'Delivery'"
+                                        :class="[selectedDeliveryType === 'Delivery' ? 'bg-white text-bakery-900 shadow-sm' : 'text-bakery-400 hover:text-bakery-600']"
+                                        class="h-10 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+                                   >
+                                        <Truck class="w-3.5 h-3.5" /> Delivery
+                                   </button>
+                              </div>
+                              <div v-if="selectedDeliveryType === 'Delivery'" class="p-3 bg-bakery-50 rounded-xl border border-bakery-100 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                                   <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-bakery-600 shadow-xs">
+                                        <MapPin class="w-4 h-4" />
+                                   </div>
+                                   <div class="flex-1 min-w-0">
+                                        <p class="text-[10px] font-black text-bakery-400 uppercase tracking-widest">Delivery Address</p>
+                                        <p class="text-xs font-bold text-bakery-900 truncate">{{ user?.address || 'No address set in profile' }}</p>
+                                   </div>
+                              </div>
+                         </div>
+                         
                          <div class="space-y-4">
                              <!-- Coupon Section -->
                              <div class="space-y-2">
@@ -681,8 +720,12 @@ const handleCancelOrder = async (orderId: number) => {
                                  <div v-if="appliedCoupon" class="flex justify-between items-center text-green-600 font-medium text-sm">
                                       <span>Discount ({{ appliedCoupon.code }})</span>
                                       <span>-{{ formatPrice(discountAmount) }}</span>
-                                 </div>
-                                 <div class="flex justify-between items-center text-2xl font-black text-bakery-900 pt-2 border-t border-bakery-100">
+                                  </div>
+                                  <div v-if="selectedDeliveryType === 'Delivery'" class="flex justify-between items-center text-bakery-500 font-medium text-sm">
+                                       <span>Delivery Fee</span>
+                                       <span>{{ formatPrice(DELIVERY_FEE) }}</span>
+                                  </div>
+                                  <div class="flex justify-between items-center text-2xl font-black text-bakery-900 pt-2 border-t border-bakery-100">
                                       <span>{{ t('shop.total') }}</span>
                                       <span>{{ formatPrice(totalPrice) }}</span>
                                  </div>
@@ -835,6 +878,11 @@ const handleCancelOrder = async (orderId: number) => {
                     </div>
                 </div>
 
+                <!-- Live Tracking Section -->
+                <div v-if="viewingOrder.deliveryType === 'Delivery'" class="animate-in fade-in slide-in-from-top-4 duration-700 mb-6">
+                    <DeliveryTracker :order-id="viewingOrder.id" :active="isOrderDetailsOpen" />
+                </div>
+
                 <!-- Customer Information -->
                 <div class="space-y-3">
                     <h3 class="font-semibold text-gray-900 flex items-center gap-2">
@@ -925,9 +973,9 @@ const handleCancelOrder = async (orderId: number) => {
                             <span class="text-gray-600">Tax (0%)</span>
                             <span class="font-medium text-gray-900">$0.00</span>
                         </div>
-                        <div class="flex justify-between text-sm">
+                        <div v-if="viewingOrder.deliveryType === 'Delivery'" class="flex justify-between text-sm">
                             <span class="text-gray-600">Delivery Fee</span>
-                            <span class="font-medium text-gray-900">$0.00</span>
+                            <span class="font-medium text-gray-900">{{ formatPrice(0.5) }}</span>
                         </div>
                         <div class="pt-2 border-t border-green-300 flex justify-between items-center">
                             <span class="font-bold text-gray-900">Total</span>

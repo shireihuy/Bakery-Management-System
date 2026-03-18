@@ -121,7 +121,7 @@ const qrUrl = computed(() => {
     // Fallback for Cash or if PayOS is not yet initiated (should not happen in QR view)
     if (!paymentConfig.value.accountNumber) return '';
     
-    const amountUSD = Math.max(0, (order.value.items?.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0) || 0) - (!isNaN(Number(order.value.discountAmount)) ? Number(order.value.discountAmount) : 0));
+    const amountUSD = order.value.total;
     const amountVND = convertFromUSD(amountUSD, 'VND');
     let description = paymentConfig.value.messageTemplate.replace('{orderId}', order.value.id.toString());
     
@@ -312,9 +312,13 @@ const completePayment = async () => {
                                     <span>Discount Amount</span>
                                     <span>-{{ formatPrice(!isNaN(Number(order.discountAmount)) ? Number(order.discountAmount) : 0) }}</span>
                                 </div>
+                                <div v-if="order.deliveryType === 'Delivery'" class="flex justify-between text-bakery-400 font-black uppercase tracking-[0.2em] text-[10px]">
+                                    <span>Delivery Fee</span>
+                                    <span>{{ formatPrice(0.5) }}</span>
+                                </div>
                                 <div class="flex justify-between items-center pt-2">
                                     <span class="text-lg font-black text-bakery-900">Amount to Pay</span>
-                                    <span class="text-4xl font-black text-bakery-900 tracking-tighter">{{ formatPrice(Math.max(0, (order.items?.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0) || 0) - (!isNaN(Number(order.discountAmount)) ? Number(order.discountAmount) : 0))) }}</span>
+                                    <span class="text-4xl font-black text-bakery-900 tracking-tighter">{{ formatPrice(order.total) }}</span>
                                 </div>
                             </div>
 
