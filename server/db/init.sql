@@ -83,6 +83,9 @@ CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
     customer_id VARCHAR(255), -- UUID for registered users, 'GUEST' for walk-ins
     customer_name VARCHAR(255), -- Stores name for walk-ins or snapshot for users
+    customer_email VARCHAR(255),
+    customer_phone VARCHAR(20),
+    customer_address TEXT,
     total_price DECIMAL(10, 2) NOT NULL,
     coupon_id INTEGER REFERENCES coupons(id) DEFAULT NULL,
     discount_amount DECIMAL(10, 2) DEFAULT 0.00,

@@ -2,8 +2,8 @@ const { pool, query } = require('../config/db');
 const NotificationController = require('./notificationController');
 
 const createOrder = async (req, res) => {
-    const { customer_id, customer_name, total_price, items, coupon_code } = req.body;
-    console.log('Creating order:', { customer_id, customer_name, total_price, itemsCount: items?.length, coupon_code });
+    const { customer_id, customer_name, customer_email, customer_phone, customer_address, total_price, items, coupon_code } = req.body;
+    console.log('Creating order:', { customer_id, customer_name, customer_email, total_price, itemsCount: items?.length, coupon_code });
 
     const client = await pool.connect();
 
@@ -57,8 +57,18 @@ const createOrder = async (req, res) => {
 
         // 1. Insert into orders table
         const orderResult = await client.query(
-            'INSERT INTO orders (customer_id, customer_name, total_price, coupon_id, discount_amount, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-            [customer_id || 'GUEST', customer_name || 'Walk-in Customer', finalPrice, couponId, discountAmount, 'Pending']
+            'INSERT INTO orders (customer_id, customer_name, customer_email, customer_phone, customer_address, total_price, coupon_id, discount_amount, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id',
+            [
+                customer_id || 'GUEST', 
+                customer_name || 'Walk-in Customer', 
+                customer_email || (customer_id === 'GUEST' ? 'walkin@example.com' : null),
+                customer_phone || null,
+                customer_address || null,
+                finalPrice, 
+                couponId, 
+                discountAmount, 
+                'Pending'
+            ]
         );
 
         const orderId = orderResult.rows[0].id;
@@ -118,9 +128,9 @@ const getOrders = async (req, res) => {
                 o.id, 
                 o.customer_id, 
                 COALESCE(o.customer_name, u.name, 'Unknown') as customer_name, 
-                u.email as customer_email,
-                u.phone_number as customer_phone,
-                u.address as customer_address,
+                COALESCE(o.customer_email, u.email, 'walkin@example.com') as customer_email,
+                COALESCE(o.customer_phone, u.phone_number) as customer_phone,
+                COALESCE(o.customer_address, u.address) as customer_address,
                 o.total_price, 
                 o.coupon_id,
                 o.discount_amount,
@@ -145,6 +155,7 @@ const getOrders = async (req, res) => {
         od.id,
             od.product_id,
             p.name as product_name,
+            p.image_url,
             od.quantity,
             od.subtotal
                 FROM order_details od
@@ -170,7 +181,7 @@ const getMyOrders = async (req, res) => {
     const userId = req.user.id;
     try {
         const result = await query(`
-            SELECT o.id, o.total_price, o.coupon_id, o.discount_amount, c.code as coupon_code, o.status, o.order_date, o.start_time, o.completed_time, o.payment_status, o.payment_method
+            SELECT o.id, o.customer_name, o.customer_email, o.customer_phone, o.customer_address, o.total_price, o.coupon_id, o.discount_amount, c.code as coupon_code, o.status, o.order_date, o.start_time, o.completed_time, o.payment_status, o.payment_method
             FROM orders o
             LEFT JOIN coupons c ON o.coupon_id = c.id
             WHERE o.customer_id = $1
@@ -184,6 +195,7 @@ const getMyOrders = async (req, res) => {
         od.id,
             od.product_id,
             p.name as product_name,
+            p.image_url,
             od.quantity,
             od.subtotal
                 FROM order_details od
@@ -330,6 +342,9 @@ const getOrderById = async (req, res) => {
                 o.id, 
                 o.customer_id, 
                 o.customer_name, 
+                o.customer_email,
+                o.customer_phone,
+                o.customer_address,
                 o.total_price, 
                 o.coupon_id,
                 o.discount_amount,
@@ -356,6 +371,7 @@ const getOrderById = async (req, res) => {
                 od.id,
                 od.product_id,
                 p.name as product_name,
+                p.image_url,
                 od.quantity,
                 od.subtotal
             FROM order_details od

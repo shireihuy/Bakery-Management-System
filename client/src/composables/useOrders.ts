@@ -4,6 +4,7 @@ export interface OrderItem {
     readonly id?: number;
     readonly productId?: number;
     readonly productName: string;
+    readonly productImage?: string;
     readonly quantity: number;
     readonly price: number;
     readonly subtotal: number;
@@ -72,6 +73,7 @@ export function useOrders() {
                     id: i.id,
                     productId: i.product_id,
                     productName: i.product_name,
+                    productImage: i.image_url?.startsWith('/') ? `${API_URL.replace('/api', '')}${i.image_url}` : i.image_url,
                     quantity: i.quantity,
                     price: parseFloat(i.subtotal) / i.quantity,
                     subtotal: parseFloat(i.subtotal)
@@ -99,8 +101,9 @@ export function useOrders() {
             orders.value = data.map((o: any) => ({
                 id: o.id,
                 customerId: o.customer_id,
-                customerName: 'Me', // We know it's us
-                customerEmail: '', // Not needed for history
+                customerName: o.customer_name || 'Me',
+                customerEmail: o.customer_email || 'walkin@example.com',
+                address: o.customer_address,
                 total: parseFloat(o.total_price) || 0,
                 discountAmount: parseFloat(o.discount_amount) || 0,
                 couponId: o.coupon_id,
@@ -111,10 +114,12 @@ export function useOrders() {
                 completedTime: o.completed_time ? new Date(o.completed_time).toLocaleString() : undefined,
                 paymentStatus: o.payment_status,
                 paymentMethod: o.payment_method,
+                phone: o.customer_phone,
                 items: o.items.map((i: any) => ({
                     id: i.id,
                     productId: i.product_id,
                     productName: i.product_name,
+                    productImage: i.image_url?.startsWith('/') ? `${API_URL.replace('/api', '')}${i.image_url}` : i.image_url,
                     quantity: i.quantity,
                     price: parseFloat(i.subtotal) / i.quantity,
                     subtotal: parseFloat(i.subtotal)
@@ -137,6 +142,9 @@ export function useOrders() {
                 body: JSON.stringify({
                     customer_id: orderData.customerId,
                     customer_name: orderData.customerName,
+                    customer_email: orderData.customerEmail,
+                    customer_phone: orderData.customerPhone,
+                    customer_address: orderData.customerAddress,
                     total_price: orderData.total_price || orderData.total,
                     coupon_code: orderData.coupon_code,
                     items: orderData.items.map((item: any) => ({
@@ -218,10 +226,13 @@ export function useOrders() {
                 completedTime: o.completed_time ? new Date(o.completed_time).toLocaleString() : undefined,
                 paymentStatus: o.payment_status,
                 paymentMethod: o.payment_method,
+                phone: o.customer_phone,
+                address: o.customer_address,
                 items: o.items.map((i: any) => ({
                     id: i.id,
                     productId: i.product_id,
                     productName: i.product_name,
+                    productImage: i.image_url?.startsWith('/') ? `${API_URL.replace('/api', '')}${i.image_url}` : i.image_url,
                     quantity: i.quantity,
                     price: parseFloat(i.subtotal) / i.quantity,
                     subtotal: parseFloat(i.subtotal)

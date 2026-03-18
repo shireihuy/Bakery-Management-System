@@ -135,6 +135,9 @@ const handleCheckout = async () => {
         const result = await addOrder({
             customerId: isCashier.value ? null : user.value.id,
             customerName: isCashier.value ? orderCustomerName.value : user.value.name,
+            customerEmail: isCashier.value ? 'walkin@example.com' : user.value.email,
+            customerPhone: isCashier.value ? null : user.value.phone,
+            customerAddress: isCashier.value ? null : user.value.address,
             items: cart.value.map(item => ({
                 productId: parseInt(item.id),
                 quantity: item.quantity,
@@ -506,9 +509,16 @@ const handleCancelOrder = async (orderId: number) => {
                  </div>
                   <div class="border-t border-b border-green-100 py-3 mb-3 space-y-2">
                      <p class="text-xs font-medium text-green-600 mb-2">{{ t('shop.items') }}</p>
-                    <div v-for="(item, idx) in order.items" :key="idx" class="flex justify-between text-xs">
-                        <span class="text-gray-700">{{ item.productName }} <span class="text-green-600 ml-1">x{{ item.quantity }}</span></span>
-                        <span class="text-gray-900 font-medium">${{ (item.price * item.quantity).toFixed(2) }}</span>
+                    <div v-for="(item, idx) in order.items" :key="idx" class="flex justify-between items-center text-xs">
+                        <div class="flex items-center gap-2">
+                             <img 
+                                :src="item.productImage || 'https://placehold.co/100x100?text=No+Image'" 
+                                :alt="item.productName"
+                                class="w-6 h-6 rounded-md object-cover border border-green-50"
+                             />
+                             <span class="text-gray-700 font-medium">{{ item.productName }} <span class="text-green-600 ml-1">x{{ item.quantity }}</span></span>
+                        </div>
+                        <span class="text-gray-900 font-bold">${{ (item.price * item.quantity).toFixed(2) }}</span>
                     </div>
                  </div>
                  <!-- Discount Badge -->
@@ -868,8 +878,15 @@ const handleCancelOrder = async (orderId: number) => {
                         <div class="divide-y divide-gray-200">
                             <div v-for="(item, idx) in viewingOrder.items" :key="idx" class="px-4 py-3 hover:bg-gray-50 transition-colors">
                                 <div class="grid grid-cols-12 gap-2 items-center">
-                                    <div class="col-span-6">
-                                        <p class="text-sm font-medium text-gray-900">{{ item.productName }}</p>
+                                    <div class="col-span-6 flex items-center gap-3">
+                                        <img 
+                                            :src="item.productImage || 'https://placehold.co/100x100?text=No+Image'" 
+                                            :alt="item.productName"
+                                            class="w-10 h-10 rounded-lg object-cover border border-gray-100 shadow-sm"
+                                        />
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-900">{{ item.productName }}</p>
+                                        </div>
                                     </div>
                                     <div class="col-span-2 text-center">
                                         <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-700 text-sm font-medium">

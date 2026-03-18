@@ -284,8 +284,15 @@ const completePayment = async () => {
                             <div class="space-y-5 max-h-[300px] overflow-y-auto pr-4 scrollbar-custom">
                                 <div v-for="(item, idx) in order.items" :key="idx" class="flex justify-between items-center group/item hover:bg-bakery-50/50 p-3 -mx-3 rounded-2xl transition-all">
                                     <div class="flex items-center gap-4">
-                                        <div class="w-10 h-10 rounded-xl bg-white border border-bakery-100 flex items-center justify-center text-sm font-black text-bakery-900 shadow-sm group-hover/item:border-bakery-300">
-                                            {{ item.quantity }}
+                                        <div class="relative">
+                                            <img 
+                                                :src="item.productImage || 'https://placehold.co/100x100?text=No+Image'" 
+                                                :alt="item.productName"
+                                                class="w-12 h-12 rounded-xl object-cover border border-bakery-100 shadow-sm transition-transform group-hover/item:scale-110"
+                                            />
+                                            <div class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-bakery-900 text-white text-[10px] font-black flex items-center justify-center border-2 border-white">
+                                                {{ item.quantity }}
+                                            </div>
                                         </div>
                                         <div>
                                             <p class="text-bakery-900 font-bold group-hover/item:text-bakery-600 transition-colors">{{ item.productName }}</p>

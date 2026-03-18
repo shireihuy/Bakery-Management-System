@@ -297,7 +297,16 @@ const changeStatus = async (order: Order, status: string) => {
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
                                     <tr v-for="(item, idx) in viewingOrder.items" :key="idx">
-                                        <td class="px-4 py-2 font-medium text-gray-900">{{ item.productName }}</td>
+                                        <td class="px-4 py-2 font-medium text-gray-900">
+                                            <div class="flex items-center gap-3">
+                                                <img 
+                                                    :src="item.productImage || 'https://placehold.co/100x100?text=No+Image'" 
+                                                    :alt="item.productName"
+                                                    class="w-10 h-10 rounded-md object-cover border border-gray-100"
+                                                />
+                                                <span>{{ item.productName }}</span>
+                                            </div>
+                                        </td>
                                         <td class="px-4 py-2 text-center text-gray-600">{{ item.quantity }}</td>
                                         <td class="px-4 py-2 text-right text-gray-600">{{ formatPrice(item.price) }}</td>
                                         <td class="px-4 py-2 text-right font-medium text-gray-900">{{ formatPrice(item.price * item.quantity) }}</td>
