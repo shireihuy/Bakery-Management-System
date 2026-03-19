@@ -29,6 +29,9 @@ export interface Order {
     readonly notes?: string;
     readonly paymentStatus?: string;
     readonly paymentMethod?: string;
+    readonly transactionId?: string;
+    readonly paymentUrl?: string;
+    readonly qrCode?: string;
     deliveryType?: 'Pick-up' | 'Delivery';
 }
 
@@ -70,6 +73,9 @@ export function useOrders() {
                 completedTime: o.completed_time ? new Date(o.completed_time).toLocaleString() : undefined,
                 paymentStatus: o.payment_status,
                 paymentMethod: o.payment_method,
+                transactionId: o.transaction_id,
+                paymentUrl: o.payment_url,
+                qrCode: o.qr_code,
                 deliveryType: o.delivery_type,
                 items: o.items.map((i: any) => ({
                     id: i.id,
@@ -116,6 +122,9 @@ export function useOrders() {
                 completedTime: o.completed_time ? new Date(o.completed_time).toLocaleString() : undefined,
                 paymentStatus: o.payment_status,
                 paymentMethod: o.payment_method,
+                transactionId: o.transaction_id,
+                paymentUrl: o.payment_url,
+                qrCode: o.qr_code,
                 deliveryType: o.delivery_type,
                 phone: o.customer_phone,
                 items: o.items.map((i: any) => ({
@@ -230,6 +239,9 @@ export function useOrders() {
                 completedTime: o.completed_time ? new Date(o.completed_time).toLocaleString() : undefined,
                 paymentStatus: o.payment_status,
                 paymentMethod: o.payment_method,
+                transactionId: o.transaction_id,
+                paymentUrl: o.payment_url,
+                qrCode: o.qr_code,
                 phone: o.customer_phone,
                 address: o.customer_address,
                 deliveryType: o.delivery_type,

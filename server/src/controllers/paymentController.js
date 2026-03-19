@@ -71,6 +71,19 @@ const initiatePayment = async (req, res) => {
                 const configRes = await query('SELECT value FROM system_settings WHERE key = $1', ['payment_qr_config']);
                 const paymentConfig = configRes.rows.length > 0 ? configRes.rows[0].value : {};
 
+                // ✅ REUSE existing link if one was already created for this order
+                // This prevents PayOS error 231 "Đơn thanh toán đã tồn tại" (order already exists)
+                if (order.transaction_id && order.qr_code && order.payment_url) {
+                    console.log(`Reusing existing PayOS link for order #${orderId}`);
+                    return res.status(200).json({
+                        message: 'PayOS link reused',
+                        paymentUrl: order.payment_url,
+                        qrCode: order.qr_code,
+                        paymentLinkId: order.transaction_id,
+                        accountName: paymentConfig.accountName || ''
+                    });
+                }
+
                 // Use manual rate if set, otherwise fetch live rate
                 let vndRate = paymentConfig.vndRate;
                 if (!vndRate) {
@@ -88,10 +101,18 @@ const initiatePayment = async (req, res) => {
                 };
 
                 const paymentLink = await payos.paymentRequests.create(paymentData);
+
+                // Save payment details to DB for recovery on reload
+                await query(
+                    'UPDATE orders SET transaction_id = $1, payment_url = $2, qr_code = $3 WHERE id = $4',
+                    [paymentLink.paymentLinkId, paymentLink.checkoutUrl, paymentLink.qrCode, orderId]
+                );
+
                 return res.status(200).json({
                     message: 'PayOS link created',
                     paymentUrl: paymentLink.checkoutUrl,
                     qrCode: paymentLink.qrCode,
+                    paymentLinkId: paymentLink.paymentLinkId,
                     bin: paymentLink.bin,
                     accountNumber: paymentLink.accountNumber,
                     amount: paymentLink.amount,
@@ -125,7 +146,7 @@ const verifyPayment = async (req, res) => {
 
     try {
         const result = await query(
-            'SELECT id, status, payment_status, payment_method, total_price, customer_id FROM orders WHERE id = $1',
+            'SELECT id, status, payment_status, payment_method, transaction_id, payment_url, qr_code, total_price, customer_id FROM orders WHERE id = $1',
             [orderId]
         );
 

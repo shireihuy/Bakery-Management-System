@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { 
     CreditCard, 
@@ -22,13 +22,14 @@ import { useOrders, type Order } from '../composables/useOrders';
 import { useI18n } from '../composables/useI18n';
 import { usePayment } from '../composables/usePayment';
 import { useCurrency } from '../composables/useCurrency';
+import QRCode from 'qrcode';
 
 const route = useRoute();
 const router = useRouter();
 const { orders, fetchOrderById } = useOrders();
 const { t } = useI18n();
 const { initiatePayment, simulateSuccessCallback, verifyPaymentStatus } = usePayment();
-const { formatPrice, convertFromUSD } = useCurrency();
+const { formatPrice } = useCurrency();
 
 const orderId = route.params.id as string;
 const order = ref<Order | null>(null);
@@ -48,8 +49,11 @@ const payosData = ref<{
     accountNumber?: string,
     bin?: string,
     description?: string,
-    accountName?: string
+    accountName?: string,
+    paymentLinkId?: string,
+    qrCode?: string
 } | null>(null);
+const qrDataUrl = ref(''); // rendered as <img> src from qrcode library
 const timeLeft = ref(900); // 15 minutes in seconds
 let timerInterval: any = null;
 let pollingInterval: any = null;
@@ -110,22 +114,24 @@ watch([showQR, showCounterWaiting], ([newQR, newCounter]) => {
     }
 });
 
-const qrUrl = computed(() => {
-    if (!order.value) return '';
-    
-    // If we have real PayOS data back from the server, use it EXCLUSIVELY
-    if (payosData.value && payosData.value.accountNumber) {
-        return `https://img.vietqr.io/image/${payosData.value.bin}-${payosData.value.accountNumber}-compact2.png?amount=${payosData.value.amount}&addInfo=${encodeURIComponent(payosData.value.description || '')}&accountName=${encodeURIComponent(payosData.value.accountName || '')}`;
+// Generate QR code as data URL whenever qrCode string changes
+watchEffect(async () => {
+    const raw = payosData.value?.qrCode;
+    if (raw) {
+        try {
+            qrDataUrl.value = await QRCode.toDataURL(raw, {
+                errorCorrectionLevel: 'M',
+                margin: 2,
+                width: 400,
+                color: { dark: '#1a1a1a', light: '#ffffff' }
+            });
+        } catch (e) {
+            console.error('QR generation error:', e);
+            qrDataUrl.value = '';
+        }
+    } else {
+        qrDataUrl.value = '';
     }
-
-    // Fallback for Cash or if PayOS is not yet initiated (should not happen in QR view)
-    if (!paymentConfig.value.accountNumber) return '';
-    
-    const amountUSD = order.value.total;
-    const amountVND = convertFromUSD(amountUSD, 'VND');
-    let description = paymentConfig.value.messageTemplate.replace('{orderId}', order.value.id.toString());
-    
-    return `https://img.vietqr.io/image/${paymentConfig.value.bankId}-${paymentConfig.value.accountNumber}-compact2.png?amount=${Math.round(amountVND)}&addInfo=${encodeURIComponent(description)}&accountName=${encodeURIComponent(paymentConfig.value.accountName)}`;
 });
 
 onMounted(async () => {
@@ -169,6 +175,16 @@ onMounted(async () => {
             };
         }
     }
+
+    // Auto-restore PayOS session if order is pending and has a payment link
+    if (order.value && order.value.paymentStatus === 'Pending' && (order.value.paymentMethod === 'qr' || order.value.paymentMethod === 'QR (PayOS)') && order.value.transactionId) {
+        payosUrl.value = order.value.paymentUrl || '';
+        payosData.value = {
+            paymentLinkId: order.value.transactionId,
+            qrCode: order.value.qrCode  // restore raw qrCode for client-side rendering
+        };
+        showQR.value = true;
+    }
 });
 
 const handlePayment = async () => {
@@ -186,7 +202,9 @@ const handlePayment = async () => {
                 accountNumber: res.accountNumber,
                 bin: res.bin,
                 description: res.description,
-                accountName: res.accountName
+                accountName: res.accountName,
+                paymentLinkId: res.paymentLinkId,
+                qrCode: res.qrCode  // raw EMV string for client-side rendering
             };
         }
         
@@ -439,7 +457,7 @@ const completePayment = async () => {
                                     <div class="h-1.5 w-12 bg-bakery-200 rounded-full mt-2"></div>
                                 </div>
                                 <div class="relative inline-block mt-4 overflow-hidden rounded-3xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.2)] bg-white group border-4 border-white">
-                                    <img v-if="qrUrl" :src="qrUrl" class="w-80 h-80 object-contain relative" alt="Payment QR Code" />
+                                    <img v-if="qrDataUrl" :src="qrDataUrl" class="w-80 h-80 object-contain relative" alt="Payment QR Code" />
                                     <div v-else class="w-80 h-80 flex items-center justify-center bg-bakery-50">
                                         <QrCode class="w-32 h-32 text-bakery-200" />
                                     </div>

@@ -90,9 +90,15 @@ CREATE TABLE IF NOT EXISTS orders (
     coupon_id INTEGER REFERENCES coupons(id) DEFAULT NULL,
     discount_amount DECIMAL(10, 2) DEFAULT 0.00,
     status VARCHAR(50) DEFAULT 'Pending', -- Pending, Baking, Ready, Completed, Cancelled
+    payment_method VARCHAR(50),
+    payment_status VARCHAR(50) DEFAULT 'Pending',
+    transaction_id VARCHAR(255),
+    payment_url TEXT,
+    qr_code TEXT,
     order_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     start_time TIMESTAMP WITH TIME ZONE,
-    completed_time TIMESTAMP WITH TIME ZONE
+    completed_time TIMESTAMP WITH TIME ZONE,
+    delivery_type VARCHAR(20) DEFAULT 'Pick-up'
 );
 
 -- Order Details (Line items)
@@ -111,7 +117,8 @@ CREATE TABLE IF NOT EXISTS payments (
     method VARCHAR(50) NOT NULL, -- Cash, Credit Card, etc.
     amount DECIMAL(10, 2) NOT NULL,
     status VARCHAR(50) DEFAULT 'Pending',
-    payment_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    payment_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    transaction_id VARCHAR(255)
 );
 
 -- Notifications Table
@@ -169,10 +176,6 @@ INSERT INTO predefined_tags (name, type) VALUES
 ('Dairy', 'allergen'),
 ('Gluten', 'allergen')
 ON CONFLICT (name) DO NOTHING;
-
--- Initial Data (Optional - Admin Account)
--- Password is 'admin123' (hashed version should be used in production)
--- INSERT INTO users (name, email, password, role) VALUES ('Admin User', 'admin@bakery.com', '$2b$10$YourHashedPasswordHere', 'Admin');
 
 -- Initial Products
 INSERT INTO products (id, name, category, price, description, image_url, stock_quantity) VALUES
