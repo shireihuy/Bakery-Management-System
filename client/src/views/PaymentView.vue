@@ -28,7 +28,7 @@ const route = useRoute();
 const router = useRouter();
 const { orders, fetchOrderById } = useOrders();
 const { t } = useI18n();
-const { initiatePayment, simulateSuccessCallback, verifyPaymentStatus } = usePayment();
+const { initiatePayment, verifyPaymentStatus } = usePayment();
 const { formatPrice } = useCurrency();
 
 const orderId = route.params.id as string;
@@ -73,7 +73,8 @@ const startTimer = () => {
         } else {
             clearInterval(timerInterval);
             showQR.value = false;
-            alert('Payment window has expired. Please try again.');
+            alert('Payment window has expired. Please check your order status in history.');
+            router.push('/customer');
         }
     }, 1000);
 };
@@ -91,6 +92,12 @@ const startPolling = () => {
                 setTimeout(() => {
                     router.push('/customer');
                 }, 3000);
+            } else if (status.payment_status === 'Cancelled' || status.status === 'Cancelled') {
+                // If cancelled (e.g. timeout on PayOS side or manual cancel)
+                clearInterval(pollingInterval);
+                clearInterval(timerInterval);
+                alert('Payment has been cancelled.');
+                router.push('/customer');
             }
         } catch (err) {
             console.error('Polling error:', err);
@@ -135,6 +142,13 @@ watchEffect(async () => {
 });
 
 onMounted(async () => {
+    // 0. Check for cancel status from PayOS redirect
+    if (route.query.status === 'cancelled') {
+        alert('Payment has been cancelled.');
+        router.push('/customer');
+        return;
+    }
+
     // 1. Try to find in cache first
     let found = orders.value.find(o => String(o.id) === orderId);
     
@@ -219,32 +233,6 @@ const handlePayment = async () => {
     }
 };
 
-const completePayment = async () => {
-    if (!order.value) return;
-    
-    // Clear intervals if manual confirmation is clicked
-    if (timerInterval) clearInterval(timerInterval);
-    if (pollingInterval) clearInterval(pollingInterval);
-    
-    paymentStatus.value = 'processing';
-    
-    try {
-        // Simulate the backend callback (normally this comes from outside)
-        // This actually updates the DB status in our mock setup
-        await simulateSuccessCallback(order.value.id);
-        
-        setTimeout(() => {
-            paymentStatus.value = 'success';
-            setTimeout(() => {
-                router.push('/customer');
-            }, 3000);
-        }, 1500);
-    } catch (err) {
-        console.error('Payment completion error:', err);
-        paymentStatus.value = 'idle';
-        alert('Payment verification failed.');
-    }
-};
 </script>
 
 <template>
@@ -496,13 +484,6 @@ const completePayment = async () => {
                                         class="flex-1 h-14 rounded-2xl border-2 border-bakery-100 text-bakery-600 font-black hover:bg-bakery-50 hover:border-bakery-200 transition-all text-sm"
                                     >
                                         Cancel
-                                    </button>
-                                    <button 
-                                        @click="completePayment"
-                                        class="flex-[2.5] h-14 rounded-2xl bg-bakery-900 text-white font-black hover:bg-black shadow-xl hover:shadow-bakery-200 transition-all text-sm flex items-center justify-center gap-2"
-                                    >
-                                        {{ t('shop.confirmPayment') }}
-                                        <CheckCircle2 class="w-4 h-4" />
                                     </button>
                                 </div>
                             </div>

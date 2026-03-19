@@ -1,6 +1,7 @@
 const { pool, query } = require('../config/db');
 const NotificationController = require('./notificationController');
 const DeliveryService = require('../services/deliveryService');
+const payos = require('../config/payos');
 
 const createOrder = async (req, res) => {
     const { 
@@ -358,6 +359,16 @@ const updateOrderStatus = async (req, res) => {
                     'UPDATE products SET stock_quantity = stock_quantity + $1 WHERE id = $2',
                     [item.quantity, item.product_id]
                 );
+            }
+
+            // Sync PayOS cancellation
+            if (currentOrder.payment_method === 'qr' || currentOrder.payment_method === 'QR (PayOS)') {
+                try {
+                    console.log(`[OrderController] Cancelling PayOS link for Order #${id}`);
+                    await payos.paymentRequests.cancel(id);
+                } catch (payosErr) {
+                    console.error('[OrderController] Failed to cancel PayOS link:', payosErr.message);
+                }
             }
 
             // Emit real-time stock update

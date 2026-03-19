@@ -1,12 +1,6 @@
 const { query } = require('../config/db');
 const NotificationController = require('./notificationController');
-const { PayOS } = require('@payos/node');
-
-const payos = new PayOS(
-    process.env.PAYOS_CLIENT_ID || '',
-    process.env.PAYOS_API_KEY || '',
-    process.env.PAYOS_CHECKSUM_KEY || ''
-);
+const payos = require('../config/payos');
 
 /**
  * Fetch and cache exchange rate from USD to VND
@@ -197,6 +191,23 @@ const verifyPayment = async (req, res) => {
                             `Payment for order #${orderId} was successful via auto-verify.`,
                             'success'
                         );
+                    }
+                } else if (payosInfo && payosInfo.status === 'CANCELLED') {
+                    console.log(`Fail-safe: PayOS confirmed order #${orderId} is CANCELLED. Updating DB...`);
+                    
+                    const updateQuery = `
+                        UPDATE orders 
+                        SET payment_status = $1, 
+                            status = $2::varchar
+                        WHERE id = $3
+                        RETURNING *
+                    `;
+                    const updatedResult = await query(updateQuery, ['Cancelled', 'Cancelled', orderId]);
+                    order = updatedResult.rows[0];
+
+                    // Notify via socket
+                    if (global.io) {
+                        global.io.emit('order_cancelled', { orderId });
                     }
                 }
             } catch (err) {
