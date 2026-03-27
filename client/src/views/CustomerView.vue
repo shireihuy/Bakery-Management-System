@@ -1008,6 +1008,14 @@ const confirmCancelOrder = async () => {
                             <span class="text-gray-600">Delivery Fee</span>
                             <span class="font-medium text-gray-900">{{ formatPrice(0.5) }}</span>
                         </div>
+                        <div v-if="viewingOrder.paymentMethod" class="flex justify-between text-sm pt-2 border-t border-green-200/50">
+                            <span class="text-gray-500 font-medium">Payment Method</span>
+                            <span class="font-bold text-green-900 capitalize">
+                                {{ viewingOrder.paymentMethod === 'cash' 
+                                    ? (viewingOrder.deliveryType === 'Delivery' ? 'Pay when receive' : 'Pay at Counter') 
+                                    : viewingOrder.paymentMethod }}
+                            </span>
+                        </div>
                         <div class="pt-2 border-t border-green-300 flex justify-between items-center">
                             <span class="font-bold text-gray-900">Total</span>
                             <span class="text-2xl font-bold text-green-700">${{ viewingOrder.total.toFixed(2) }}</span>

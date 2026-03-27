@@ -20,6 +20,7 @@ import {
 } from 'lucide-vue-next';
 import { useOrders, type Order } from '../composables/useOrders';
 import { useI18n } from '../composables/useI18n';
+import { useAuth } from '../composables/useAuth';
 import { usePayment } from '../composables/usePayment';
 import { useCurrency } from '../composables/useCurrency';
 import QRCode from 'qrcode';
@@ -27,9 +28,12 @@ import QRCode from 'qrcode';
 const route = useRoute();
 const router = useRouter();
 const { orders, fetchOrderById } = useOrders();
+const { user } = useAuth();
 const { t } = useI18n();
 const { initiatePayment, verifyPaymentStatus } = usePayment();
 const { formatPrice } = useCurrency();
+
+const isCashier = computed(() => user.value?.role?.toLowerCase() === 'cashier' || user.value?.role?.toLowerCase() === 'admin');
 
 const orderId = route.params.id as string;
 const order = ref<Order | null>(null);
@@ -411,10 +415,10 @@ const handlePayment = async () => {
                                             <Wallet class="w-7 h-7 text-white" />
                                         </div>
                                         <div class="text-left">
-                                            <p class="font-black text-bakery-900 text-lg">Pay at Counter</p>
+                                            <p class="font-black text-bakery-900 text-lg">{{ order?.deliveryType === 'Delivery' && !isCashier ? 'Pay when receive' : 'Pay at Counter' }}</p>
                                             <div class="flex items-center gap-2">
                                                 <span class="text-[9px] font-black text-amber-600 uppercase tracking-widest bg-amber-50 px-2 py-0.5 rounded-md">Cash / Physical Card</span>
-                                                <span class="text-[9px] font-bold text-amber-600 flex items-center gap-1"><Clock class="w-2.5 h-2.5" /> Pay at Pickup</span>
+                                                <span class="text-[9px] font-bold text-amber-600 flex items-center gap-1"><Clock class="w-2.5 h-2.5" /> {{ order?.deliveryType === 'Delivery' && !isCashier ? 'Cash on Delivery' : 'Pay at Pickup' }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -493,14 +497,14 @@ const handlePayment = async () => {
                         <div v-if="showCounterWaiting && paymentStatus === 'idle'" class="w-full text-center space-y-12 animate-in zoom-in slide-in-from-bottom-5 duration-500">
                             <div class="space-y-6">
                                 <div class="inline-flex flex-col items-center">
-                                    <h2 class="text-3xl font-black text-bakery-900 tracking-tight">Pay at Counter</h2>
+                                    <h2 class="text-3xl font-black text-bakery-900 tracking-tight">{{ order?.deliveryType === 'Delivery' && !isCashier ? 'Pay on Delivery' : 'Pay at Counter' }}</h2>
                                     <div class="h-1.5 w-12 bg-amber-200 rounded-full mt-2"></div>
                                 </div>
                                 <div class="relative inline-block mt-4 p-12 bg-white border-2 border-amber-50 rounded-[4rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.1)]">
                                     <div class="w-48 h-48 bg-amber-50 rounded-[3rem] flex items-center justify-center mb-4 mx-auto">
                                         <Wallet class="w-24 h-24 text-amber-600" />
                                     </div>
-                                    <p class="text-bakery-900 font-bold text-lg">Please proceed to the counter</p>
+                                    <p class="text-bakery-900 font-bold text-lg">{{ order?.deliveryType === 'Delivery' && !isCashier ? 'Please pay the courier upon arrival' : 'Please proceed to the counter' }}</p>
                                     <p class="text-bakery-500 text-sm mt-2">Provide your Order ID: <span class="text-bakery-900 font-black">#{{ orderId }}</span></p>
                                 </div>
                                 

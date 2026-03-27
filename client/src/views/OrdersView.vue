@@ -321,7 +321,14 @@ const confirmCancel = async () => {
                             <div class="bg-white rounded-lg border border-gray-100 p-3 space-y-1 text-sm">
                                 <p><span class="text-gray-500 w-24 inline-block">Placed:</span> <span>{{ viewingOrder.date }} {{ viewingOrder.startTime ? '' : '(Pending)' }}</span></p>
                                 <p><span class="text-gray-500 w-24 inline-block">Payment:</span> <span :class="viewingOrder.paymentStatus === 'Paid' ? 'text-green-600 font-bold' : 'text-amber-600 font-bold'">{{ viewingOrder.paymentStatus || 'Unpaid' }}</span></p>
-                                <p v-if="viewingOrder.paymentMethod"><span class="text-gray-500 w-24 inline-block">Method:</span> <span class="capitalize">{{ viewingOrder.paymentMethod }}</span></p>
+                                <p v-if="viewingOrder.paymentMethod">
+                                    <span class="text-gray-500 w-24 inline-block">Method:</span> 
+                                    <span class="capitalize">
+                                        {{ viewingOrder.paymentMethod === 'cash' 
+                                            ? (viewingOrder.deliveryType === 'Delivery' ? 'Pay when receive' : 'Pay at Counter') 
+                                            : viewingOrder.paymentMethod }}
+                                    </span>
+                                </p>
                                 <p v-if="viewingOrder.startTime"><span class="text-gray-500 w-24 inline-block">Started:</span> <span>{{ viewingOrder.startTime }}</span></p>
                                 <p v-if="viewingOrder.completedTime"><span class="text-gray-500 w-24 inline-block">Completed:</span> <span>{{ viewingOrder.completedTime }}</span></p>
                             </div>
