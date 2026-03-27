@@ -70,6 +70,32 @@ const viewDetails = (order: Order) => {
 const changeStatus = async (order: Order, status: string) => {
     await updateOrderStatus(order.id, status as Order['status']);
 };
+
+const isCancelModalOpen = ref(false);
+const selectedCancelReason = ref('');
+const customReason = ref('');
+const predefinedReasons = [
+    'Customer requested cancellation',
+    'Out of stock',
+    'Kitchen too busy',
+    'Delivery issues',
+    'Payment failed',
+    'Incorrect order details',
+    'Other'
+];
+
+const openCancelModal = () => {
+    isCancelModalOpen.value = true;
+    selectedCancelReason.value = 'Customer requested cancellation';
+};
+
+const confirmCancel = async () => {
+    const reason = selectedCancelReason.value === 'Other' ? customReason.value : selectedCancelReason.value;
+    if (!reason) return;
+    
+    await updateOrderStatus(viewingOrder.value.id, 'Cancelled', undefined, reason);
+    isCancelModalOpen.value = false;
+};
 </script>
 
 <template>
@@ -256,7 +282,7 @@ const changeStatus = async (order: Order, status: string) => {
                             </button>
                             <button 
                                 v-if="['Pending', 'Baking', 'Ready'].includes(viewingOrder.status)"
-                                @click="changeStatus(viewingOrder, 'Cancelled')"
+                                @click="openCancelModal"
                                 class="px-3 py-1.5 bg-red-100 text-red-700 text-sm font-medium rounded hover:bg-red-200 border border-red-200 transition-colors"
                             >
                                 {{ t('orders.cancelOrder') }}
@@ -268,6 +294,15 @@ const changeStatus = async (order: Order, status: string) => {
                                 <XCircle class="w-4 h-4" /> {{ t('orders.orderCancelled') }}
                              </span>
                         </div>
+                    </div>
+
+                    <!-- Cancellation Reason -->
+                    <div v-if="viewingOrder.status === 'Cancelled' && viewingOrder.cancel_reason" class="bg-red-50 border border-red-100 p-4 rounded-lg">
+                        <div class="flex items-center gap-2 text-red-700 font-bold mb-1">
+                            <XCircle class="w-4 h-4" />
+                            <span>Cancellation Reason</span>
+                        </div>
+                        <p class="text-sm text-red-600">{{ viewingOrder.cancel_reason }}</p>
                     </div>
 
                     <!-- Customer Info -->
@@ -336,6 +371,59 @@ const changeStatus = async (order: Order, status: string) => {
                     <div v-if="viewingOrder.notes" class="bg-yellow-50 border border-yellow-100 p-3 rounded-lg text-sm text-yellow-800">
                         <span class="font-bold">{{ t('orders.notes') }}:</span> {{ viewingOrder.notes }}
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cancel Reason Modal -->
+        <div v-if="isCancelModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in duration-200">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-red-50">
+                    <h3 class="text-lg font-bold text-red-900 flex items-center gap-2">
+                        <XCircle class="w-5 h-5" /> Cancel Order #{{ viewingOrder.id }}
+                    </h3>
+                    <button @click="isCancelModalOpen = false" class="text-gray-400 hover:text-gray-600"><XCircle class="w-6 h-6" /></button>
+                </div>
+                
+                <div class="p-6 space-y-4">
+                    <p class="text-sm text-gray-600 font-medium">Please select a reason for cancelling this order:</p>
+                    
+                    <div class="space-y-2">
+                        <label v-for="reason in predefinedReasons" :key="reason" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors has-checked:bg-red-50 has-checked:border-red-200">
+                            <input 
+                                type="radio" 
+                                v-model="selectedCancelReason" 
+                                :value="reason"
+                                class="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300"
+                            >
+                            <span class="text-sm font-medium text-gray-700">{{ reason }}</span>
+                        </label>
+                    </div>
+
+                    <div v-if="selectedCancelReason === 'Other'" class="animate-in slide-in-from-top-2 duration-200">
+                        <textarea 
+                            v-model="customReason" 
+                            placeholder="Enter detailed reason..."
+                            class="w-full p-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50"
+                            rows="3"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-gray-50 flex gap-3">
+                    <button 
+                        @click="isCancelModalOpen = false"
+                        class="flex-1 px-4 py-2.5 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-all"
+                    >
+                        Keep Order
+                    </button>
+                    <button 
+                        @click="confirmCancel"
+                        :disabled="selectedCancelReason === 'Other' && !customReason.trim()"
+                        class="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50"
+                    >
+                        Confirm Cancellation
+                    </button>
                 </div>
             </div>
         </div>

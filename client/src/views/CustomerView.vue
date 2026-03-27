@@ -300,22 +300,44 @@ const addToCartFromDialogExtended = (event: MouseEvent) => {
     }
 };
 
-const handleCancelOrder = async (orderId: number) => {
-    if (confirm('Are you sure you want to cancel this order?')) {
-        try {
-            await updateOrderStatus(orderId, 'Cancelled');
-            if (isCashier.value) {
-                await fetchOrders();
-            } else {
-                await fetchMyOrders();
-            }
-            isOrderDetailsOpen.value = false;
-        } catch (err) {
-            alert('Failed to cancel order.');
-        }
-    }
+const isCancelModalOpen = ref(false);
+const selectedCancelReason = ref('');
+const customReason = ref('');
+const orderToCancel = ref<number | null>(null);
+const predefinedReasons = [
+    'Changed my mind',
+    'Found a better price',
+    'Order taking too long',
+    'Incorrect items selected',
+    'Delivery address error',
+    'Other'
+];
+
+const openCancelModal = (orderId: number) => {
+    orderToCancel.value = orderId;
+    isCancelModalOpen.value = true;
+    selectedCancelReason.value = 'Changed my mind';
 };
 
+const confirmCancelOrder = async () => {
+    if (!orderToCancel.value) return;
+    const reason = selectedCancelReason.value === 'Other' ? customReason.value : selectedCancelReason.value;
+    if (!reason) return;
+    
+    try {
+        await updateOrderStatus(orderToCancel.value, 'Cancelled', undefined, reason);
+        if (isCashier.value) {
+            await fetchOrders();
+        } else {
+            await fetchMyOrders();
+        }
+        isCancelModalOpen.value = false;
+        isOrderDetailsOpen.value = false;
+        orderToCancel.value = null;
+    } catch (err) {
+        alert('Failed to cancel order.');
+    }
+};
 </script>
 
 <template>
@@ -558,7 +580,7 @@ const handleCancelOrder = async (orderId: number) => {
                             <CreditCard class="w-3.5 h-3.5 mr-1.5" /> Pay Now
                         </button>
                         <button 
-                            @click="handleCancelOrder(order.id)"
+                            @click="openCancelModal(order.id)"
                             class="h-9 rounded-xl bg-red-50 text-red-600 border border-red-100 text-xs font-bold hover:bg-red-100 flex items-center justify-center transition-all"
                         >
                             <Trash2 class="w-3.5 h-3.5 mr-1.5" /> Cancel
@@ -878,6 +900,15 @@ const handleCancelOrder = async (orderId: number) => {
                     </div>
                 </div>
 
+                <!-- Cancellation Reason -->
+                <div v-if="viewingOrder.status === 'Cancelled' && viewingOrder.cancel_reason" class="bg-red-50 border border-red-100 p-4 rounded-xl">
+                    <div class="flex items-center gap-2 text-red-700 font-bold mb-1 uppercase tracking-wider text-xs">
+                        <XCircle class="w-4 h-4" />
+                        <span>Cancellation Reason</span>
+                    </div>
+                    <p class="text-sm text-red-600 font-medium">{{ viewingOrder.cancel_reason }}</p>
+                </div>
+
                 <!-- Live Tracking Section -->
                 <div v-if="viewingOrder.deliveryType === 'Delivery'" class="animate-in fade-in slide-in-from-top-4 duration-700 mb-6">
                     <DeliveryTracker :order-id="viewingOrder.id" :active="isOrderDetailsOpen" />
@@ -994,7 +1025,7 @@ const handleCancelOrder = async (orderId: number) => {
                         <CreditCard class="w-4 h-4" /> Pay Now
                     </button>
                     <button 
-                        @click="handleCancelOrder(viewingOrder.id)"
+                        @click="openCancelModal(viewingOrder.id)"
                         class="px-4 py-2 rounded-lg bg-red-50 text-red-600 border border-red-100 font-bold text-sm hover:bg-red-100 transition-all flex items-center gap-2"
                     >
                         <Trash2 class="w-4 h-4" /> Cancel Order
@@ -1050,6 +1081,59 @@ const handleCancelOrder = async (orderId: number) => {
         }"
     >
         <img :src="fly.image" class="w-full h-full object-cover">
+    </div>
+
+    <!-- Cancel Reason Modal -->
+    <div v-if="isCancelModalOpen" class="fixed inset-0 z-150 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in duration-300">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-red-50">
+                <h3 class="text-lg font-bold text-red-900 flex items-center gap-2">
+                    <XCircle class="w-5 h-5" /> Cancel Order #{{ orderToCancel }}
+                </h3>
+                <button @click="isCancelModalOpen = false" class="text-gray-400 hover:text-gray-600"><XCircle class="w-6 h-6" /></button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <p class="text-sm text-gray-600 font-medium">Why are you cancelling your order?</p>
+                
+                <div class="space-y-2">
+                    <label v-for="reason in predefinedReasons" :key="reason" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors has-checked:bg-red-50 has-checked:border-red-200">
+                        <input 
+                            type="radio" 
+                            v-model="selectedCancelReason" 
+                            :value="reason"
+                            class="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300"
+                        >
+                        <span class="text-sm font-medium text-gray-700">{{ reason }}</span>
+                    </label>
+                </div>
+
+                <div v-if="selectedCancelReason === 'Other'" class="animate-in slide-in-from-top-2 duration-200">
+                    <textarea 
+                        v-model="customReason" 
+                        placeholder="Please tell us more..."
+                        class="w-full p-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50"
+                        rows="3"
+                    ></textarea>
+                </div>
+            </div>
+
+            <div class="p-6 bg-gray-50 flex gap-3 border-t border-gray-100">
+                <button 
+                    @click="isCancelModalOpen = false"
+                    class="flex-1 px-4 py-2.5 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-all font-premium"
+                >
+                    Nevermind
+                </button>
+                <button 
+                    @click="confirmCancelOrder"
+                    :disabled="selectedCancelReason === 'Other' && !customReason.trim()"
+                    class="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50"
+                >
+                    Cancel Order
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 </template>

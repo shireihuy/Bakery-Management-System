@@ -33,6 +33,7 @@ export interface Order {
     readonly paymentUrl?: string;
     readonly qrCode?: string;
     deliveryType?: 'Pick-up' | 'Delivery';
+    cancel_reason?: string;
 }
 
 const orders = ref<Order[]>([]);
@@ -77,6 +78,7 @@ export function useOrders() {
                 paymentUrl: o.payment_url,
                 qrCode: o.qr_code,
                 deliveryType: o.delivery_type,
+                cancel_reason: o.cancel_reason,
                 items: o.items.map((i: any) => ({
                     id: i.id,
                     productId: i.product_id,
@@ -126,6 +128,7 @@ export function useOrders() {
                 paymentUrl: o.payment_url,
                 qrCode: o.qr_code,
                 deliveryType: o.delivery_type,
+                cancel_reason: o.cancel_reason,
                 phone: o.customer_phone,
                 items: o.items.map((i: any) => ({
                     id: i.id,
@@ -181,7 +184,7 @@ export function useOrders() {
         }
     };
 
-    const updateOrderStatus = async (orderId: number, status?: Order['status'], paymentStatus?: string) => {
+    const updateOrderStatus = async (orderId: number, status?: Order['status'], paymentStatus?: string, cancelReason?: string) => {
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
@@ -190,7 +193,7 @@ export function useOrders() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ status, payment_status: paymentStatus })
+                body: JSON.stringify({ status, payment_status: paymentStatus, cancel_reason: cancelReason })
             });
 
             if (!response.ok) {
@@ -202,6 +205,7 @@ export function useOrders() {
             if (order) {
                 if (status) order.status = status;
                 if (paymentStatus) (order as any).paymentStatus = paymentStatus;
+                if (cancelReason) order.status === 'Cancelled' && (order.cancel_reason = cancelReason);
             }
         } catch (err) {
             console.error('Error updating status:', err);
@@ -245,6 +249,7 @@ export function useOrders() {
                 phone: o.customer_phone,
                 address: o.customer_address,
                 deliveryType: o.delivery_type,
+                cancel_reason: o.cancel_reason,
                 items: o.items.map((i: any) => ({
                     id: i.id,
                     productId: i.product_id,

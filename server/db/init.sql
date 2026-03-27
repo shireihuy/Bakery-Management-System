@@ -98,7 +98,8 @@ CREATE TABLE IF NOT EXISTS orders (
     order_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     start_time TIMESTAMP WITH TIME ZONE,
     completed_time TIMESTAMP WITH TIME ZONE,
-    delivery_type VARCHAR(20) DEFAULT 'Pick-up'
+    delivery_type VARCHAR(20) DEFAULT 'Pick-up',
+    cancel_reason TEXT
 );
 
 -- Order Details (Line items)

@@ -188,7 +188,8 @@ const getOrders = async (req, res) => {
                 o.completed_time,
                 o.payment_status,
                 o.payment_method,
-                o.delivery_type
+                o.delivery_type,
+                o.cancel_reason
             FROM orders o
             LEFT JOIN users u ON o.customer_id::text = u.id::text
             LEFT JOIN coupons c ON o.coupon_id = c.id
@@ -229,7 +230,7 @@ const getMyOrders = async (req, res) => {
     const userId = req.user.id;
     try {
         const result = await query(`
-            SELECT o.id, o.customer_name, o.customer_email, o.customer_phone, o.customer_address, o.delivery_type, o.total_price, o.coupon_id, o.discount_amount, c.code as coupon_code, o.status, o.order_date, o.start_time, o.completed_time, o.payment_status, o.payment_method
+            SELECT o.id, o.customer_name, o.customer_email, o.customer_phone, o.customer_address, o.delivery_type, o.total_price, o.coupon_id, o.discount_amount, c.code as coupon_code, o.status, o.order_date, o.start_time, o.completed_time, o.payment_status, o.payment_method, o.cancel_reason
             FROM orders o
             LEFT JOIN coupons c ON o.coupon_id = c.id
             WHERE o.customer_id = $1
@@ -266,7 +267,7 @@ const getMyOrders = async (req, res) => {
 
 const updateOrderStatus = async (req, res) => {
     const { id } = req.params;
-    const { status, payment_status } = req.body;
+    const { status, payment_status, cancel_reason } = req.body;
 
     const client = await pool.connect();
     try {
@@ -325,6 +326,11 @@ const updateOrderStatus = async (req, res) => {
         if (payment_status) {
             updateFields.push(`payment_status = $${paramCount++}`);
             params.push(payment_status);
+        }
+
+        if (cancel_reason && status === 'Cancelled') {
+            updateFields.push(`cancel_reason = $${paramCount++}`);
+            params.push(cancel_reason);
         }
 
         if (updateFields.length === 0) {
@@ -424,7 +430,8 @@ const getOrderById = async (req, res) => {
                 o.completed_time,
                 o.payment_status,
                 o.payment_method,
-                o.delivery_type
+                o.delivery_type,
+                o.cancel_reason
             FROM orders o
             LEFT JOIN coupons c ON o.coupon_id = c.id
             WHERE o.id = $1
