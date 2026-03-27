@@ -68,12 +68,12 @@ class GHNClient {
      * Calculate Shipping Fee
      * @param {Object} params - to_district_id, to_ward_code, weight (grams), etc.
      */
-    async calculateFee({ to_district_id, to_ward_code, weight = 500, length = 10, width = 10, height = 10 }) {
+    async calculateFee({ from_district_id = 1454, to_district_id, to_ward_code, weight = 500, length = 10, width = 10, height = 10 }) {
         // Find available services first (standard, fast, etc.)
         console.log(`[GHN] Fetching services for district: ${to_district_id}`);
         const services = await this._request('shipping-order/available-services', {
             shop_id: this.shopId,
-            from_district: 1454,
+            from_district: from_district_id,
             to_district: to_district_id
         });
         

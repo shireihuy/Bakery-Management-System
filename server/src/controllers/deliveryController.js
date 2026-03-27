@@ -70,7 +70,12 @@ const calculateFee = async (req, res) => {
             return res.status(400).json({ message: 'Missing district_id or ward_code' });
         }
         
+        const { query } = require('../config/db');
+        const settingsRes = await query("SELECT value FROM system_settings WHERE key = 'store_location_config'");
+        const from_district_id = settingsRes.rows.length > 0 ? settingsRes.rows[0].value.district_id : 1454;
+
         const fee = await GHNClient.calculateFee({
+            from_district_id: parseInt(from_district_id),
             to_district_id: parseInt(district_id),
             to_ward_code: ward_code,
             weight: weight ? parseInt(weight) : 500

@@ -3,7 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
 import { useCurrency } from '../composables/useCurrency';
-import { User, Save, Ticket, Key, CreditCard, MapPin } from 'lucide-vue-next';
+import { User, Save, Ticket, Key, CreditCard, MapPin, Store } from 'lucide-vue-next';
 import { useGHN } from '../composables/useGHN';
 
 const { user, updateProfile } = useAuth();
@@ -38,7 +38,7 @@ const onDistrictChange = () => {
 };
 
 const isSaving = ref(false);
-const activeTab = ref<'profile' | 'coupons' | 'payment'>('profile');
+const activeTab = ref<'profile' | 'coupons' | 'payment' | 'location'>('profile');
 const message = ref({ text: '', type: '' as 'success' | 'error' | '' });
 
 const coupons = ref<any[]>([]);
@@ -101,6 +101,81 @@ const savePaymentSettings = async () => {
         }
     } catch (e) {
         message.value = { text: 'Failed to update payment settings', type: 'error' };
+    } finally {
+        isSaving.value = false;
+    }
+};
+
+const storeLocationConfig = ref({
+    province_id: null as number | null,
+    district_id: null as number | null,
+    ward_code: null as string | null,
+    address: ''
+});
+const isLocationLoading = ref(false);
+
+const onStoreProvinceChange = () => {
+    storeLocationConfig.value.district_id = null;
+    storeLocationConfig.value.ward_code = null;
+    if (storeLocationConfig.value.province_id) {
+        fetchDistricts(storeLocationConfig.value.province_id);
+    }
+};
+
+const onStoreDistrictChange = () => {
+    storeLocationConfig.value.ward_code = null;
+    if (storeLocationConfig.value.district_id) {
+        fetchWards(storeLocationConfig.value.district_id);
+    }
+};
+
+const loadStoreLocationConfig = async () => {
+    if (!isAdminOrManager.value) return;
+    isLocationLoading.value = true;
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/system/settings`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            const settings = await response.json();
+            if (settings.store_location_config) {
+                storeLocationConfig.value = settings.store_location_config;
+                if (storeLocationConfig.value.province_id) {
+                    await fetchDistricts(storeLocationConfig.value.province_id);
+                    if (storeLocationConfig.value.district_id) {
+                        await fetchWards(storeLocationConfig.value.district_id);
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Failed loading store location settings', e);
+    } finally {
+        isLocationLoading.value = false;
+    }
+};
+
+const saveStoreLocationConfig = async () => {
+    isSaving.value = true;
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/system/settings`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ key: 'store_location_config', value: storeLocationConfig.value })
+        });
+        
+        if (res.ok) {
+            message.value = { text: 'Store location updated', type: 'success' };
+        } else {
+            throw new Error();
+        }
+    } catch (e) {
+        message.value = { text: 'Failed to update store location', type: 'error' };
     } finally {
         isSaving.value = false;
     }
@@ -195,6 +270,7 @@ onMounted(async () => {
     }
     loadCoupons();
     loadPaymentSettings();
+    loadStoreLocationConfig();
 });
 
 const handleSave = async () => {
@@ -259,6 +335,15 @@ const handleSave = async () => {
                     >
                         <CreditCard class="w-4 h-4" />
                         Card & QR Payments
+                    </button>
+                    <button 
+                        v-if="isAdminOrManager"
+                        @click="activeTab = 'location'"
+                        class="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all font-medium border"
+                        :class="activeTab === 'location' ? 'bg-green-50 text-green-700 border-green-200 shadow-sm' : 'text-gray-600 hover:bg-gray-50 border-transparent'"
+                    >
+                        <Store class="w-4 h-4" />
+                        Store Location
                     </button>
                 </div>
 
@@ -538,6 +623,94 @@ const handleSave = async () => {
                                 <Save v-if="!isSaving" class="w-4 h-4" />
                                 <span v-if="isSaving" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                                 {{ isSaving ? 'Saving Settings...' : 'Update Payment Settings' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Store Location Tab -->
+                <div v-else-if="activeTab === 'location' && isAdminOrManager" class="md:col-span-2 space-y-6">
+                    <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl flex items-start gap-3">
+                        <div class="text-blue-600 mt-0.5"><Store class="w-5 h-5"/></div>
+                        <p class="text-xs text-blue-800 leading-relaxed">
+                            Configure your bakery's physical location. This address will be used as the <strong>Origin Address</strong> for all GHN delivery calculations.
+                        </p>
+                    </div>
+
+                    <form @submit.prevent="saveStoreLocationConfig" class="space-y-5 flex flex-col">
+                        <div class="space-y-4">
+                            <label class="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                <MapPin class="w-4 h-4 text-blue-600" />
+                                Bakery Location Details
+                            </label>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Province</label>
+                                    <select 
+                                        v-model="storeLocationConfig.province_id" 
+                                        @change="onStoreProvinceChange"
+                                        class="w-full h-10 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500"
+                                        required
+                                    >
+                                        <option :value="null" disabled>Select Province</option>
+                                        <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">{{ p.ProvinceName }}</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">District</label>
+                                    <select 
+                                        v-if="storeLocationConfig.province_id"
+                                        v-model="storeLocationConfig.district_id" 
+                                        @change="onStoreDistrictChange"
+                                        class="w-full h-10 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500"
+                                        required
+                                    >
+                                        <option :value="null" disabled>Select District</option>
+                                        <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">{{ d.DistrictName }}</option>
+                                    </select>
+                                    <div v-else class="h-10 bg-gray-50 border border-gray-200 rounded-lg flex items-center px-3 text-xs text-gray-400">Select province first</div>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ward</label>
+                                    <select 
+                                        v-if="storeLocationConfig.district_id"
+                                        v-model="storeLocationConfig.ward_code"
+                                        class="w-full h-10 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500"
+                                        required
+                                    >
+                                        <option :value="null" disabled>Select Ward</option>
+                                        <option v-for="w in wards" :key="w.WardCode" :value="w.WardCode">{{ w.WardName }}</option>
+                                    </select>
+                                    <div v-else class="h-10 bg-gray-50 border border-gray-200 rounded-lg flex items-center px-3 text-xs text-gray-400">Select district first</div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-sm font-medium text-gray-700">Detailed Address (Street, Building)</label>
+                                <textarea 
+                                    v-model="storeLocationConfig.address"
+                                    rows="2"
+                                    class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                                    placeholder="42/41 Nguyễn Thái Học..."
+                                    required
+                                ></textarea>
+                            </div>
+                        </div>
+
+                        <div v-if="message.text" :class="`p-3 rounded-lg text-sm font-medium mt-4 ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`">
+                            {{ message.text }}
+                        </div>
+
+                        <div class="flex justify-end pt-4 mt-auto">
+                             <button 
+                                type="submit" 
+                                :disabled="isSaving"
+                                class="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 transition-all shadow-md disabled:opacity-50"
+                            >
+                                <Save v-if="!isSaving" class="w-4 h-4" />
+                                <span v-if="isSaving" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                {{ isSaving ? 'Saving...' : 'Save Location' }}
                             </button>
                         </div>
                     </form>

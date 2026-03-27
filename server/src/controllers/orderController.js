@@ -69,7 +69,11 @@ const createOrder = async (req, res) => {
         if (delivery_type === 'Delivery') {
             if (district_id && ward_code) {
                 try {
+                    const settingsRes = await client.query('SELECT value FROM system_settings WHERE key = $1', ['store_location_config']);
+                    const from_district_id = settingsRes.rows.length > 0 ? settingsRes.rows[0].value.district_id : 1454;
+
                     const feeResult = await GHNClient.calculateFee({
+                        from_district_id: parseInt(from_district_id),
                         to_district_id: district_id,
                         to_ward_code: ward_code,
                         weight: verifiedItems.length * 200 // Mock 200g per item

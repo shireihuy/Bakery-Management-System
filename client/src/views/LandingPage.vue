@@ -83,11 +83,28 @@ const handleScroll = () => {
     isScrolled.value = window.scrollY > 20;
 };
 
+const storeLocation = ref('');
+
+const loadStoreInfo = async () => {
+    try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/system/settings`);
+        if (response.ok) {
+            const settings = await response.json();
+            if (settings.store_location_config && settings.store_location_config.address) {
+                storeLocation.value = settings.store_location_config.address;
+            }
+        }
+    } catch {
+       // Ignore, fallback to default translation
+    }
+};
+
 onMounted(() => {
     handleResize();
     window.addEventListener('resize', handleResize);
     window.addEventListener('scroll', handleScroll);
     fetchProducts();
+    loadStoreInfo();
 });
 
 onUnmounted(() => {
@@ -467,7 +484,7 @@ const signatureProducts = [
                            <Clock class="w-5 h-5 text-bakery-400" /> 6 AM - 8 PM
                       </div>
                        <div class="flex items-center gap-3">
-                           <MapPin class="w-5 h-5 text-bakery-400" /> {{ t('landing.locationTitle') }}
+                           <MapPin class="w-5 h-5 text-bakery-400" /> {{ storeLocation || t('landing.locationTitle') }}
                       </div>
                   </div>
               </div>
