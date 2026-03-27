@@ -33,6 +33,9 @@ export interface Order {
     readonly paymentUrl?: string;
     readonly qrCode?: string;
     deliveryType?: 'Pick-up' | 'Delivery';
+    deliveryFee?: number;
+    district_id?: number;
+    ward_code?: string;
     cancel_reason?: string;
 }
 
@@ -78,6 +81,7 @@ export function useOrders() {
                 paymentUrl: o.payment_url,
                 qrCode: o.qr_code,
                 deliveryType: o.delivery_type,
+                deliveryFee: parseFloat(o.delivery_fee) || 0,
                 cancel_reason: o.cancel_reason,
                 items: o.items.map((i: any) => ({
                     id: i.id,
@@ -128,6 +132,7 @@ export function useOrders() {
                 paymentUrl: o.payment_url,
                 qrCode: o.qr_code,
                 deliveryType: o.delivery_type,
+                deliveryFee: parseFloat(o.delivery_fee) || 0,
                 cancel_reason: o.cancel_reason,
                 phone: o.customer_phone,
                 items: o.items.map((i: any) => ({
@@ -160,6 +165,8 @@ export function useOrders() {
                     customer_email: orderData.customerEmail,
                     customer_phone: orderData.customerPhone,
                     customer_address: orderData.customerAddress,
+                    district_id: orderData.district_id,
+                    ward_code: orderData.ward_code,
                     delivery_type: orderData.deliveryType || 'Pick-up',
                     total_price: orderData.total_price || orderData.total,
                     coupon_code: orderData.coupon_code,
@@ -249,6 +256,9 @@ export function useOrders() {
                 phone: o.customer_phone,
                 address: o.customer_address,
                 deliveryType: o.delivery_type,
+                deliveryFee: parseFloat(o.delivery_fee) || 0,
+                district_id: o.district_id,
+                ward_code: o.ward_code,
                 cancel_reason: o.cancel_reason,
                 items: o.items.map((i: any) => ({
                     id: i.id,

@@ -3,7 +3,8 @@ import { ref, onMounted, computed } from 'vue';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
 import { useCurrency } from '../composables/useCurrency';
-import { User, Save, Ticket, Key, CreditCard } from 'lucide-vue-next';
+import { User, Save, Ticket, Key, CreditCard, MapPin } from 'lucide-vue-next';
+import { useGHN } from '../composables/useGHN';
 
 const { user, updateProfile } = useAuth();
 const { t } = useI18n();
@@ -13,8 +14,28 @@ const formData = ref({
     name: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
+    province_id: null as number | null,
+    district_id: null as number | null,
+    ward_code: null as string | null
 });
+
+const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useGHN();
+
+const onProvinceChange = () => {
+    formData.value.district_id = null;
+    formData.value.ward_code = null;
+    if (formData.value.province_id) {
+        fetchDistricts(formData.value.province_id);
+    }
+};
+
+const onDistrictChange = () => {
+    formData.value.ward_code = null;
+    if (formData.value.district_id) {
+        fetchWards(formData.value.district_id);
+    }
+};
 
 const isSaving = ref(false);
 const activeTab = ref<'profile' | 'coupons' | 'payment'>('profile');
@@ -152,14 +173,25 @@ const openAddCoupon = () => {
     showCouponModal.value = true;
 };
 
-onMounted(() => {
+onMounted(async () => {
     if (user.value) {
         formData.value = {
             name: user.value.name,
             email: user.value.email,
             phone: user.value.phone || '',
-            address: user.value.address || ''
+            address: user.value.address || '',
+            province_id: user.value.province_id || null,
+            district_id: user.value.district_id || null,
+            ward_code: user.value.ward_code || null
         };
+        
+        await fetchProvinces();
+        if (user.value.province_id) {
+            await fetchDistricts(user.value.province_id);
+            if (user.value.district_id) {
+                await fetchWards(user.value.district_id);
+            }
+        }
     }
     loadCoupons();
     loadPaymentSettings();
@@ -174,7 +206,10 @@ const handleSave = async () => {
             name: formData.value.name,
             email: formData.value.email,
             phone: formData.value.phone,
-            address: formData.value.address
+            address: formData.value.address,
+            province_id: formData.value.province_id ?? undefined,
+            district_id: formData.value.district_id ?? undefined,
+            ward_code: formData.value.ward_code ?? undefined
         });
         
         message.value = { text: t('settings.profileUpdated'), type: 'success' };
@@ -281,14 +316,60 @@ const handleSave = async () => {
                             </div>
                         </div>
 
-                        <div class="space-y-1">
-                            <label class="text-sm font-medium text-gray-700">{{ t('settings.address') }}</label>
-                            <textarea 
-                                v-model="formData.address"
-                                rows="3"
-                                class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
-                                placeholder="123 Main St, City, Country"
-                            ></textarea>
+                        <div class="space-y-4">
+                            <label class="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                <MapPin class="w-4 h-4 text-green-600" />
+                                Location Details
+                            </label>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Province</label>
+                                    <select 
+                                        v-model="formData.province_id" 
+                                        @change="onProvinceChange"
+                                        class="w-full h-10 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500"
+                                    >
+                                        <option :value="null" disabled>Select Province</option>
+                                        <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">{{ p.ProvinceName }}</option>
+                                    </select>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">District</label>
+                                    <select 
+                                        v-if="formData.province_id"
+                                        v-model="formData.district_id" 
+                                        @change="onDistrictChange"
+                                        class="w-full h-10 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500"
+                                    >
+                                        <option :value="null" disabled>Select District</option>
+                                        <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">{{ d.DistrictName }}</option>
+                                    </select>
+                                    <div v-else class="h-10 bg-gray-50 border border-gray-200 rounded-lg flex items-center px-3 text-xs text-gray-400">Select province first</div>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ward</label>
+                                    <select 
+                                        v-if="formData.district_id"
+                                        v-model="formData.ward_code"
+                                        class="w-full h-10 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500"
+                                    >
+                                        <option :value="null" disabled>Select Ward</option>
+                                        <option v-for="w in wards" :key="w.WardCode" :value="w.WardCode">{{ w.WardName }}</option>
+                                    </select>
+                                    <div v-else class="h-10 bg-gray-50 border border-gray-200 rounded-lg flex items-center px-3 text-xs text-gray-400">Select district first</div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-sm font-medium text-gray-700">Street Address</label>
+                                <textarea 
+                                    v-model="formData.address"
+                                    rows="2"
+                                    class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
+                                    placeholder="House No, Street name..."
+                                ></textarea>
+                            </div>
                         </div>
 
                         <div v-if="message.text" :class="`p-3 rounded-lg text-sm font-medium ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`">

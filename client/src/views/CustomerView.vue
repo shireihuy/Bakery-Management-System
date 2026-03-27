@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { 
   ShoppingCart, 
@@ -28,6 +28,7 @@ import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
 import { useCurrency } from '../composables/useCurrency';
 import { useCart } from '../composables/useCart';
+import { useGHN } from '../composables/useGHN';
 
 // State
 const { products, fetchProducts, submitRating } = useProducts();
@@ -36,21 +37,9 @@ const { user } = useAuth();
 const { t } = useI18n();
 const { formatPrice } = useCurrency();
 const { cart, fetchCart, addToCart, updateQuantity, removeFromCart, clearCart } = useCart();
+const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards, fetchFee } = useGHN();
 const router = useRouter();
 
-import { onMounted } from 'vue';
-
-onMounted(async () => {
-    await fetchProducts();
-    await fetchCart();
-    if (user.value) {
-        if (isCashier.value) {
-            await fetchOrders();
-        } else {
-            await fetchMyOrders();
-        }
-    }
-});
 
 // Cart state is from composable now
 const selectedCategory = ref('All');
@@ -75,7 +64,10 @@ const appliedCoupon = ref<any>(null);
 const couponError = ref('');
 const isApplyingCoupon = ref(false);
 const selectedDeliveryType = ref<'Pick-up' | 'Delivery'>('Pick-up');
-const DELIVERY_FEE = 0.50;
+const DELIVERY_FEE = ref(0.50);
+const selectedProvince = ref<number | null>(null);
+const selectedDistrict = ref<number | null>(null);
+const selectedWard = ref<string | null>(null);
 
 // Derived State
 const isCashier = computed(() => user.value?.role?.toLowerCase() === 'cashier');
@@ -114,17 +106,18 @@ const subTotalPrice = computed(() => cart.value.reduce((sum, item) => sum + (ite
 const discountAmount = computed(() => {
     if (!appliedCoupon.value) return 0;
     let discount = 0;
+    const totalToApply = subTotalPrice.value + (selectedDeliveryType.value === 'Delivery' ? DELIVERY_FEE.value : 0);
     if (appliedCoupon.value.discount_type === 'percentage') {
-        discount = subTotalPrice.value * (Number(appliedCoupon.value.discount_value) / 100);
+        discount = totalToApply * (Number(appliedCoupon.value.discount_value) / 100);
     } else {
         discount = Number(appliedCoupon.value.discount_value);
     }
-    return Math.min(discount, subTotalPrice.value); // discount can't be more than subtotal
+    return Math.min(discount, totalToApply); // discount can't be more than total
 });
 
 const totalPrice = computed(() => {
-    const base = Math.max(0, subTotalPrice.value - discountAmount.value);
-    return selectedDeliveryType.value === 'Delivery' ? base + DELIVERY_FEE : base;
+    const totalBeforeDiscount = subTotalPrice.value + (selectedDeliveryType.value === 'Delivery' ? DELIVERY_FEE.value : 0);
+    return Math.max(0, totalBeforeDiscount - discountAmount.value);
 });
 
 // Actions
@@ -147,6 +140,8 @@ const handleCheckout = async () => {
             customerPhone: isCashier.value ? null : user.value.phone,
             customerAddress: isCashier.value ? null : user.value.address,
             deliveryType: selectedDeliveryType.value,
+            district_id: selectedDistrict.value,
+            ward_code: selectedWard.value,
             items: cart.value.map(item => ({
                 productId: parseInt(item.id),
                 quantity: item.quantity,
@@ -301,6 +296,46 @@ const addToCartFromDialogExtended = (event: MouseEvent) => {
 };
 
 const isCancelModalOpen = ref(false);
+
+onMounted(async () => {
+    await fetchProducts();
+    await fetchCart();
+    if (user.value) {
+        if (isCashier.value) {
+            await fetchOrders();
+        } else {
+            await fetchMyOrders();
+        }
+        
+        // Auto-populate delivery location if saved in profile
+        if (user.value.province_id) {
+            selectedProvince.value = user.value.province_id;
+            await fetchDistricts(user.value.province_id);
+            if (user.value.district_id) {
+                selectedDistrict.value = user.value.district_id;
+                await fetchWards(user.value.district_id);
+                if (user.value.ward_code) {
+                    selectedWard.value = user.value.ward_code;
+                }
+            }
+        }
+    }
+});
+
+watch(selectedDeliveryType, (newVal) => {
+    if (newVal === 'Delivery' && provinces.value.length === 0) {
+        fetchProvinces();
+    }
+});
+
+watch(selectedWard, async (newVal) => {
+    if (newVal && selectedDistrict.value) {
+        // Approximate weight: 200g per item
+        const totalWeight = cart.value.reduce((sum, item) => sum + (item.quantity * 200), 0) || 500;
+        const fee = await (fetchFee as any)(selectedDistrict.value, newVal, totalWeight);
+        DELIVERY_FEE.value = fee;
+    }
+});
 const selectedCancelReason = ref('');
 const customReason = ref('');
 const orderToCancel = ref<number | null>(null);
@@ -695,7 +730,7 @@ const confirmCancelOrder = async () => {
                                    </div>
                                    <div class="flex-1 min-w-0">
                                         <p class="text-[10px] font-black text-bakery-400 uppercase tracking-widest">Delivery Address</p>
-                                        <p class="text-xs font-bold text-bakery-900 truncate">{{ user?.address || 'No address set in profile' }}</p>
+                                        <p class="text-xs font-bold text-bakery-900 truncate">{{ user?.address || 'No address set in profile' }}</p><div class='mt-3 grid grid-cols-1 gap-2 pt-2 border-t border-bakery-100/50'><select v-model='selectedProvince' @change='fetchDistricts(selectedProvince!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'><option :value='null' disabled>Province</option><option v-for='p in provinces' :key='p.ProvinceID' :value='p.ProvinceID'>{{p.ProvinceName}}</option></select><select v-if='selectedProvince' v-model='selectedDistrict' @change='fetchWards(selectedDistrict!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'><option :value='null' disabled>District</option><option v-for='d in districts' :key='d.DistrictID' :value='d.DistrictID'>{{d.DistrictName}}</option></select><select v-if='selectedDistrict' v-model='selectedWard' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'><option :value='null' disabled>Ward</option><option v-for='w in wards' :key='w.WardCode' :value='w.WardCode'>{{w.WardName}}</option></select></div>
                                    </div>
                               </div>
                          </div>
@@ -988,25 +1023,16 @@ const confirmCancelOrder = async () => {
                 <div class="space-y-3 pt-4 border-t border-gray-200">
                     <h3 class="font-semibold text-gray-900">Order Summary</h3>
                     <div class="space-y-2 p-4 bg-linear-to-br from-green-50 to-emerald-50 rounded-lg border border-green-200">
-                        <!-- Subtotal row: items sum before discount -->
                         <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Subtotal</span>
-                            <span class="font-medium text-gray-900">${{ (viewingOrder.total + (viewingOrder.discountAmount || 0)).toFixed(2) }}</span>
+                            <span class="text-gray-600 font-medium">Total Bill</span>
+                            <span class="font-bold text-gray-900 border-b-2 border-green-100 pb-0.5">{{ formatPrice(viewingOrder.total + (viewingOrder.discountAmount || 0)) }}</span>
                         </div>
-                        <!-- Coupon / Discount row -->
                         <div v-if="viewingOrder.discountAmount && viewingOrder.discountAmount > 0" class="flex justify-between text-sm">
-                            <span class="text-green-700 font-medium flex items-center gap-1">
-                                🎟️ Coupon<span v-if="viewingOrder.couponCode" class="font-bold"> "{{ viewingOrder.couponCode }}"</span>
+                            <span class="text-emerald-700 font-medium flex items-center gap-1">
+                                <span class="bg-emerald-100 text-emerald-800 text-[10px] px-1.5 py-0.5 rounded font-black uppercase tracking-tighter">Coupon</span>
+                                <span v-if="viewingOrder.couponCode" class="font-bold">"{{ viewingOrder.couponCode }}"</span>
                             </span>
-                            <span class="font-bold text-green-700">-${{ viewingOrder.discountAmount.toFixed(2) }}</span>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-gray-600">Tax (0%)</span>
-                            <span class="font-medium text-gray-900">$0.00</span>
-                        </div>
-                        <div v-if="viewingOrder.deliveryType === 'Delivery'" class="flex justify-between text-sm">
-                            <span class="text-gray-600">Delivery Fee</span>
-                            <span class="font-medium text-gray-900">{{ formatPrice(0.5) }}</span>
+                            <span class="font-bold text-emerald-700">-{{ formatPrice(viewingOrder.discountAmount) }}</span>
                         </div>
                         <div v-if="viewingOrder.paymentMethod" class="flex justify-between text-sm pt-2 border-t border-green-200/50">
                             <span class="text-gray-500 font-medium">Payment Method</span>
@@ -1145,3 +1171,5 @@ const confirmCancelOrder = async () => {
     </div>
 </div>
 </template>
+
+

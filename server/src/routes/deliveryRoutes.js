@@ -9,4 +9,10 @@ router.get('/orders/:orderId', deliveryController.getDeliveryByOrderId);
 // 2. Request a delivery for an order (admin-facing)
 router.post('/orders/:orderId/request', deliveryController.requestDelivery);
 
+// GHN Location Helpers
+router.get('/provinces', deliveryController.getProvinces);
+router.get('/districts/:provinceId', deliveryController.getDistricts);
+router.get('/wards/:districtId', deliveryController.getWards);
+router.get('/fee', deliveryController.calculateFee);
+
 module.exports = router;

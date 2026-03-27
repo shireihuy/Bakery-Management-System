@@ -1,5 +1,6 @@
 const { query } = require('../config/db');
 const NotificationController = require('../controllers/notificationController');
+const GHNClient = require('../utils/ghnClient');
 
 /**
  * Mock Delivery Service
@@ -12,15 +13,15 @@ class DeliveryService {
      * Creates the initial delivery record in 'Pending' status.
      * Called immediately when a delivery order is placed.
      */
-    async initializeDelivery(orderId) {
-        console.log(`[MockDelivery] Initializing delivery record for Order #${orderId}`);
+    async initializeDelivery(orderId, fee = 0.50) {
+        console.log(`[MockDelivery] Initializing delivery record for Order #${orderId} with fee: ${fee}`);
         try {
             const result = await query(
                 `INSERT INTO deliveries (order_id, status, delivery_fee) 
                  VALUES ($1, $2, $3) 
-                 ON CONFLICT (order_id) DO UPDATE SET updated_at = CURRENT_TIMESTAMP
+                 ON CONFLICT (order_id) DO UPDATE SET updated_at = CURRENT_TIMESTAMP, delivery_fee = $3
                  RETURNING *`,
-                [orderId, 'Pending', 0.50]
+                [orderId, 'Pending', fee]
             );
             return result.rows[0];
         } catch (error) {
@@ -34,43 +35,60 @@ class DeliveryService {
      * Called when the order is 'Ready'.
      */
     async dispatchDelivery(orderId) {
-        console.log(`[MockDelivery] Dispatching delivery (assigning driver) for Order #${orderId}`);
+        console.log(`[GHN] Dispatching delivery for Order #${orderId}`);
         
-        const trackingNumber = `BAK-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-        const estimatedDeliveryTime = new Date();
-        estimatedDeliveryTime.setMinutes(estimatedDeliveryTime.getMinutes() + 45);
-
         try {
+            // 1. Fetch complete order details for GHN request
+            const orderRes = await query(`
+                SELECT id, customer_name, customer_phone, customer_address, district_id, ward_code, total_price 
+                FROM orders WHERE id = $1
+            `, [orderId]);
+
+            if (orderRes.rows.length === 0) throw new Error('Order not found');
+            const order = orderRes.rows[0];
+
+            // 2. Fetch items for the order
+            const itemsRes = await query('SELECT p.name, od.quantity, p.price FROM order_details od JOIN products p ON od.product_id = p.id WHERE od.order_id = $1', [orderId]);
+
+            // 3. Create real GHN order
+            const ghnResponse = await GHNClient.createOrder({
+                to_name: order.customer_name,
+                to_phone: order.customer_phone,
+                to_address: order.customer_address,
+                to_ward_code: order.ward_code,
+                to_district_id: order.district_id,
+                items: itemsRes.rows
+            });
+
+            console.log(`[GHN] Order created successfully: ${ghnResponse.order_code}`);
+
+            // 4. Update local delivery record with GHN info
             const result = await query(
                 `UPDATE deliveries 
                  SET status = $1, 
                      tracking_number = $2, 
-                     driver_name = $3, 
-                     driver_phone = $4, 
-                     estimated_time = $5,
+                     estimated_time = $3,
                      updated_at = CURRENT_TIMESTAMP
-                 WHERE order_id = $6
+                 WHERE order_id = $4
                  RETURNING *`,
                 [
                     'Assigned',
-                    trackingNumber,
-                    'John Doe',
-                    '0912345678',
-                    estimatedDeliveryTime,
+                    ghnResponse.order_code,
+                    ghnResponse.expected_delivery_time,
                     orderId
                 ]
             );
 
             if (result.rows.length === 0) {
-                // If the record somehow didn't exist (e.g. manual status update without record), create it now
+                // Should not happen with initializeDelivery, but safety first
                 return await this.createLegacyDelivery(orderId);
             }
 
             const delivery = result.rows[0];
-            this.simulateWorkflow(delivery.id);
+            // No more simulateWorkflow - waiting for webhook or actual delivery!
             return delivery;
         } catch (error) {
-            console.error('[MockDelivery] Error dispatching delivery:', error);
+            console.error('[GHN] Error dispatching delivery:', error.message);
             throw error;
         }
     }

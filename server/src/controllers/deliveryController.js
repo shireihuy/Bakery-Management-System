@@ -1,4 +1,5 @@
 const DeliveryService = require('../services/deliveryService');
+const GHNClient = require('../utils/ghnClient');
 
 const getDeliveryByOrderId = async (req, res) => {
     const { orderId } = req.params;
@@ -35,7 +36,56 @@ const requestDelivery = async (req, res) => {
     }
 };
 
+const getProvinces = async (req, res) => {
+    try {
+        const provinces = await GHNClient.getProvinces();
+        res.json(provinces);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching provinces', error: error.message });
+    }
+};
+
+const getDistricts = async (req, res) => {
+    try {
+        const districts = await GHNClient.getDistricts(parseInt(req.params.provinceId));
+        res.json(districts);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching districts', error: error.message });
+    }
+};
+
+const getWards = async (req, res) => {
+    try {
+        const wards = await GHNClient.getWards(parseInt(req.params.districtId));
+        res.json(wards);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching wards', error: error.message });
+    }
+};
+
+const calculateFee = async (req, res) => {
+    try {
+        const { district_id, ward_code, weight } = req.query;
+        if (!district_id || !ward_code) {
+            return res.status(400).json({ message: 'Missing district_id or ward_code' });
+        }
+        
+        const fee = await GHNClient.calculateFee({
+            to_district_id: parseInt(district_id),
+            to_ward_code: ward_code,
+            weight: weight ? parseInt(weight) : 500
+        });
+        res.json({ fee });
+    } catch (error) {
+        res.status(500).json({ message: 'Error calculating fee', error: error.message });
+    }
+};
+
 module.exports = {
     getDeliveryByOrderId,
-    requestDelivery
+    requestDelivery,
+    getProvinces,
+    getDistricts,
+    getWards,
+    calculateFee
 };

@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 
 const updateProfile = async (req, res) => {
-    const { name, email, phone, address } = req.body;
+    const { name, email, phone, address, province_id, district_id, ward_code } = req.body;
     const normalizedEmail = email ? email.toLowerCase() : '';
     const userId = req.user.id; // From authenticateToken middleware
 
@@ -13,8 +13,8 @@ const updateProfile = async (req, res) => {
         const finalAddress = (address === '' || address === undefined) ? null : address;
 
         const result = await pool.query(
-            'UPDATE users SET name = $1, email = $2, phone_number = $3, address = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING id, name, email, role, phone_number as phone, address',
-            [name, normalizedEmail, finalPhone, finalAddress, userId]
+            'UPDATE users SET name = $1, email = $2, phone_number = $3, address = $4, province_id = $5, district_id = $6, ward_code = $7, updated_at = CURRENT_TIMESTAMP WHERE id = $8 RETURNING id, name, email, role, phone_number as phone, address, province_id, district_id, ward_code',
+            [name, normalizedEmail, finalPhone, finalAddress, province_id || null, district_id || null, ward_code || null, userId]
         );
 
 
@@ -31,7 +31,7 @@ const updateProfile = async (req, res) => {
 
 const updateUser = async (req, res) => {
     const { id } = req.params;
-    const { name, email, role, phone, address, status } = req.body;
+    const { name, email, role, phone, address, province_id, district_id, ward_code, status } = req.body;
     const normalizedEmail = email ? email.toLowerCase() : '';
 
     console.log('Admin update user ID:', id, { name, email: normalizedEmail, role, status });
@@ -41,8 +41,8 @@ const updateUser = async (req, res) => {
         const finalAddress = (address === '' || address === undefined) ? null : address;
 
         const result = await pool.query(
-            'UPDATE users SET name = $1, email = $2, role = $3, phone_number = $4, address = $5, status = $6, updated_at = CURRENT_TIMESTAMP WHERE id = $7 RETURNING id, name, email, role, status, phone_number as phone, address',
-            [name, normalizedEmail, role, finalPhone, finalAddress, status || 'active', id]
+            'UPDATE users SET name = $1, email = $2, role = $3, phone_number = $4, address = $5, province_id = $6, district_id = $7, ward_code = $8, status = $9, updated_at = CURRENT_TIMESTAMP WHERE id = $10 RETURNING id, name, email, role, status, phone_number as phone, address, province_id, district_id, ward_code',
+            [name, normalizedEmail, role, finalPhone, finalAddress, province_id || null, district_id || null, ward_code || null, status || 'active', id]
         );
 
 

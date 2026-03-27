@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Loader2, ArrowLeft, Phone, MapPin } from 'lucide-vue-next';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
+import { useGHN } from '../composables/useGHN';
 import SimpleCaptcha from '../components/SimpleCaptcha.vue';
 
 const router = useRouter();
@@ -24,6 +25,30 @@ const onCaptchaVerify = (status: boolean) => {
 };
 
 const { register, login } = useAuth();
+const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useGHN();
+
+const selectedProvince = ref<number | null>(null);
+const selectedDistrict = ref<number | null>(null);
+const selectedWard = ref<string | null>(null);
+
+onMounted(() => {
+    fetchProvinces();
+});
+
+const onProvinceChange = () => {
+    selectedDistrict.value = null;
+    selectedWard.value = null;
+    if (selectedProvince.value) {
+        fetchDistricts(selectedProvince.value);
+    }
+};
+
+const onDistrictChange = () => {
+    selectedWard.value = null;
+    if (selectedDistrict.value) {
+        fetchWards(selectedDistrict.value);
+    }
+};
 
 const onToggleMode = () => {
     router.push('/login');
@@ -60,6 +85,9 @@ const handleSubmit = async () => {
             password: password.value,
             phone_number: phone.value,
             address: address.value,
+            province_id: selectedProvince.value,
+            district_id: selectedDistrict.value,
+            ward_code: selectedWard.value,
             role: 'Customer' // Default to customer on public registration
         });
         
@@ -155,18 +183,53 @@ const handleSubmit = async () => {
 
                 <!-- Right Column -->
                 <div class="space-y-6">
-                    <div class="space-y-2">
-                      <label for="address" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">{{ t('auth.address') }}</label>
-                      <div class="relative group">
-                        <MapPin class="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-bakery-300 group-focus-within:text-bakery-500 transition-colors" />
-                        <input
-                          id="address"
-                          type="text"
-                          placeholder="123 Main St..."
-                          v-model="address"
-                          :disabled="isLoading"
-                          class="flex h-12 w-full rounded-2xl border border-bakery-100 bg-white/50 px-12 py-2 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-bakery-500/10 focus:border-bakery-500 disabled:opacity-50"
-                        />
+                    <div class="space-y-4">
+                      <div class="space-y-2">
+                        <label class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">Location</label>
+                        <div class="grid grid-cols-1 gap-3">
+                            <select 
+                                v-model="selectedProvince" 
+                                @change="onProvinceChange"
+                                class="h-12 w-full rounded-2xl border border-bakery-100 bg-white/50 px-4 text-sm font-medium focus:ring-4 focus:ring-bakery-500/10 focus:border-bakery-500"
+                            >
+                                <option :value="null" disabled>Select Province</option>
+                                <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">{{ p.ProvinceName }}</option>
+                            </select>
+
+                            <select 
+                                v-if="selectedProvince"
+                                v-model="selectedDistrict" 
+                                @change="onDistrictChange"
+                                class="h-12 w-full rounded-2xl border border-bakery-100 bg-white/50 px-4 text-sm font-medium focus:ring-4 focus:ring-bakery-500/10 focus:border-bakery-500"
+                            >
+                                <option :value="null" disabled>Select District</option>
+                                <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">{{ d.DistrictName }}</option>
+                            </select>
+
+                            <select 
+                                v-if="selectedDistrict"
+                                v-model="selectedWard"
+                                class="h-12 w-full rounded-2xl border border-bakery-100 bg-white/50 px-4 text-sm font-medium focus:ring-4 focus:ring-bakery-500/10 focus:border-bakery-500"
+                            >
+                                <option :value="null" disabled>Select Ward</option>
+                                <option v-for="w in wards" :key="w.WardCode" :value="w.WardCode">{{ w.WardName }}</option>
+                            </select>
+                        </div>
+                      </div>
+
+                      <div class="space-y-2">
+                        <label for="address" class="text-[10px] font-black text-bakery-400 uppercase tracking-widest ml-1">Street Address</label>
+                        <div class="relative group">
+                          <MapPin class="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-bakery-300 group-focus-within:text-bakery-500 transition-colors" />
+                          <input
+                            id="address"
+                            type="text"
+                            placeholder="House No, Street name..."
+                            v-model="address"
+                            :disabled="isLoading"
+                            class="flex h-12 w-full rounded-2xl border border-bakery-100 bg-white/50 px-12 py-2 text-sm font-medium shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-bakery-500/10 focus:border-bakery-500 disabled:opacity-50"
+                          />
+                        </div>
                       </div>
                     </div>
 

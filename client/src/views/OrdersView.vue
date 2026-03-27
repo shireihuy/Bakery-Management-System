@@ -365,10 +365,18 @@ const confirmCancel = async () => {
                                         <td class="px-4 py-2 text-right font-medium text-gray-900">{{ formatPrice(item.price * item.quantity) }}</td>
                                     </tr>
                                 </tbody>
-                                <tfoot class="bg-gray-50 font-bold text-gray-900">
-                                    <tr>
-                                        <td colspan="3" class="px-4 py-3 text-right">{{ t('orders.total') }}</td>
-                                        <td class="px-4 py-3 text-right text-green-700 text-lg">{{ formatPrice(viewingOrder.total) }}</td>
+                                <tfoot class="bg-gray-50 text-gray-900 border-t-2 border-green-100">
+                                    <tr class="text-xs text-gray-500 font-black uppercase tracking-[0.2em]">
+                                        <td colspan="3" class="px-4 py-3 text-right">Total Bill</td>
+                                        <td class="px-4 py-3 text-right">{{ formatPrice(viewingOrder.total + (viewingOrder.discountAmount || 0)) }}</td>
+                                    </tr>
+                                    <tr v-if="viewingOrder.discountAmount > 0" class="text-xs text-emerald-600 font-black uppercase tracking-[0.2em]">
+                                        <td colspan="3" class="px-4 py-1 text-right">Discount</td>
+                                        <td class="px-4 py-1 text-right">-{{ formatPrice(viewingOrder.discountAmount) }}</td>
+                                    </tr>
+                                    <tr class="font-black text-lg border-t border-green-100 bg-green-50/50">
+                                        <td colspan="3" class="px-4 py-4 text-right uppercase tracking-[0.2em]">{{ t('orders.total') }}</td>
+                                        <td class="px-4 py-4 text-right text-green-700 text-2xl font-black">{{ formatPrice(viewingOrder.total) }}</td>
                                     </tr>
                                 </tfoot>
                             </table>

@@ -3,22 +3,28 @@ const NotificationController = require('./notificationController');
 const DeliveryService = require('../services/deliveryService');
 const payos = require('../config/payos');
 
+const GHNClient = require('../utils/ghnClient');
+
 const createOrder = async (req, res) => {
     const { 
-        customer_id, 
-        customer_name, 
-        customer_email, 
-        customer_phone, 
         customer_address, 
+        customer_phone,
+        district_id,
+        ward_code,
         delivery_type, 
         items, 
         coupon_code 
     } = req.body;
+
+    const customer_id = req.user?.id || 'GUEST';
+    const customer_name = req.user?.name || 'Walk-in Customer';
+    const customer_email = req.user?.email || (customer_id === 'GUEST' ? 'walkin@example.com' : null);
+    const finalPhone = customer_phone || req.user?.phone || null;
     
     console.log('Creating order with backend calculation:', { customer_id, customer_name, itemsCount: items?.length, coupon_code });
 
     const client = await pool.connect();
-    const DELIVERY_FEE = 0.50;
+    let DELIVERY_FEE = 0.50; // Minimum default
 
     try {
         await client.query('BEGIN');
@@ -59,9 +65,27 @@ const createOrder = async (req, res) => {
             });
         }
 
-        // 2. Handle Coupon
+        // 2. Handle Delivery Fee
+        if (delivery_type === 'Delivery') {
+            if (district_id && ward_code) {
+                try {
+                    const feeResult = await GHNClient.calculateFee({
+                        to_district_id: district_id,
+                        to_ward_code: ward_code,
+                        weight: verifiedItems.length * 200 // Mock 200g per item
+                    });
+                    DELIVERY_FEE = Number(feeResult.total) / 25000; // Convert to USD approximately
+                    console.log(`[GHN] Calculated Fee: $${DELIVERY_FEE.toFixed(2)} for District ${district_id}`);
+                } catch (ghnErr) {
+                    console.error('[GHN] Fee calculation failed, falling back to default:', ghnErr.message);
+                }
+            }
+        }
+
+        // 3. Handle Coupon (applied to total including shipping if user wants)
         let couponId = null;
         let discountAmount = 0;
+        const totalBeforeDiscount = subtotal + (delivery_type === 'Delivery' ? DELIVERY_FEE : 0);
 
         if (coupon_code) {
             const couponRes = await client.query('SELECT * FROM coupons WHERE UPPER(code) = UPPER($1) FOR UPDATE', [coupon_code]);
@@ -73,35 +97,35 @@ const createOrder = async (req, res) => {
                                 (!coupon.end_date || new Date(coupon.end_date) >= now) && 
                                 (!coupon.usage_limit || coupon.usage_count < coupon.usage_limit);
 
+                // Min purchase still usually applies to items subtotal
                 if (isActive && subtotal >= Number(coupon.min_purchase_amount)) {
                     couponId = coupon.id;
                     if (coupon.discount_type === 'percentage') {
-                        discountAmount = subtotal * (Number(coupon.discount_value) / 100);
+                        discountAmount = totalBeforeDiscount * (Number(coupon.discount_value) / 100);
                     } else if (coupon.discount_type === 'fixed') {
                         discountAmount = Number(coupon.discount_value);
                     }
-                    discountAmount = Math.min(discountAmount, subtotal);
+                    discountAmount = Math.min(discountAmount, totalBeforeDiscount);
                     
                     await client.query('UPDATE coupons SET usage_count = usage_count + 1 WHERE id = $1', [couponId]);
                 }
             }
         }
 
-        // 3. Final Price Calculation
-        let finalPrice = Math.max(0, subtotal - discountAmount);
-        if (delivery_type === 'Delivery') {
-            finalPrice += DELIVERY_FEE;
-        }
+        // 4. Final Price Calculation
+        let finalPrice = Math.max(0, totalBeforeDiscount - discountAmount);
 
         // 4. Insert into orders table
         const orderResult = await client.query(
-            'INSERT INTO orders (customer_id, customer_name, customer_email, customer_phone, customer_address, delivery_type, total_price, coupon_id, discount_amount, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id',
+            'INSERT INTO orders (customer_id, customer_name, customer_email, customer_phone, customer_address, district_id, ward_code, delivery_type, total_price, coupon_id, discount_amount, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id',
             [
                 customer_id || 'GUEST', 
                 customer_name || 'Walk-in Customer', 
                 customer_email || (customer_id === 'GUEST' ? 'walkin@example.com' : null),
-                customer_phone || null,
+                finalPhone,
                 customer_address || null,
+                district_id || null,
+                ward_code || null,
                 delivery_type || 'Pick-up',
                 finalPrice.toFixed(2), 
                 couponId, 
@@ -130,8 +154,8 @@ const createOrder = async (req, res) => {
         // Pro Way: Initialize delivery record immediately so tracking works during "Baking"
         if (delivery_type === 'Delivery') {
             try {
-                await DeliveryService.initializeDelivery(orderId);
-                console.log(`[OrderController] Delivery record initialized for Order #${orderId}`);
+                await DeliveryService.initializeDelivery(orderId, DELIVERY_FEE);
+                console.log(`[OrderController] Delivery record initialized for Order #${orderId} with fee: $${DELIVERY_FEE.toFixed(2)}`);
             } catch (deliveryErr) {
                 console.error('[OrderController] Failed to initialize delivery record:', deliveryErr);
             }
@@ -189,10 +213,14 @@ const getOrders = async (req, res) => {
                 o.payment_status,
                 o.payment_method,
                 o.delivery_type,
-                o.cancel_reason
+                o.district_id,
+                o.ward_code,
+                o.cancel_reason,
+                d.delivery_fee
             FROM orders o
             LEFT JOIN users u ON o.customer_id::text = u.id::text
             LEFT JOIN coupons c ON o.coupon_id = c.id
+            LEFT JOIN deliveries d ON o.id = d.order_id
             ORDER BY o.order_date DESC
         `);
 
@@ -230,9 +258,10 @@ const getMyOrders = async (req, res) => {
     const userId = req.user.id;
     try {
         const result = await query(`
-            SELECT o.id, o.customer_name, o.customer_email, o.customer_phone, o.customer_address, o.delivery_type, o.total_price, o.coupon_id, o.discount_amount, c.code as coupon_code, o.status, o.order_date, o.start_time, o.completed_time, o.payment_status, o.payment_method, o.cancel_reason
+            SELECT o.id, o.customer_name, o.customer_email, o.customer_phone, o.customer_address, o.district_id, o.ward_code, o.delivery_type, o.total_price, o.coupon_id, o.discount_amount, c.code as coupon_code, o.status, o.order_date, o.start_time, o.completed_time, o.payment_status, o.payment_method, o.cancel_reason, d.delivery_fee
             FROM orders o
             LEFT JOIN coupons c ON o.coupon_id = c.id
+            LEFT JOIN deliveries d ON o.id = d.order_id
             WHERE o.customer_id = $1
             ORDER BY o.order_date DESC
             `, [userId]);
@@ -431,9 +460,16 @@ const getOrderById = async (req, res) => {
                 o.payment_status,
                 o.payment_method,
                 o.delivery_type,
-                o.cancel_reason
+                o.district_id,
+                o.ward_code,
+                o.cancel_reason,
+                d.delivery_fee,
+                o.payment_url,
+                o.transaction_id,
+                o.qr_code
             FROM orders o
             LEFT JOIN coupons c ON o.coupon_id = c.id
+            LEFT JOIN deliveries d ON o.id = d.order_id
             WHERE o.id = $1
         `, [id]);
 

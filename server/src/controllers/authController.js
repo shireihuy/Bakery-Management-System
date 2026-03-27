@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const register = async (req, res) => {
-    const { name, email, password, phone_number, address, role, status } = req.body;
+    const { name, email, password, phone_number, address, province_id, district_id, ward_code, role, status } = req.body;
 
     console.log('Registration attempt:', { name, email, role, phone_number, address, status });
 
@@ -28,8 +28,8 @@ const register = async (req, res) => {
 
         console.log('Inserting new user into database...');
         const newUser = await pool.query(
-            'INSERT INTO users (name, email, password, phone_number, address, role, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, email, role, status, phone_number as phone, address',
-            [name, normalizedEmail, hashedPassword, finalPhone, finalAddress, userRole, userStatus]
+            'INSERT INTO users (name, email, password, phone_number, address, province_id, district_id, ward_code, role, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, name, email, role, status, phone_number as phone, address, province_id, district_id, ward_code',
+            [name, normalizedEmail, hashedPassword, finalPhone, finalAddress, province_id || null, district_id || null, ward_code || null, userRole, userStatus]
         );
 
         if (newUser.rows.length === 0) {
@@ -81,7 +81,10 @@ const login = async (req, res) => {
                 role: user.role,
                 status: user.status,
                 phone: user.phone_number,
-                address: user.address
+                address: user.address,
+                province_id: user.province_id,
+                district_id: user.district_id,
+                ward_code: user.ward_code
             }
         });
     } catch (err) {

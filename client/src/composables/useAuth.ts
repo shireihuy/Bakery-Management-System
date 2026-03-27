@@ -8,6 +8,9 @@ interface User {
     status: 'active' | 'inactive';
     phone?: string;
     address?: string;
+    province_id?: number;
+    district_id?: number;
+    ward_code?: string;
 }
 
 const user = ref<User | null>(null);
