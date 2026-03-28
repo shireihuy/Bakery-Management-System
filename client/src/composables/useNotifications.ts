@@ -11,9 +11,33 @@ export interface Notification {
     user_id: string;
 }
 
+export interface ToastNotification {
+    id: string;
+    title: string;
+    message: string;
+    type: 'info' | 'success' | 'warning' | 'error';
+    duration: number;
+}
+
 const notifications = ref<Notification[]>([]);
+const toastQueue = ref<ToastNotification[]>([]);
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 let isSocketInitialized = false;
+
+const addToast = (notification: Notification, duration = 5000) => {
+    const toast: ToastNotification = {
+        id: `toast-${notification.id}-${Date.now()}`,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        duration,
+    };
+    toastQueue.value.push(toast);
+    // Auto-dismiss after duration
+    setTimeout(() => {
+        toastQueue.value = toastQueue.value.filter(t => t.id !== toast.id);
+    }, duration);
+};
 
 const handleNewNotification = (notification: Notification) => {
     // Check for duplicate by ID before adding
@@ -21,10 +45,8 @@ const handleNewNotification = (notification: Notification) => {
     if (!exists) {
         console.log('New notification received via socket:', notification);
         notifications.value.unshift(notification);
-
-        if (Notification.permission === 'granted') {
-            new Notification(notification.title, { body: notification.message });
-        }
+        // Show in-app toast popup
+        addToast(notification);
     }
 };
 
@@ -116,17 +138,25 @@ export function useNotifications() {
 
     // Initialize only if not already initialized
     onMounted(() => {
+        // Ensure socket joined the user room (handles page refresh + already-connected case)
+        socketService.joinUserRoom();
         if (notifications.value.length === 0) {
             fetchNotifications();
         }
     });
 
+    const dismissToast = (id: string) => {
+        toastQueue.value = toastQueue.value.filter(t => t.id !== id);
+    };
+
     return {
         notifications: readonly(notifications),
+        toastQueue: readonly(toastQueue),
         unreadCount,
         markAsRead,
         markAllAsRead,
         deleteNotification,
-        fetchNotifications
+        fetchNotifications,
+        dismissToast
     };
 }

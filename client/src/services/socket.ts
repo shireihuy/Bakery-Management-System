@@ -23,12 +23,13 @@ class SocketService {
         });
     }
 
-    private joinUserRoom() {
+    joinUserRoom() {
         const storedUser = localStorage.getItem('user');
         if (storedUser && this.socket) {
             try {
                 const user = JSON.parse(storedUser);
                 if (user.id) {
+                    console.log(`[Socket] Joining room user_${user.id}`);
                     this.socket.emit('join:user', user.id);
                 }
             } catch (err) {

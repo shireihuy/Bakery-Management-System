@@ -1,4 +1,5 @@
 import { ref, readonly } from 'vue';
+import { socketService } from '../services/socket';
 
 interface User {
     id: string;
@@ -34,6 +35,9 @@ export function useAuth() {
             user.value = data.user;
             localStorage.setItem('user', JSON.stringify(data.user));
             localStorage.setItem('token', data.token);
+
+            // Join socket room for real-time notifications
+            socketService.joinUserRoom();
 
             // Return redirect path based on role
             const role = data.user.role.toLowerCase();
