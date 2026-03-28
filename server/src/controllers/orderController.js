@@ -431,12 +431,23 @@ const updateOrderStatus = async (req, res) => {
         // Create notification for the customer
         try {
             if (order.customer_id && order.customer_id !== 'GUEST') {
-                await NotificationController.createNotification(
-                    order.customer_id,
-                    'Order Status Updated',
-                    `Your order #${id} status is now: ${status}`,
-                    status === 'Completed' ? 'success' : (status === 'Cancelled' ? 'error' : 'info')
-                );
+                if (status) {
+                    // Notify on order status changes only
+                    await NotificationController.createNotification(
+                        order.customer_id,
+                        'Order Status Updated',
+                        `Your order #${id} status is now: ${status}`,
+                        status === 'Completed' ? 'success' : (status === 'Cancelled' ? 'error' : 'info')
+                    );
+                } else if (payment_status === 'Paid') {
+                    // Notify on payment confirmation
+                    await NotificationController.createNotification(
+                        order.customer_id,
+                        'Payment Confirmed',
+                        `Your payment for order #${id} has been confirmed. Thank you!`,
+                        'success'
+                    );
+                }
             }
         } catch (notifErr) {
             console.error('Failed to create status notification:', notifErr);
