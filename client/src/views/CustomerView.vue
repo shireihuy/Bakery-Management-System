@@ -68,6 +68,7 @@ const DELIVERY_FEE = ref(0.50);
 const selectedProvince = ref<number | null>(null);
 const selectedDistrict = ref<number | null>(null);
 const selectedWard = ref<string | null>(null);
+const streetAddress = ref('');
 
 // Derived State
 const isCashier = computed(() => user.value?.role?.toLowerCase() === 'cashier');
@@ -120,6 +121,29 @@ const totalPrice = computed(() => {
     return Math.max(0, totalBeforeDiscount - discountAmount.value);
 });
 
+const mapUrl = computed(() => {
+    let addressParts = [];
+    if (selectedWard.value) {
+        const ward = wards.value.find(w => w.WardCode === selectedWard.value);
+        if (ward) addressParts.push(ward.WardName);
+    }
+    if (selectedDistrict.value) {
+        const district = districts.value.find(d => d.DistrictID === selectedDistrict.value);
+        if (district) addressParts.push(district.DistrictName);
+    }
+    if (selectedProvince.value) {
+        const province = provinces.value.find(p => p.ProvinceID === selectedProvince.value);
+        if (province) addressParts.push(province.ProvinceName);
+    }
+    if (streetAddress.value) {
+        addressParts.unshift(streetAddress.value);
+    }
+    
+    // If no specific address parts, use user's address or a generic location
+    const address = addressParts.length > 0 ? addressParts.join(', ') : (user.value?.address || 'Vietnam');
+    return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+});
+
 // Actions
 const handleCheckout = async () => {
     if (!user.value) {
@@ -133,12 +157,19 @@ const handleCheckout = async () => {
     }
 
     try {
+        const addressPartsList = [];
+        if (streetAddress.value) addressPartsList.push(streetAddress.value);
+        if (selectedWard.value) addressPartsList.push(wards.value.find(w => w.WardCode === selectedWard.value)?.WardName);
+        if (selectedDistrict.value) addressPartsList.push(districts.value.find(d => d.DistrictID === selectedDistrict.value)?.DistrictName);
+        if (selectedProvince.value) addressPartsList.push(provinces.value.find(p => p.ProvinceID === selectedProvince.value)?.ProvinceName);
+        const fullAddress = addressPartsList.filter(Boolean).join(', ') || user.value.address;
+
         const result = await addOrder({
             customerId: isCashier.value ? null : user.value.id,
             customerName: isCashier.value ? orderCustomerName.value : user.value.name,
             customerEmail: isCashier.value ? 'walkin@example.com' : user.value.email,
             customerPhone: isCashier.value ? null : user.value.phone,
-            customerAddress: isCashier.value ? null : user.value.address,
+            customerAddress: isCashier.value ? null : fullAddress,
             deliveryType: selectedDeliveryType.value,
             district_id: selectedDistrict.value,
             ward_code: selectedWard.value,
@@ -305,6 +336,10 @@ onMounted(async () => {
             await fetchOrders();
         } else {
             await fetchMyOrders();
+        }
+        
+        if (user.value.address) {
+            streetAddress.value = user.value.address;
         }
         
         // Auto-populate delivery location if saved in profile
@@ -730,8 +765,26 @@ const confirmCancelOrder = async () => {
                                    </div>
                                    <div class="flex-1 min-w-0">
                                         <p class="text-[10px] font-black text-bakery-400 uppercase tracking-widest">Delivery Address</p>
-                                        <p class="text-xs font-bold text-bakery-900 truncate">{{ user?.address || 'No address set in profile' }}</p><div class='mt-3 grid grid-cols-1 gap-2 pt-2 border-t border-bakery-100/50'><select v-model='selectedProvince' @change='fetchDistricts(selectedProvince!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'><option :value='null' disabled>Province</option><option v-for='p in provinces' :key='p.ProvinceID' :value='p.ProvinceID'>{{p.ProvinceName}}</option></select><select v-if='selectedProvince' v-model='selectedDistrict' @change='fetchWards(selectedDistrict!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'><option :value='null' disabled>District</option><option v-for='d in districts' :key='d.DistrictID' :value='d.DistrictID'>{{d.DistrictName}}</option></select><select v-if='selectedDistrict' v-model='selectedWard' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'><option :value='null' disabled>Ward</option><option v-for='w in wards' :key='w.WardCode' :value='w.WardCode'>{{w.WardName}}</option></select></div>
+                                        <input 
+                                            v-model="streetAddress" 
+                                            type="text" 
+                                            placeholder="Enter street name, house number..." 
+                                            class="w-full mt-1 border-b border-bakery-100 bg-transparent text-xs font-bold text-bakery-900 focus:outline-none focus:border-bakery-400 pb-1 placeholder:text-bakery-300"
+                                        />
+                                        <div class='mt-3 grid grid-cols-1 gap-2 pt-2 border-t border-bakery-100/50'><select v-model='selectedProvince' @change='fetchDistricts(selectedProvince!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'><option :value='null' disabled>Province</option><option v-for='p in provinces' :key='p.ProvinceID' :value='p.ProvinceID'>{{p.ProvinceName}}</option></select><select v-if='selectedProvince' v-model='selectedDistrict' @change='fetchWards(selectedDistrict!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'><option :value='null' disabled>District</option><option v-for='d in districts' :key='d.DistrictID' :value='d.DistrictID'>{{d.DistrictName}}</option></select><select v-if='selectedDistrict' v-model='selectedWard' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'><option :value='null' disabled>Ward</option><option v-for='w in wards' :key='w.WardCode' :value='w.WardCode'>{{w.WardName}}</option></select></div>
                                    </div>
+                              </div>
+                              <div v-if="selectedDeliveryType === 'Delivery'" class="h-32 mt-2 rounded-xl overflow-hidden shadow-sm border border-bakery-100 relative group animate-in fade-in slide-in-from-top-2">
+                                  <iframe 
+                                      :key="mapUrl"
+                                      width="100%" 
+                                      height="100%" 
+                                      style="border:0;" 
+                                      loading="lazy" 
+                                      allowfullscreen 
+                                      :src="mapUrl">
+                                  </iframe>
+                                  <!-- Pointer overlay to make it non-interactive to not break scroll if you want, but for maps interaction is nice -->
                               </div>
                          </div>
                          
@@ -946,7 +999,7 @@ const confirmCancelOrder = async () => {
 
                 <!-- Live Tracking Section -->
                 <div v-if="viewingOrder.deliveryType === 'Delivery'" class="animate-in fade-in slide-in-from-top-4 duration-700 mb-6">
-                    <DeliveryTracker :order-id="viewingOrder.id" :active="isOrderDetailsOpen" />
+                    <DeliveryTracker :order-id="viewingOrder.id" :active="isOrderDetailsOpen" :destination="viewingOrder.address" />
                 </div>
 
                 <!-- Customer Information -->

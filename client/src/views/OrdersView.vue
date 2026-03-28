@@ -245,7 +245,7 @@ const confirmCancel = async () => {
                 <div class="p-6 overflow-y-auto space-y-6">
                     <!-- Live Tracker Section -->
                     <div v-if="viewingOrder.deliveryType === 'Delivery'" class="animate-in fade-in slide-in-from-top-4 duration-700">
-                        <DeliveryTracker :order-id="viewingOrder.id" :active="isDetailOpen" />
+                        <DeliveryTracker :order-id="viewingOrder.id" :active="isDetailOpen" :destination="viewingOrder.address" />
                     </div>
                     <!-- Workflow Actions -->
                     <div class="flex flex-wrap gap-3 p-4 bg-gray-50 rounded-lg border border-gray-100">

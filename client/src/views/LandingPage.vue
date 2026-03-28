@@ -221,6 +221,11 @@ const signatureProducts = [
     }
 ];
 
+const mapUrl = computed(() => {
+    const address = storeLocation.value || t('landing.locationTitle') || 'Vietnam';
+    return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+});
+
 </script>
 
 <template>
@@ -450,6 +455,50 @@ const signatureProducts = [
                     <h3 class="text-bakery-900 font-black text-2xl mb-4 tracking-tight">{{ feature.title }}</h3>
                     <p class="text-bakery-500 font-medium leading-relaxed">{{ feature.description }}</p>
                 </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Store Locator Section -->
+      <section class="bg-white py-32">
+        <div class="container mx-auto px-6">
+          <div class="text-center mb-16 space-y-4">
+            <h2 class="text-5xl font-black text-bakery-900 tracking-tight">Visit Our <span class="text-bakery-600">Store</span></h2>
+            <div class="w-20 h-1.5 bg-bakery-900 mx-auto rounded-full"></div>
+            <p class="text-xl text-bakery-500 font-medium max-w-2xl mx-auto pt-4">
+              Come by and experience the aroma of freshly baked goods in person.
+            </p>
+          </div>
+          
+          <div class="relative rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-bakery-50 h-[500px] group">
+            <iframe 
+               :key="mapUrl"
+               width="100%" 
+               height="100%" 
+               style="border:0;" 
+               loading="lazy" 
+               allowfullscreen 
+               :src="mapUrl">
+            </iframe>
+            
+            <!-- Floating Store Card -->
+            <div class="absolute bottom-6 left-6 md:bottom-10 md:left-10 bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-2xl border border-bakery-100 max-w-sm transform group-hover:-translate-y-2 transition-transform duration-500">
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 bg-bakery-900 rounded-xl flex items-center justify-center shrink-0">
+                  <MapPin class="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 class="text-bakery-900 font-black text-lg mb-1">The Artisan Bakery</h3>
+                  <p class="text-bakery-500 text-sm font-medium mb-3 line-clamp-2">
+                    {{ storeLocation || t('landing.locationTitle') }}
+                  </p>
+                  <div class="flex items-center gap-2 text-bakery-600 text-sm font-bold">
+                    <Clock class="w-4 h-4" />
+                    <span>Open 6 AM - 8 PM</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

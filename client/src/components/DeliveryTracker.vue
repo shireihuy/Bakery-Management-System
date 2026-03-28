@@ -4,7 +4,7 @@ import {
     Clock, 
     User, 
     Truck, 
-    MapPin, 
+
     CheckCircle2, 
     AlertCircle,
     Phone,
@@ -15,6 +15,7 @@ import { useDeliveries } from '../composables/useDeliveries';
 const props = defineProps<{
     orderId: number;
     active: boolean;
+    destination?: string;
 }>();
 
 const { delivery, fetchDeliveryByOrderId, loading, error } = useDeliveries();
@@ -81,6 +82,11 @@ const getStageStatus = (index: number) => {
 const progressWidth = computed(() => {
     if (currentStageIndex.value === -1) return '0%';
     return `${(currentStageIndex.value / (stages.length - 1)) * 100}%`;
+});
+
+const mapUrl = computed(() => {
+    const address = props.destination || 'Vietnam';
+    return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
 });
 
 </script>
@@ -166,8 +172,36 @@ const progressWidth = computed(() => {
                 </div>
             </div>
 
+            <!-- Live Map -->
+            <div class="mt-8 rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-bakery-100 h-48 sm:h-64 relative group">
+                <iframe 
+                    :key="mapUrl"
+                    width="100%" 
+                    height="100%" 
+                    style="border:0;" 
+                    loading="lazy" 
+                    allowfullscreen 
+                    :src="mapUrl">
+                </iframe>
+                <div class="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 bg-white/95 backdrop-blur-md px-4 py-3 rounded-xl shadow-lg border border-bakery-100 flex items-center justify-between sm:justify-start sm:gap-4 group-hover:-translate-y-1 transition-transform duration-300">
+                     <div class="flex items-center gap-3">
+                         <div class="w-10 h-10 rounded-full bg-bakery-50 flex items-center justify-center text-bakery-600">
+                             <Truck class="w-5 h-5" />
+                         </div>
+                         <div>
+                             <p class="text-[10px] sm:text-xs font-black text-bakery-400 uppercase tracking-widest">Routing to</p>
+                             <p class="text-xs sm:text-sm font-bold text-bakery-900 truncate max-w-[150px] sm:max-w-[200px]">{{ props.destination || 'Destination' }}</p>
+                         </div>
+                     </div>
+                     <div v-if="delivery.status !== 'Delivered'" class="text-right sm:text-left pl-3 sm:border-l sm:border-bakery-100">
+                         <p class="text-[10px] sm:text-xs font-black text-bakery-400 uppercase tracking-widest">Est. Time</p>
+                         <p class="text-xs sm:text-sm font-bold text-bakery-900 truncate">25-40 mins</p>
+                     </div>
+                </div>
+            </div>
+
             <!-- Driver Info Card -->
-            <div v-if="delivery.driver_name" class="mt-12 flex items-center gap-4 bg-bakery-50/50 p-4 rounded-2xl border border-bakery-100 animate-in fade-in slide-in-from-bottom-2">
+            <div v-if="delivery.driver_name" class="mt-6 flex items-center gap-4 bg-bakery-50/50 p-4 rounded-2xl border border-bakery-100 animate-in fade-in slide-in-from-bottom-2">
                 <div class="w-12 h-12 rounded-xl bg-white border border-bakery-100 flex items-center justify-center text-bakery-600 shadow-sm font-black text-lg uppercase">
                     {{ delivery.driver_name.charAt(0) }}
                 </div>
@@ -182,12 +216,6 @@ const progressWidth = computed(() => {
                 >
                     <Phone class="w-4 h-4" />
                 </a>
-            </div>
-
-            <!-- Estimated Time -->
-            <div v-if="delivery.status !== 'Delivered'" class="flex items-center gap-2 text-xs font-bold text-bakery-500 justify-center sm:justify-start">
-                <MapPin class="w-4 h-4 text-bakery-400" />
-                Arriving in approx. <span class="text-bakery-900">25-40 mins</span>
             </div>
         </div>
 
