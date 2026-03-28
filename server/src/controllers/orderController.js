@@ -7,6 +7,9 @@ const GHNClient = require('../utils/ghnClient');
 
 const createOrder = async (req, res) => {
     const { 
+        customer_id: body_customer_id,
+        customer_name: body_customer_name,
+        customer_email: body_customer_email,
         customer_address, 
         customer_phone,
         district_id,
@@ -16,9 +19,16 @@ const createOrder = async (req, res) => {
         coupon_code 
     } = req.body;
 
-    const customer_id = req.user?.id || 'GUEST';
-    const customer_name = req.user?.name || 'Walk-in Customer';
-    const customer_email = req.user?.email || (customer_id === 'GUEST' ? 'walkin@example.com' : null);
+    const customer_id = body_customer_id || req.user?.id || 'GUEST';
+    let customer_name = body_customer_name || req.user?.name || 'Walk-in Customer';
+    let customer_email = body_customer_email || req.user?.email || (customer_id === 'GUEST' ? 'walkin@example.com' : null);
+    
+    // If Admin places order for someone else, respect the provided name
+    if (req.user?.role === 'Cashier' || req.user?.role === 'Admin') {
+        customer_name = body_customer_name || 'Walk-in Customer';
+        customer_email = body_customer_email || 'walkin@example.com';
+    }
+
     const finalPhone = customer_phone || req.user?.phone || null;
     
     console.log('Creating order with backend calculation:', { customer_id, customer_name, itemsCount: items?.length, coupon_code });
