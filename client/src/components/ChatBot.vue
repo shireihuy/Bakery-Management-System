@@ -176,7 +176,7 @@ const sendToAI = async (text: string) => {
     messages.value.push({
       id: Date.now() + 1,
       type: 'bot',
-      text: data.text || t('chatbot.errorAI')
+      text: data.text || data.message || t('chatbot.errorAI')
     });
 
   } catch (error) {
