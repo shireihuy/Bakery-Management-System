@@ -15,7 +15,14 @@ export interface Product {
     readonly allergens?: readonly string[];
     readonly rating?: number;
     readonly totalVotes?: number;
+    readonly flashSale?: {
+        readonly salePrice: number;
+        readonly stock: number;
+        readonly sold: number;
+        readonly endTime: string;
+    } | null;
 }
+
 
 const products = ref<Product[]>([]);
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';

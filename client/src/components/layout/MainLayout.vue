@@ -11,8 +11,10 @@ import {
   Warehouse,
   BarChart3,
   Bell,
-  Users
+  Users,
+  Zap
 } from 'lucide-vue-next';
+
 
 import { useAuth } from '../../composables/useAuth';
 import { useNotifications } from '../../composables/useNotifications';
@@ -42,6 +44,10 @@ const navigation = computed(() => {
   if (['admin', 'manager', 'cashier'].includes(role)) {
     tabs.push({ name: t('nav.products'), href: '/products', icon: Package });
   }
+  if (['admin', 'manager'].includes(role)) {
+    tabs.push({ name: 'Flash Sales', href: '/flash-sales', icon: Zap });
+  }
+
   if (['admin', 'manager', 'cashier', 'baker'].includes(role)) {
     tabs.push({ name: t('nav.orders'), href: '/orders', icon: ShoppingCart });
   }

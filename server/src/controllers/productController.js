@@ -5,13 +5,23 @@ const getProducts = async (req, res) => {
         const result = await query(`
             SELECT p.*, 
                    COALESCE(AVG(pr.rating), 0) as avg_rating,
-                   COUNT(pr.rating) as total_votes
+                   COUNT(pr.rating) as total_votes,
+                   fsi.sale_price as flash_sale_price,
+                   fsi.flash_sale_stock,
+                   fsi.sold_quantity as flash_sale_sold,
+                   fs.end_time as flash_sale_end
             FROM products p
             LEFT JOIN product_ratings pr ON p.id = pr.product_id
+            LEFT JOIN flash_sale_items fsi ON p.id = fsi.product_id
+            LEFT JOIN flash_sales fs ON fsi.flash_sale_id = fs.id 
+                AND fs.is_active = TRUE 
+                AND fs.start_time <= CURRENT_TIMESTAMP 
+                AND fs.end_time >= CURRENT_TIMESTAMP
             WHERE p.is_active = TRUE
-            GROUP BY p.id
+            GROUP BY p.id, fsi.sale_price, fsi.flash_sale_stock, fsi.sold_quantity, fs.end_time
             ORDER BY p.id ASC
         `);
+
         const products = result.rows.map(p => ({
             id: p.id.toString(),
             name: p.name,
@@ -27,8 +37,15 @@ const getProducts = async (req, res) => {
             ingredients: Array.isArray(p.ingredients) ? p.ingredients : JSON.parse(p.ingredients || '[]'),
             allergens: Array.isArray(p.allergens) ? p.allergens : JSON.parse(p.allergens || '[]'),
             rating: parseFloat(p.avg_rating).toFixed(1),
-            totalVotes: parseInt(p.total_votes)
+            totalVotes: parseInt(p.total_votes),
+            flashSale: p.flash_sale_price ? {
+                salePrice: parseFloat(p.flash_sale_price),
+                stock: p.flash_sale_stock,
+                sold: p.flash_sale_sold,
+                endTime: p.flash_sale_end
+            } : null
         }));
+
         res.json(products);
     } catch (err) {
         console.error('Error fetching products:', err);

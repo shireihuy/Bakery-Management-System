@@ -225,3 +225,24 @@ CREATE TABLE IF NOT EXISTS deliveries (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Flash Sales Tables
+CREATE TABLE IF NOT EXISTS flash_sales (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS flash_sale_items (
+    id SERIAL PRIMARY KEY,
+    flash_sale_id INTEGER REFERENCES flash_sales(id) ON DELETE CASCADE,
+    product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
+    sale_price DECIMAL(10, 2) NOT NULL,
+    flash_sale_stock INTEGER NOT NULL,
+    sold_quantity INTEGER DEFAULT 0,
+    UNIQUE(flash_sale_id, product_id)
+);
+

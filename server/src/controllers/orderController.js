@@ -48,6 +48,7 @@ const createOrder = async (req, res) => {
         }
 
         for (const item of items) {
+
             const productRes = await client.query(
                 'SELECT id, name, price, stock_quantity FROM products WHERE id = $1 FOR SHARE',
                 [item.product_id]
@@ -63,17 +64,56 @@ const createOrder = async (req, res) => {
                 throw new Error(`Insufficient stock for product: ${product.name}`);
             }
 
-            const itemPrice = Number(product.price);
-            const itemSubtotal = itemPrice * Number(item.quantity);
-            
+            // 1.1 Check for active flash sale
+            const flashSaleRes = await client.query(`
+                SELECT fsi.*, fs.end_time
+                FROM flash_sale_items fsi
+                JOIN flash_sales fs ON fsi.flash_sale_id = fs.id
+                WHERE fsi.product_id = $1
+                AND fs.is_active = TRUE
+                AND fs.start_time <= CURRENT_TIMESTAMP
+                AND fs.end_time >= CURRENT_TIMESTAMP
+                FOR UPDATE
+            `, [product.id]);
+
+            let itemPrice = Number(product.price);
+            let isFlashSale = false;
+            let flashSaleItemId = null;
+            let itemSubtotal = 0;
+            let saleQty = 0;
+            let normalQty = Number(item.quantity);
+
+            if (flashSaleRes.rows.length > 0) {
+                const fsi = flashSaleRes.rows[0];
+                const availableSaleStock = Math.max(0, fsi.flash_sale_stock - fsi.sold_quantity);
+                
+                if (availableSaleStock > 0) {
+                    saleQty = Math.min(normalQty, availableSaleStock);
+                    normalQty -= saleQty;
+                    itemSubtotal = (saleQty * Number(fsi.sale_price)) + (normalQty * itemPrice);
+                    isFlashSale = true;
+                    flashSaleItemId = fsi.id;
+                    // For the record, we'll store the 'average' price or just the subtotal
+                    // But for order_details, we usually store the subtotal.
+                } else {
+                    itemSubtotal = normalQty * itemPrice;
+                }
+            } else {
+                itemSubtotal = normalQty * itemPrice;
+            }
+
             subtotal += itemSubtotal;
             verifiedItems.push({
                 product_id: product.id,
                 quantity: item.quantity,
+                sale_quantity: saleQty, // Track how many were actually on sale
                 subtotal: itemSubtotal.toFixed(2),
-                price: itemPrice
+                price: itemPrice, // Base price
+                isFlashSale,
+                flashSaleItemId
             });
         }
+
 
         // 2. Handle Delivery Fee
         if (delivery_type === 'Delivery') {
@@ -161,7 +201,15 @@ const createOrder = async (req, res) => {
                 'UPDATE products SET stock_quantity = stock_quantity - $1 WHERE id = $2',
                 [item.quantity, item.product_id]
             );
+
+            if (item.isFlashSale && item.flashSaleItemId && item.sale_quantity > 0) {
+                await client.query(
+                    'UPDATE flash_sale_items SET sold_quantity = sold_quantity + $1 WHERE id = $2',
+                    [item.sale_quantity, item.flashSaleItemId]
+                );
+            }
         }
+
 
         await client.query('COMMIT');
 
@@ -398,17 +446,55 @@ const updateOrderStatus = async (req, res) => {
             }
 
             // Restore product stock
-            const itemsRes = await client.query(
-                'SELECT product_id, quantity FROM order_details WHERE order_id = $1',
+            const itemsRes = await client.query(`
+                SELECT od.product_id, od.quantity, fsi.id as flash_sale_item_id
+                FROM order_details od
+                LEFT JOIN products p ON od.product_id = p.id
+                LEFT JOIN flash_sale_items fsi ON p.id = fsi.product_id
+                JOIN orders o ON od.order_id = o.id
+                JOIN flash_sales fs ON fsi.flash_sale_id = fs.id
+                WHERE od.order_id = $1 
+                  AND fs.start_time <= o.order_date 
+                  AND fs.end_time >= o.order_date
+            `, [id]);
+
+            // Note: The logic above for finding the flash sale item is a bit complex 
+            // because we didn't store flash_sale_item_id in order_details.
+            // Ideally we should add flash_sale_item_id to order_details table.
+            // Let's do a simpler approach: check if subtotal/quantity matches flash sale price at that time.
+            
+            const allItemsRes = await client.query(
+                'SELECT product_id, quantity, subtotal FROM order_details WHERE order_id = $1',
                 [id]
             );
 
-            for (const item of itemsRes.rows) {
+            for (const item of allItemsRes.rows) {
                 await client.query(
                     'UPDATE products SET stock_quantity = stock_quantity + $1 WHERE id = $2',
                     [item.quantity, item.product_id]
                 );
+
+                // Check if this item was a flash sale item
+                const unitPrice = Number(item.subtotal) / item.quantity;
+                const fsCheck = await client.query(`
+                    SELECT fsi.id 
+                    FROM flash_sale_items fsi
+                    JOIN flash_sales fs ON fsi.flash_sale_id = fs.id
+                    JOIN orders o ON o.id = $1
+                    WHERE fsi.product_id = $2 
+                      AND ABS(fsi.sale_price - $3) < 0.01
+                      AND fs.start_time <= o.order_date 
+                      AND fs.end_time >= o.order_date
+                `, [id, item.product_id, unitPrice]);
+
+                if (fsCheck.rows.length > 0) {
+                    await client.query(
+                        'UPDATE flash_sale_items SET sold_quantity = GREATEST(0, sold_quantity - $1) WHERE id = $2',
+                        [item.quantity, fsCheck.rows[0].id]
+                    );
+                }
             }
+
 
             // Sync PayOS cancellation
             if (currentOrder.payment_method === 'qr' || currentOrder.payment_method === 'QR (PayOS)') {

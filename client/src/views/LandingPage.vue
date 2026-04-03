@@ -15,6 +15,16 @@ import {
   ChevronRight
 } from "lucide-vue-next";
 
+// Swiper imports
+import { Swiper, SwiperSlide } from 'swiper/vue';
+import { Autoplay, Navigation, Pagination } from 'swiper/modules';
+// @ts-ignore
+import 'swiper/css';
+// @ts-ignore
+import 'swiper/css/navigation';
+// @ts-ignore
+import 'swiper/css/pagination';
+
 import { useAuth } from '../composables/useAuth';
 import { useProducts } from '../composables/useProducts';
 import { useI18n } from '../composables/useI18n';
@@ -60,10 +70,35 @@ const menuProducts = computed(() => {
     return dbProducts.value.length > 0 ? dbProducts.value : [];
 });
 
+const activeFlashSales = ref<any[]>([]);
+const isLoadingFlashSales = ref(false);
 
-const currentSlide = ref(0);
+const fetchActiveFlashSales = async () => {
+    isLoadingFlashSales.value = true;
+    try {
+        const url = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+        const response = await fetch(`${url}/flash-sales/active`);
+        if (response.ok) {
+            const data = await response.json();
+            // Map image paths to full URLs if they are relative paths from the server
+            activeFlashSales.value = data.map((sale: any) => ({
+                ...sale,
+                items: sale.items.map((item: any) => ({
+                    ...item,
+                    image: item.image?.startsWith('/') ? `${url.replace('/api', '')}${item.image}` : item.image
+                }))
+            }));
+        }
+    } catch (err) {
+        console.error('Failed to fetch flash sales:', err);
+    } finally {
+        isLoadingFlashSales.value = false;
+    }
+};
+
+
+
 const slidesToShow = ref(4);
-const isTransitioning = ref(true);
 
 const handleResize = () => {
     if (window.innerWidth < 640) {
@@ -104,6 +139,7 @@ onMounted(() => {
     window.addEventListener('resize', handleResize);
     window.addEventListener('scroll', handleScroll);
     fetchProducts();
+    fetchActiveFlashSales();
     loadStoreInfo();
 });
 
@@ -112,62 +148,9 @@ onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll);
 });
 
-// Auto-rotate carousel
-let timer: ReturnType<typeof setInterval>;
-onMounted(() => {
-    timer = setInterval(() => {
-        nextSlide();
-    }, 3500);
-});
-
-onUnmounted(() => {
-    if (timer) clearInterval(timer);
-});
+// Auto-rotate handled by Swiper component
 
 
-const nextSlide = () => {
-    if (!isTransitioning.value) return;
-    
-    currentSlide.value++;
-    
-    if (currentSlide.value === menuProducts.value.length) {
-        setTimeout(() => {
-            isTransitioning.value = false;
-            currentSlide.value = 0;
-            setTimeout(() => {
-                isTransitioning.value = true;
-            }, 50);
-        }, 500);
-    }
-};
-
-const prevSlide = () => {
-    if (!isTransitioning.value) return;
-
-    if (currentSlide.value === 0) {
-        isTransitioning.value = false;
-        currentSlide.value = menuProducts.value.length;
-        setTimeout(() => {
-            isTransitioning.value = true;
-            currentSlide.value--;
-        }, 50);
-    } else {
-        currentSlide.value--;
-    }
-};
-
-const goToSlide = (index: number) => {
-    isTransitioning.value = true;
-    currentSlide.value = index;
-};
-
-const displayProducts = computed(() => {
-    return [...menuProducts.value, ...menuProducts.value.slice(0, slidesToShow.value)];
-});
-
-const totalDots = computed(() => {
-    return menuProducts.value.length;
-});
 
 const features = computed(() => [
     {
@@ -269,87 +252,115 @@ const mapUrl = computed(() => {
             </h2>
             <div class="w-12 h-1 bg-bakery-600 mx-auto rounded-full"></div>
           </div>
-           
-           <div class="relative group">
-                <div class="overflow-hidden p-4">
-                    <div 
-                        class="flex" 
-                        :class="{ 'transition-transform duration-500 ease-in-out': isTransitioning }"
-                        :style="{ transform: `translateX(-${currentSlide * (100 / slidesToShow)}%)` }"
-                    >
+                    <div class="relative group">
+                <swiper
+                    :modules="[Autoplay, Navigation, Pagination]"
+                    :slides-per-view="1"
+                    :space-between="20"
+                    :loop="true"
+                    :autoplay="{
+                        delay: 3500,
+                        disableOnInteraction: false,
+                    }"
+                    :navigation="{
+                        prevEl: '.swiper-button-prev-custom',
+                        nextEl: '.swiper-button-next-custom',
+                    }"
+                    :pagination="{
+                        clickable: true,
+                        el: '.swiper-pagination-custom',
+                    }"
+                    :breakpoints="{
+                        '640': {
+                            slidesPerView: 2,
+                        },
+                        '1024': {
+                            slidesPerView: 3,
+                        },
+                        '1280': {
+                            slidesPerView: 4,
+                        }
+                    }"
+                    class="p-4"
+                >
+                    <swiper-slide v-for="product in menuProducts" :key="product.id" class="h-auto">
                         <div 
-                            v-for="(product, idx) in displayProducts" 
-                            :key="`${product.id}-${idx}`" 
-                            class="shrink-0 px-4"
-                            :style="{ width: `${100 / slidesToShow}%` }"
+                            :class="[
+                                (product.flashSale && product.flashSale.sold < product.flashSale.stock) 
+                                ? 'border-emerald-600 ring-4 ring-emerald-50/50 shadow-[0_30px_60px_rgba(6,95,70,0.1)] bg-linear-to-b from-white to-emerald-50/10' 
+                                : 'border-bakery-50 hover:border-bakery-200'
+                            ]"
+                            class="bg-white rounded-3xl lg:rounded-[2.5rem] overflow-hidden border transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] h-full flex flex-col group/card m-1"
                         >
-                            <div class="bg-white rounded-3xl lg:rounded-[2.5rem] overflow-hidden border border-bakery-50 hover:border-bakery-200 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] h-full flex flex-col group/card">
-                                <div class="relative h-64 lg:h-72 overflow-hidden">
-                                    <img
-                                        :src="product.image"
-                                        :alt="product.name"
-                                        class="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-700"
-                                    />
-                                    <div class="absolute top-4 right-4 bg-bakery-900/90 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">
+                            <div class="relative h-64 lg:h-72 overflow-hidden">
+                                <img
+                                    :src="product.image"
+                                    :alt="product.name"
+                                    class="w-full h-full object-cover group-hover/card:scale-110 transition-transform duration-700"
+                                />
+                                <div v-if="product.flashSale && product.flashSale.sold < product.flashSale.stock" class="absolute top-0 left-0 bg-bakery-900 text-white px-6 py-2 rounded-br-3xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl z-10">
+                                    Limited Deal
+                                </div>
+                                <div class="absolute top-4 right-4 flex flex-col gap-2 items-end">
+                                    <div class="bg-bakery-900/90 backdrop-blur-md text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">
                                         {{product.category}}
                                     </div>
-                                    <div v-if="product.rating" class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
-                                        <Star class="w-3.5 h-3.5 fill-accent-gold text-accent-gold" />
-                                        <span class="text-xs text-bakery-900 font-black">{{product.rating}}</span>
+                                    <div v-if="product.flashSale && product.flashSale.sold < product.flashSale.stock" class="bg-emerald-600 text-white px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-tighter animate-pulse shadow-lg">
+                                        Flash Sale
                                     </div>
                                 </div>
-                                <div class="p-5 lg:p-6 flex-1 flex flex-col">
-                                    <h3 class="text-bakery-900 mb-2 font-black text-lg">{{product.name}}</h3>
-                                    <p class="text-xs lg:text-sm text-bakery-500 mb-6 font-medium line-clamp-2">{{product.description}}</p>
-                                    <div class="flex items-center justify-between mt-auto">
-                                        <div class="flex flex-col">
-                                            <span class="text-xl lg:text-2xl text-bakery-900 font-black">
-                                                {{ formatPrice(product.price) }}
+                                <div v-if="product.rating" class="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
+                                    <Star class="w-3.5 h-3.5 fill-accent-gold text-accent-gold" />
+                                    <span class="text-xs text-bakery-900 font-black">{{product.rating}}</span>
+                                </div>
+                            </div>
+                            <div class="p-5 lg:p-6 flex-1 flex flex-col">
+                                <h3 class="text-bakery-900 mb-2 font-black text-lg">{{product.name}}</h3>
+                                <p class="text-xs lg:text-sm text-bakery-500 mb-6 font-medium line-clamp-2">{{product.description}}</p>
+                                <div class="flex items-center justify-between mt-auto">
+                                    <div class="flex flex-col">
+                                        <div v-if="product.flashSale && product.flashSale.sold < product.flashSale.stock" class="flex flex-col">
+                                            <span class="text-[10px] text-bakery-400 line-through font-bold">{{ formatPrice(product.price) }}</span>
+                                            <span class="text-xl lg:text-2xl text-emerald-600 font-black">
+                                                {{ formatPrice(product.flashSale.salePrice) }}
                                             </span>
-                                            <span class="text-[10px] text-bakery-400 font-bold uppercase tracking-widest">{{ product.stock }} {{ t('inventory.unit') || 'left' }}</span>
                                         </div>
-                                        <button
-                                            @click="onGetStarted"
-                                            class="shrink-0 w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-bakery-50 flex items-center justify-center text-bakery-900 group-hover/card:bg-bakery-900 group-hover/card:text-white transition-all duration-300 shadow-sm"
-                                        >
-                                            <ArrowRight class="w-4 h-4 lg:w-5 lg:h-5" />
-                                        </button>
+                                        <span v-else class="text-xl lg:text-2xl text-bakery-900 font-black">
+                                            {{ formatPrice(product.price) }}
+                                        </span>
+                                        <span class="text-[10px] text-bakery-400 font-bold uppercase tracking-widest">{{ product.stock }} {{ t('inventory.unit') || 'left' }}</span>
                                     </div>
+                                    <button
+                                        @click="onGetStarted"
+                                        class="shrink-0 w-10 h-10 lg:w-12 lg:h-12 rounded-xl lg:rounded-2xl bg-bakery-50 flex items-center justify-center text-bakery-900 group-hover/card:bg-bakery-900 group-hover/card:text-white transition-all duration-300 shadow-sm"
+                                    >
+                                        <ArrowRight class="w-4 h-4 lg:w-5 lg:h-5" />
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </swiper-slide>
+                </swiper>
 
                 <!-- Navigation Controls -->
                 <button 
-                    @click="prevSlide"
-                    class="hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 w-14 h-14 rounded-full bg-white shadow-2xl border border-bakery-50 items-center justify-center text-bakery-900 hover:bg-bakery-900 hover:text-white transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-0 z-10"
+                    class="swiper-button-prev-custom hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 w-14 h-14 rounded-full bg-white shadow-2xl border border-bakery-50 items-center justify-center text-bakery-900 hover:bg-bakery-900 hover:text-white transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-0 z-30"
                 >
                     <ChevronLeft class="w-6 h-6" />
                 </button>
                 <button 
-                    @click="nextSlide"
-                    class="hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 w-14 h-14 rounded-full bg-white shadow-2xl border border-bakery-50 items-center justify-center text-bakery-900 hover:bg-bakery-900 hover:text-white transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-0 z-10"
+                    class="swiper-button-next-custom hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 w-14 h-14 rounded-full bg-white shadow-2xl border border-bakery-50 items-center justify-center text-bakery-900 hover:bg-bakery-900 hover:text-white transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-0 z-30"
                 >
                     <ChevronRight class="w-6 h-6" />
                 </button>
 
                 <!-- Pagination Dots -->
-                <div v-if="totalDots > 1" class="flex justify-center mt-12 gap-3">
-                    <button 
-                        v-for="(_, index) in totalDots" 
-                        :key="index"
-                        @click="goToSlide(index)"
-                        :class="[currentSlide === index ? 'bg-bakery-900 w-10' : 'bg-bakery-100 w-3 hover:bg-bakery-200']"
-                        class="h-1.5 rounded-full transition-all duration-500"
-                    ></button>
-                </div>
+                <div class="swiper-pagination-custom flex justify-center mt-12 gap-3 static!"></div>
            </div>
         </div>
        </section>
       
-      <!-- Hero Section -->
+       <!-- Hero Section -->
       <section class="container mx-auto px-6 py-24 lg:py-40">
         <div class="grid lg:grid-cols-2 gap-20 items-center">
           <div class="space-y-10 text-center lg:text-left flex flex-col items-center lg:items-start">
@@ -406,6 +417,7 @@ const mapUrl = computed(() => {
           </div>
         </div>
       </section>
+
 
 
       <!-- Signature Grid -->

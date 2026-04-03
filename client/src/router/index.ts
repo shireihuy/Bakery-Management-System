@@ -12,6 +12,8 @@ import UsersView from '../views/UsersView.vue'
 import NotificationsView from '../views/NotificationsView.vue'
 import InventoryView from '../views/InventoryView.vue'
 import ReportsView from '../views/ReportsView.vue'
+import FlashSalesManager from '../views/FlashSalesManager.vue'
+
 import { useAuth } from '../composables/useAuth'
 
 const router = createRouter({
@@ -116,6 +118,19 @@ const router = createRouter({
                 }
             ]
         },
+        {
+            path: '/flash-sales',
+            component: MainLayout,
+            meta: { requiresAuth: true, roles: ['admin', 'manager'] },
+            children: [
+                {
+                    path: '',
+                    name: 'flash-sales',
+                    component: FlashSalesManager
+                }
+            ]
+        },
+
         {
             path: '/customer',
             component: MainLayout,

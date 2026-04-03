@@ -63,6 +63,7 @@ const couponRoutes = require('./routes/couponRoutes');
 const systemRoutes = require('./routes/systemRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const deliveryRoutes = require('./routes/deliveryRoutes');
+const flashSaleRoutes = require('./routes/flashSaleRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -76,6 +77,8 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/system', systemRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/deliveries', deliveryRoutes);
+app.use('/api/flash-sales', flashSaleRoutes);
+
 
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

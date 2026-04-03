@@ -20,9 +20,18 @@ const getCart = async (req, res) => {
                 p.price,
                 p.stock_quantity as stock,
                 p.image_url as image,
-                p.category
+                p.category,
+                fsi.sale_price as flash_sale_price,
+                fsi.flash_sale_stock,
+                fsi.sold_quantity as flash_sale_sold,
+                fs.end_time as flash_sale_end
             FROM cart_items ci
             JOIN products p ON ci.product_id = p.id
+            LEFT JOIN flash_sale_items fsi ON p.id = fsi.product_id
+            LEFT JOIN flash_sales fs ON fsi.flash_sale_id = fs.id 
+                AND fs.is_active = TRUE 
+                AND fs.start_time <= CURRENT_TIMESTAMP 
+                AND fs.end_time >= CURRENT_TIMESTAMP
             WHERE ci.user_id = $1
             ORDER BY ci.created_at ASC
         `, [userId]);
@@ -36,10 +45,17 @@ const getCart = async (req, res) => {
             stock: Number(row.stock),
             image: row.image,
             category: row.category,
-            quantity: row.quantity
+            quantity: row.quantity,
+            flashSale: row.flash_sale_price ? {
+                salePrice: parseFloat(row.flash_sale_price),
+                stock: row.flash_sale_stock,
+                sold: row.flash_sale_sold,
+                endTime: row.flash_sale_end
+            } : null
         }));
         
         res.json({ success: true, cart: items });
+
     } catch (error) {
         console.error('Error fetching cart:', error);
         res.status(500).json({ success: false, message: 'Server error' });

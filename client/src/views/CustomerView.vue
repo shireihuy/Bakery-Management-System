@@ -29,6 +29,8 @@ import { useI18n } from '../composables/useI18n';
 import { useCurrency } from '../composables/useCurrency';
 import { useCart } from '../composables/useCart';
 import { useGHN } from '../composables/useGHN';
+import FlashSaleSection from '../components/FlashSaleSection.vue';
+
 
 // State
 const { products, fetchProducts, submitRating } = useProducts();
@@ -58,6 +60,9 @@ const showLoginPrompt = ref(false);
 const userRating = ref(0);
 const hoverRating = ref(0);
 const isSubmittingRating = ref(false);
+const activeFlashSales = ref<any[]>([]);
+const isLoadingFlashSales = ref(false);
+
 
 const couponCodeInput = ref('');
 const appliedCoupon = ref<any>(null);
@@ -102,7 +107,16 @@ const filteredAndSortedProducts = computed(() => {
 });
 
 const totalItems = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0));
-const subTotalPrice = computed(() => cart.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
+const subTotalPrice = computed(() => cart.value.reduce((sum, item) => {
+    if (item.flashSale) {
+        const availableSaleStock = Math.max(0, item.flashSale.stock - item.flashSale.sold);
+        const saleQty = Math.min(item.quantity, availableSaleStock);
+        const normalQty = Math.max(0, item.quantity - saleQty);
+        return sum + (saleQty * item.flashSale.salePrice) + (normalQty * item.price);
+    }
+    return sum + (item.price * item.quantity);
+}, 0));
+
 
 const discountAmount = computed(() => {
     if (!appliedCoupon.value) return 0;
@@ -283,7 +297,14 @@ const flyingItems = ref<{ id: number, x: number, y: number, targetX: number, tar
 let flyIdCounter = 0;
 
 const handleAddToCart = (product: Product, event: MouseEvent | null) => {
-    addToCart(product);
+    // Check if flash sale is actually valid (has stock)
+    const activeProduct = { ...product };
+    if (activeProduct.flashSale && activeProduct.flashSale.sold >= activeProduct.flashSale.stock) {
+        activeProduct.flashSale = null;
+    }
+    
+    addToCart(activeProduct);
+
     
     // Bounce effect
     isCartBouncing.value = true;
@@ -319,6 +340,24 @@ const handleAddToCart = (product: Product, event: MouseEvent | null) => {
     }
 };
 
+const handleFlashSaleAddToCart = (item: any, event: MouseEvent | null) => {
+    const product: any = {
+        id: item.product_id.toString(),
+        name: item.name,
+        price: parseFloat(item.original_price),
+        image: item.image,
+        stock: item.flash_sale_stock,
+        flashSale: {
+            salePrice: parseFloat(item.sale_price),
+            stock: item.flash_sale_stock,
+            sold: item.sold_quantity,
+            endTime: '' 
+        }
+    };
+    handleAddToCart(product, event);
+};
+
+
 const addToCartFromDialogExtended = (event: MouseEvent) => {
     if (selectedProduct.value) {
         handleAddToCart(selectedProduct.value, event);
@@ -328,9 +367,36 @@ const addToCartFromDialogExtended = (event: MouseEvent) => {
 
 const isCancelModalOpen = ref(false);
 
+const fetchActiveFlashSales = async () => {
+
+    isLoadingFlashSales.value = true;
+    try {
+        const url = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+        const response = await fetch(`${url}/flash-sales/active`);
+        if (response.ok) {
+            const data = await response.json();
+            // Map image paths to full URLs if they are relative paths from the server
+            activeFlashSales.value = data.map((sale: any) => ({
+                ...sale,
+                items: sale.items.map((item: any) => ({
+                    ...item,
+                    image: item.image?.startsWith('/') ? `${url.replace('/api', '')}${item.image}` : item.image
+                }))
+            }));
+        }
+
+    } catch (err) {
+        console.error('Failed to fetch flash sales:', err);
+    } finally {
+        isLoadingFlashSales.value = false;
+    }
+};
+
 onMounted(async () => {
     await fetchProducts();
+    await fetchActiveFlashSales();
     await fetchCart();
+
     if (user.value) {
         if (isCashier.value) {
             await fetchOrders();
@@ -469,8 +535,18 @@ const confirmCancelOrder = async () => {
         </button>
     </div>
 
+    <!-- Flash Sale Section -->
+    <FlashSaleSection 
+        v-if="activeFlashSales.length > 0 && activeTab === 'menu'"
+        :activeSales="activeFlashSales"
+        @add-to-cart="handleFlashSaleAddToCart"
+    />
+
+
+
 
     <!-- Menu Content -->
+
     <div v-if="activeTab === 'menu'" class="space-y-6">
         <!-- Filters -->
         <div class="glass-card p-4 sm:p-6 rounded-3xl border border-bakery-100 mb-8 premium-shadow">
@@ -539,10 +615,16 @@ const confirmCancelOrder = async () => {
                     <div class="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-end p-6">
                         <p class="text-white text-sm font-medium line-clamp-2">{{ product.description }}</p>
                     </div>
-                    <div class="absolute top-4 right-4 glass-card px-3 py-1.5 rounded-xl text-bakery-700 text-xs font-bold uppercase tracking-widest">
-                        {{ product.category }}
+                    <div class="absolute top-4 right-4 flex flex-col gap-2 items-end">
+                        <div class="glass-card px-3 py-1.5 rounded-xl text-bakery-700 text-xs font-bold uppercase tracking-widest">
+                            {{ product.category }}
+                        </div>
+                        <div v-if="product.flashSale && product.flashSale.sold < product.flashSale.stock" class="bg-red-500 text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-tighter animate-pulse shadow-lg">
+                            Flash Sale
+                        </div>
                     </div>
                 </div>
+
 
                 <div class="p-6 flex-1 flex flex-col">
                     <div class="flex justify-between items-start mb-4">
@@ -557,9 +639,14 @@ const confirmCancelOrder = async () => {
                     <div class="mt-auto space-y-5">
                           <div class="flex justify-between items-center">
                              <div class="flex flex-col">
-                                <span class="text-2xl font-black text-bakery-900">{{ formatPrice(product.price) }}</span>
+                                <div v-if="product.flashSale && product.flashSale.sold < product.flashSale.stock" class="flex flex-col">
+                                    <span class="text-xs text-bakery-400 line-through font-bold">{{ formatPrice(product.price) }}</span>
+                                    <span class="text-2xl font-black text-red-600">{{ formatPrice(product.flashSale.salePrice) }}</span>
+                                </div>
+                                <span v-else class="text-2xl font-black text-bakery-900">{{ formatPrice(product.price) }}</span>
                                 <span class="text-xs text-bakery-400 font-bold uppercase tracking-widest">{{ product.stock }} left</span>
                              </div>
+
                              <div class="flex gap-2">
                                 <button @click="openProductDetails(product)" class="w-12 h-12 rounded-2xl border border-bakery-100 text-bakery-600 hover:bg-bakery-50 transition-all flex items-center justify-center shadow-sm">
                                     <Info class="w-5 h-5" />
@@ -715,14 +802,24 @@ const confirmCancelOrder = async () => {
                                             <Trash2 class="w-4 h-4" />
                                         </button>
                                     </div>
-                                    <div class="flex items-center justify-between">
-                                        <p class="text-bakery-600 font-bold">{{ formatPrice(item.price * item.quantity) }}</p>
+                                    <div class="flex items-center justify-between mt-1">
+                                        <div class="flex flex-col">
+                                            <span v-if="item.flashSale" class="text-[10px] text-bakery-300 line-through font-bold mb-0.5">{{ formatPrice(item.price * item.quantity) }}</span>
+                                            <p :class="item.flashSale ? 'text-red-500' : 'text-bakery-600'" class="font-bold leading-none">
+                                                {{ formatPrice(
+                                                    item.flashSale 
+                                                    ? (Math.min(item.quantity, Math.max(0, item.flashSale.stock - item.flashSale.sold)) * item.flashSale.salePrice) + (Math.max(0, item.quantity - Math.max(0, item.flashSale.stock - item.flashSale.sold)) * item.price)
+                                                    : (item.price * item.quantity)
+                                                ) }}
+                                            </p>
+                                        </div>
                                         <div class="flex items-center gap-3 bg-bakery-50 p-1 rounded-xl">
                                              <button @click="updateQuantity(item.id, -1)" class="w-7 h-7 rounded-lg bg-white border border-bakery-100 flex items-center justify-center hover:bg-bakery-100 transition-colors"><Minus class="w-3 h-3" /></button>
                                              <span class="text-sm w-4 text-center font-bold text-bakery-900">{{ item.quantity }}</span>
                                              <button @click="updateQuantity(item.id, 1)" class="w-7 h-7 rounded-lg bg-white border border-bakery-100 flex items-center justify-center hover:bg-bakery-100 transition-colors"><Plus class="w-3 h-3" /></button>
                                         </div>
                                     </div>
+
                                 </div>
                             </div>
                         </div>
