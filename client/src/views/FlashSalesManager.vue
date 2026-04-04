@@ -32,8 +32,8 @@
         </div>
         
         <div class="p-5 space-y-4">
-          <div v-for="item in sale.items" :key="item.id" class="flex items-center gap-3">
-            <img :src="item.image" class="w-10 h-10 rounded-lg object-cover" />
+          <div v-for="item in sale.items" :key="item.id || item.product_id" class="flex items-center gap-3">
+            <img :src="item.image || getProductImage(item.product_id)" class="w-10 h-10 rounded-lg object-cover" />
             <div class="flex-1 min-w-0">
               <p class="text-sm font-bold text-gray-900 truncate">{{ item.name }}</p>
               <div class="flex items-center gap-2">
@@ -80,12 +80,41 @@
               <label class="text-xs font-black text-gray-400 uppercase tracking-widest">Event Name</label>
               <input v-model="newSale.name" type="text" class="w-full h-12 rounded-xl border border-gray-100 px-4 focus:ring-2 focus:ring-bakery-300" placeholder="e.g., Midnight Matcha" />
             </div>
-            <div class="space-y-2">
-              <label class="text-xs font-black text-gray-400 uppercase tracking-widest">Products</label>
-              <select @change="addProductToSale($event)" class="w-full h-12 rounded-xl border border-gray-100 px-4 focus:ring-2 focus:ring-bakery-300">
-                <option value="">Select a product...</option>
-                <option v-for="p in availableProducts" :key="p.id" :value="p.id">{{ p.name }} (${{ p.price }})</option>
-              </select>
+            <div class="space-y-2 relative">
+              <label class="text-xs font-black text-gray-400 uppercase tracking-widest">Add Product</label>
+              <div class="relative">
+                <div class="flex items-center bg-white rounded-xl border border-gray-100 px-4 focus-within:ring-2 focus-within:ring-bakery-300 transition-all">
+                  <span class="text-gray-400">🔍</span>
+                  <input 
+                    type="text" 
+                    v-model="productSearch" 
+                    @focus="isDropdownOpen = true"
+                    class="w-full h-12 bg-transparent border-none focus:ring-0 text-sm outline-none" 
+                    placeholder="Search available products..." 
+                  />
+                </div>
+                
+                <!-- Custom Dropdown -->
+                <div v-if="isDropdownOpen && filteredAvailableProducts.length > 0" 
+                     class="absolute z-50 left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div 
+                    v-for="p in filteredAvailableProducts" 
+                    :key="p.id" 
+                    @click="selectProduct(p)"
+                    class="p-3 hover:bg-bakery-50 cursor-pointer flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
+                  >
+                    <img :src="p.image" class="w-10 h-10 rounded-lg object-cover shadow-sm" />
+                    <div class="flex-1 min-w-0">
+                      <p class="font-bold text-gray-900 text-sm truncate">{{ p.name }}</p>
+                      <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">${{ p.price }}</p>
+                    </div>
+                    <div class="text-bakery-600 font-bold text-lg">+</div>
+                  </div>
+                </div>
+                
+                <!-- Backdrop to close dropdown -->
+                <div v-if="isDropdownOpen" @click="isDropdownOpen = false" class="fixed inset-0 z-10"></div>
+              </div>
             </div>
           </div>
 
@@ -104,6 +133,7 @@
           <div v-if="newSale.items.length > 0" class="space-y-4">
             <label class="text-xs font-black text-gray-400 uppercase tracking-widest">Item Settings</label>
             <div v-for="(item, index) in newSale.items" :key="item.product_id" class="p-4 bg-gray-50 rounded-2xl flex flex-wrap items-center gap-4 border border-gray-100">
+              <img :src="getProductImage(item.product_id)" class="w-16 h-16 rounded-xl object-cover shadow-sm border border-gray-200" />
               <div class="flex-1 min-w-[150px]">
                 <p class="font-bold text-gray-900">{{ getProductName(item.product_id) }}</p>
                 <p class="text-xs text-gray-400">Regular: ${{ getProductPrice(item.product_id) }}</p>
@@ -143,6 +173,8 @@ import { useProducts } from '../composables/useProducts';
 const { products, fetchProducts } = useProducts();
 const flashSales = ref([]);
 const isModalOpen = ref(false);
+const isDropdownOpen = ref(false);
+const productSearch = ref('');
 
 const newSale = ref({
   name: '',
@@ -160,7 +192,15 @@ const fetchFlashSales = async () => {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
-            flashSales.value = await response.json();
+            const data = await response.json();
+            // Map image paths to full URLs if they are relative paths from the server
+            flashSales.value = data.map((sale) => ({
+                ...sale,
+                items: sale.items.map((item) => ({
+                    ...item,
+                    image: item.image?.startsWith('/') ? `${API_URL.replace('/api', '')}${item.image}` : item.image
+                }))
+            }));
         }
     } catch (err) {
         console.error('Failed to fetch flash sales:', err);
@@ -177,19 +217,17 @@ const openCreateModal = () => {
     isModalOpen.value = true;
 };
 
-const addProductToSale = (event) => {
-    const productId = parseInt(event.target.value);
-    if (!productId) return;
-    
+const selectProduct = (product) => {
+    const productId = parseInt(product.id);
     if (newSale.value.items.some(i => i.product_id === productId)) return;
     
-    const product = products.value.find(p => parseInt(p.id) === productId);
     newSale.value.items.push({
         product_id: productId,
         sale_price: (product.price * 0.5).toFixed(2),
         flash_sale_stock: 10
     });
-    event.target.value = '';
+    productSearch.value = '';
+    isDropdownOpen.value = false;
 };
 
 const removeItem = (index) => {
@@ -198,9 +236,19 @@ const removeItem = (index) => {
 
 const getProductName = (id) => products.value.find(p => parseInt(p.id) === id)?.name || 'Unknown';
 const getProductPrice = (id) => products.value.find(p => parseInt(p.id) === id)?.price || 0;
+const getProductImage = (id) => products.value.find(p => parseInt(p.id) === id)?.image || '';
 
 const availableProducts = computed(() => {
     return products.value.filter(p => !newSale.value.items.some(i => i.product_id === parseInt(p.id)));
+});
+
+const filteredAvailableProducts = computed(() => {
+    if (!productSearch.value) return availableProducts.value;
+    const query = productSearch.value.toLowerCase();
+    return availableProducts.value.filter(p => 
+        p.name.toLowerCase().includes(query) || 
+        p.category.toLowerCase().includes(query)
+    );
 });
 
 const isFormValid = computed(() => {
