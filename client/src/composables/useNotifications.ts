@@ -1,6 +1,8 @@
 import { ref, readonly, computed, onMounted } from 'vue';
 import { socketService } from '../services/socket';
 
+import notificationSound from '../assets/notification.mp3';
+
 export interface Notification {
     id: string;
     title: string;
@@ -24,6 +26,18 @@ const toastQueue = ref<ToastNotification[]>([]);
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 let isSocketInitialized = false;
 
+// Initialize audio once to be ready for playback
+const audio = new Audio(notificationSound);
+
+const playSound = () => {
+    // Reset and play
+    audio.currentTime = 0;
+    audio.play().catch(error => {
+        // Silently fail if autoplay is blocked or other issues
+        console.warn('Audio playback failed:', error);
+    });
+};
+
 const addToast = (notification: Notification, duration = 5000) => {
     const toast: ToastNotification = {
         id: `toast-${notification.id}-${Date.now()}`,
@@ -32,6 +46,10 @@ const addToast = (notification: Notification, duration = 5000) => {
         type: notification.type,
         duration,
     };
+    
+    // Play sound for the new toast
+    playSound();
+    
     toastQueue.value.push(toast);
     // Auto-dismiss after duration
     setTimeout(() => {
