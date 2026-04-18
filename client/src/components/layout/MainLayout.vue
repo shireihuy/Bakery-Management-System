@@ -12,7 +12,8 @@ import {
   BarChart3,
   Bell,
   Users,
-  Zap
+  Zap,
+  MessageSquare
 } from 'lucide-vue-next';
 
 
@@ -59,6 +60,10 @@ const navigation = computed(() => {
   }
   if (role === 'admin') {
     tabs.push({ name: t('nav.users'), href: '/users', icon: Users });
+  }
+
+  if (['admin', 'manager'].includes(role)) {
+    tabs.push({ name: 'Support', href: '/support-chat', icon: MessageSquare });
   }
   
   // Static tabs for everyone (including guests)

@@ -84,18 +84,17 @@ const qnaData = computed<QnA[]>(() => {
 const isOpen = ref(false);
 const userInput = ref('');
 const isBaking = ref(false);
-// Hides QnA as soon as the user sends any question; can be toggled back
 const questionAsked = ref(false);
 const showQnA = ref(true);
 
 const messages = ref<Message[]>([]);
 
-// Initialize messages on mount
 onMounted(() => {
   messages.value = [
     { id: 1, type: 'bot', text: t('chatbot.welcome') }
   ];
 });
+
 const messageContainer = ref<HTMLElement | null>(null);
 
 const categories = computed(() => [...new Set(qnaData.value.map(item => item.category))]);
@@ -134,7 +133,6 @@ const selectCategory = (category: string) => {
 const sendToAI = async (text: string) => {
   if (!text.trim() || isBaking.value) return;
 
-  // Hide QnA immediately when user sends a question
   questionAsked.value = true;
   showQnA.value = false;
 
@@ -225,7 +223,7 @@ watch(currentLocale, () => { resetChat(); });
     <!-- Chat Toggle Button -->
     <button
       @click="toggleChat"
-      class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-bakery-600 text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group relative animate-float"
+      class="w-12 h-12 md:w-14 md:h-14 rounded-full bg-bakery-900 text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all group relative animate-float"
       :class="{ 'rotate-90': isOpen }"
     >
       <svg v-if="!isOpen" xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -234,9 +232,6 @@ watch(currentLocale, () => { resetChat(); });
       <svg v-else xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
       </svg>
-
-      <!-- Notification Dot -->
-      <div v-if="!isOpen" class="absolute -top-1 -right-1 w-3.5 h-3.5 md:w-4 md:h-4 bg-accent-gold rounded-full border-2 border-white animate-pulse"></div>
     </button>
 
     <!-- Chat Window -->
@@ -248,7 +243,7 @@ watch(currentLocale, () => { resetChat(); });
       leave-from-class="transform translate-x-0 translate-y-0 opacity-100 scale-100"
       leave-to-class="transform translate-x-10 -translate-y-10 opacity-0 scale-95"
     >
-      <div v-if="isOpen" class="absolute bottom-16 md:bottom-20 right-0 w-[calc(100vw-2rem)] sm:w-80 md:w-96 glass-card rounded-4xl md:rounded-[2.5rem] overflow-hidden flex flex-col max-h-[70vh] ring-1 ring-bakery-900/5">
+      <div v-if="isOpen" class="absolute bottom-16 md:bottom-20 right-0 w-[calc(100vw-2rem)] sm:w-80 md:w-96 glass-card rounded-4xl md:rounded-[2.5rem] overflow-hidden flex flex-col max-h-[70vh] ring-1 ring-bakery-900/5 shadow-2xl">
         <!-- Header -->
         <div class="bg-bakery-900 p-6 text-white flex items-center gap-4">
           <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl">
@@ -277,7 +272,7 @@ watch(currentLocale, () => { resetChat(); });
               :class="[
                 'max-w-[85%] p-4 rounded-3xl text-sm leading-relaxed',
                 msg.type === 'user'
-                  ? 'bg-bakery-600 text-white rounded-tr-none'
+                  ? 'bg-bakery-900 text-white rounded-tr-none'
                   : 'bg-white text-bakery-900 shadow-sm border border-bakery-100 rounded-tl-none'
               ]"
             >
@@ -285,7 +280,6 @@ watch(currentLocale, () => { resetChat(); });
             </div>
           </div>
 
-          <!-- Baking Loader -->
           <div v-if="isBaking" class="flex justify-start">
             <div class="bg-white text-bakery-400 p-4 rounded-3xl rounded-tl-none shadow-sm border border-bakery-100 flex items-center gap-2">
               <span class="text-xs font-medium italic">{{ t('chatbot.baking') }}</span>
@@ -298,7 +292,7 @@ watch(currentLocale, () => { resetChat(); });
           </div>
         </div>
 
-        <!-- QnA Options Area — hidden once an answer is generated -->
+        <!-- QnA Options Area -->
         <Transition
           enter-active-class="transition duration-300 ease-out"
           enter-from-class="opacity-0 translate-y-2"
@@ -308,16 +302,15 @@ watch(currentLocale, () => { resetChat(); });
           leave-to-class="opacity-0 translate-y-2"
         >
           <div v-if="showQnA" class="p-6 pt-0 bg-white/50 space-y-3">
-            <!-- Category Selection -->
             <div v-if="!currentCategory" class="flex flex-col gap-2">
               <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400 px-2 mb-1">{{ t('chatbot.chooseTopic') }}</p>
               <button
                 v-for="cat in categories"
                 :key="cat"
                 @click="selectCategory(cat)"
-                class="w-full text-left p-4 rounded-2xl bg-white border border-bakery-100 hover:border-bakery-600 hover:bg-bakery-50 transition-all text-xs font-bold text-bakery-700 flex items-center justify-between group"
+                class="w-full text-left p-4 rounded-2xl bg-white border border-bakery-100 hover:border-bakery-900 hover:bg-bakery-50 transition-all text-xs font-bold text-bakery-700 flex items-center justify-between group"
               >
-                <span class="flex items-center gap-2">
+                 <span class="flex items-center gap-2">
                   <span v-if="cat === t('chatbot.categories.coupons')">🏷️</span>
                   <span v-else-if="cat === t('chatbot.categories.howto')">📖</span>
                   <span v-else-if="cat === t('chatbot.categories.aboutUs')">🏪</span>
@@ -328,7 +321,6 @@ watch(currentLocale, () => { resetChat(); });
               </button>
             </div>
 
-            <!-- Question Selection -->
             <div v-else class="flex flex-col gap-2">
               <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400 px-2 mb-1">{{ currentCategory }}</p>
               <div class="max-h-48 overflow-y-auto space-y-2 pr-1 scrollbar-hide">
@@ -354,7 +346,6 @@ watch(currentLocale, () => { resetChat(); });
         <!-- Input Area -->
         <div class="p-4 bg-white border-t border-bakery-100">
           <form @submit.prevent="sendToAI(userInput)" class="relative flex items-center gap-2">
-            <!-- Toggle QnA button — only visible after first question -->
             <button
               v-if="questionAsked"
               type="button"
@@ -362,7 +353,7 @@ watch(currentLocale, () => { resetChat(); });
               :title="showQnA ? t('chatbot.hideTopics') : t('chatbot.showTopics')"
               class="shrink-0 p-2.5 rounded-2xl border transition-all text-xs font-bold"
               :class="showQnA
-                ? 'bg-bakery-600 text-white border-bakery-600'
+                ? 'bg-bakery-900 text-white border-bakery-900'
                 : 'bg-bakery-50 text-bakery-500 border-bakery-100 hover:border-bakery-400 hover:text-bakery-700'"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
@@ -371,13 +362,13 @@ watch(currentLocale, () => { resetChat(); });
               v-model="userInput"
               type="text"
               :placeholder="t('chatbot.placeholder')"
-              class="w-full bg-bakery-50/50 border border-bakery-100 rounded-2xl py-3 px-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-bakery-600/20 focus:border-bakery-600 transition-all"
+              class="w-full bg-bakery-50/50 border border-bakery-100 rounded-2xl py-3 px-4 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-bakery-900/10 focus:border-bakery-900 transition-all"
               :disabled="isBaking"
             />
             <button
               type="submit"
               :disabled="!userInput.trim() || isBaking"
-              class="absolute right-2 p-2 text-bakery-600 hover:bg-bakery-100 rounded-xl transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+              class="absolute right-2 p-2 text-bakery-900 hover:bg-bakery-100 rounded-xl transition-all disabled:opacity-30 disabled:hover:bg-transparent"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
             </button>
@@ -409,5 +400,10 @@ watch(currentLocale, () => { resetChat(); });
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
 }
 </style>

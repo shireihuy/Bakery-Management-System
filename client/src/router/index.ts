@@ -13,6 +13,7 @@ import NotificationsView from '../views/NotificationsView.vue'
 import InventoryView from '../views/InventoryView.vue'
 import ReportsView from '../views/ReportsView.vue'
 import FlashSalesManager from '../views/FlashSalesManager.vue'
+import ChatSupportView from '../views/ChatSupportView.vue'
 
 import { useAuth } from '../composables/useAuth'
 
@@ -127,6 +128,18 @@ const router = createRouter({
                     path: '',
                     name: 'flash-sales',
                     component: FlashSalesManager
+                }
+            ]
+        },
+        {
+            path: '/support-chat',
+            component: MainLayout,
+            meta: { requiresAuth: true, roles: ['admin', 'manager'] },
+            children: [
+                {
+                    path: '',
+                    name: 'support-chat',
+                    component: ChatSupportView
                 }
             ]
         },
