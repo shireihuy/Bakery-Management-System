@@ -4,11 +4,13 @@ import { useChat, type ChatMessage } from '../composables/useChat';
 import { useAuth } from '../composables/useAuth';
 import { socketService } from '../services/socket';
 import { MessageSquare, X, Send, Clock, User } from 'lucide-vue-next';
+import { useChatUI } from '../composables/useChatUI';
 
 const { messages: liveMessages, sendMessage, fetchHistory } = useChat();
 const { user } = useAuth();
+const { activeChat, toggleSupportChat, closeAll } = useChatUI();
 
-const isOpen = ref(false);
+const isOpen = computed(() => activeChat.value === 'SUPPORT');
 const userInput = ref('');
 const messageContainer = ref<HTMLElement | null>(null);
 
@@ -35,11 +37,15 @@ const toggleChat = async () => {
         return;
     }
     
-    isOpen.value = !isOpen.value;
+    toggleSupportChat();
     if (isOpen.value) {
         await fetchHistory('SUPPORT');
         scrollToBottom();
     }
+};
+
+const closeChat = () => {
+    closeAll();
 };
 
 const handleIncomingMessage = (newMessage: ChatMessage) => {
@@ -118,7 +124,7 @@ watch(displayMessages, () => { if (isOpen.value) scrollToBottom(); }, { deep: tr
               </div>
             </div>
           </div>
-          <button @click="isOpen = false" class="p-2 hover:bg-bakery-900/10 rounded-xl transition-colors">
+          <button @click="closeChat" class="p-2 hover:bg-bakery-900/10 rounded-xl transition-colors">
             <X class="w-4 h-4" />
           </button>
         </div>

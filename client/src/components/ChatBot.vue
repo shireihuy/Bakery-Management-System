@@ -2,7 +2,10 @@
 import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { useI18n } from '../composables/useI18n';
 
+import { useChatUI } from '../composables/useChatUI';
+
 const { t, currentLocale } = useI18n();
+const { activeChat, toggleAIChat } = useChatUI();
 
 interface Message {
   id: number;
@@ -81,7 +84,7 @@ const qnaData = computed<QnA[]>(() => {
   ];
 });
 
-const isOpen = ref(false);
+const isOpen = computed(() => activeChat.value === 'AI');
 const userInput = ref('');
 const isBaking = ref(false);
 const questionAsked = ref(false);
@@ -110,7 +113,7 @@ const toggleQnA = () => {
 };
 
 const toggleChat = () => {
-  isOpen.value = !isOpen.value;
+  toggleAIChat();
 };
 
 const selectCategory = (category: string) => {
