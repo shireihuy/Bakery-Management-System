@@ -59,6 +59,11 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
     const { id } = req.params;
+    const adminId = req.user.id;
+
+    if (adminId.toString() === id.toString()) {
+        return res.status(400).json({ message: 'You cannot delete your own account for safety reasons.' });
+    }
 
     try {
         const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);

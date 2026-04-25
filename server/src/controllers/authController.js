@@ -37,7 +37,18 @@ const register = async (req, res) => {
         }
 
         console.log('User registered successfully:', newUser.rows[0].email, 'assigned ID:', newUser.rows[0].id);
-        res.status(201).json(newUser.rows[0]);
+        
+        const user = newUser.rows[0];
+        const token = jwt.sign(
+            { id: user.id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.status(201).json({
+            token,
+            user
+        });
     } catch (err) {
         console.error('Registration error details:', err);
         res.status(500).json({ message: 'Server error during registration', error: err.message });

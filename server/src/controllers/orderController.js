@@ -278,6 +278,7 @@ const getOrders = async (req, res) => {
                 o.district_id,
                 o.ward_code,
                 o.cancel_reason,
+                o.version,
                 d.delivery_fee
             FROM orders o
             LEFT JOIN users u ON o.customer_id::text = u.id::text
@@ -320,7 +321,7 @@ const getMyOrders = async (req, res) => {
     const userId = req.user.id;
     try {
         const result = await query(`
-            SELECT o.id, o.customer_name, o.customer_email, o.customer_phone, o.customer_address, o.district_id, o.ward_code, o.delivery_type, o.total_price, o.coupon_id, o.discount_amount, c.code as coupon_code, o.status, o.order_date, o.start_time, o.completed_time, o.payment_status, o.payment_method, o.cancel_reason, d.delivery_fee
+            SELECT o.id, o.customer_name, o.customer_email, o.customer_phone, o.customer_address, o.district_id, o.ward_code, o.delivery_type, o.total_price, o.coupon_id, o.discount_amount, c.code as coupon_code, o.status, o.order_date, o.start_time, o.completed_time, o.payment_status, o.payment_method, o.cancel_reason, o.version, d.delivery_fee
             FROM orders o
             LEFT JOIN coupons c ON o.coupon_id = c.id
             LEFT JOIN deliveries d ON o.id = d.order_id
@@ -358,7 +359,7 @@ const getMyOrders = async (req, res) => {
 
 const updateOrderStatus = async (req, res) => {
     const { id } = req.params;
-    const { status, payment_status, cancel_reason } = req.body;
+    const { status, payment_status, cancel_reason, version } = req.body;
 
     const client = await pool.connect();
     try {
@@ -429,10 +430,20 @@ const updateOrderStatus = async (req, res) => {
             return res.status(400).json({ message: 'No fields to update' });
         }
 
-        const updateQuery = `UPDATE orders SET ${updateFields.join(', ')} WHERE id = $${paramCount} RETURNING *`;
-        params.push(id);
+        // Add version check and increment
+        updateFields.push(`version = version + 1`);
+        const updateQuery = `UPDATE orders SET ${updateFields.join(', ')} WHERE id = $${paramCount} AND version = $${paramCount + 1} RETURNING *`;
+        params.push(id, version || currentOrder.version);
 
         const result = await client.query(updateQuery, params);
+        
+        if (result.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(409).json({ 
+                message: 'Concurrency conflict: The order was modified by another user. Please refresh and try again.',
+                currentOrder: currentOrder
+            });
+        }
         const order = result.rows[0];
 
         // Handle Stock and Coupon restore on Cancellation
@@ -577,7 +588,8 @@ const getOrderById = async (req, res) => {
                 d.delivery_fee,
                 o.payment_url,
                 o.transaction_id,
-                o.qr_code
+                o.qr_code,
+                o.version
             FROM orders o
             LEFT JOIN coupons c ON o.coupon_id = c.id
             LEFT JOIN deliveries d ON o.id = d.order_id

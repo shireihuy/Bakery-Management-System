@@ -1,4 +1,5 @@
 const { query } = require('../config/db');
+const NotificationController = require('./notificationController');
 
 const getProducts = async (req, res) => {
     try {
@@ -200,6 +201,16 @@ const updateStock = async (req, res) => {
                 productId: id,
                 newStock: result.rows[0].stock_quantity
             });
+        }
+
+        // Check for low stock alert
+        const product = result.rows[0];
+        if (product.stock_quantity <= product.min_stock_level) {
+            await NotificationController.notifyAdmins(
+                'Low Stock Alert',
+                `Product "${product.name}" is low on stock (${product.stock_quantity} left).`,
+                'warning'
+            );
         }
 
         res.json(result.rows[0]);
