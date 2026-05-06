@@ -291,6 +291,20 @@ export interface TranslationSchema {
             employeeGuide: string;
         };
     };
+    support: {
+        quickHelp: string;
+        hours: string;
+        orderStatus: string;
+        customCakes: string;
+        createOrder: string;
+        hoursMsg: string;
+        orderStatusMsg: string;
+        customCakesMsg: string;
+        createOrderMsg: string;
+        liveSupport: string;
+        welcomeMsg: string;
+        inputPlaceholder: string;
+    };
 }
 
 export const defaultTranslations: Record<Language, TranslationSchema> = {
@@ -585,6 +599,20 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
                 employeeGuide: 'Employee Guide',
             },
         },
+        support: {
+            quickHelp: 'Quick Help',
+            hours: 'Store Hours',
+            orderStatus: 'Order Status',
+            customCakes: 'Custom Cakes',
+            createOrder: 'Create Order',
+            hoursMsg: 'Hello! What are your store hours today?',
+            orderStatusMsg: 'Hi, I would like to check the status of my recent order.',
+            customCakesMsg: 'I am interested in ordering a custom cake. Can you help me?',
+            createOrderMsg: 'Hello Admin, I would like you to help me create a new order for some bakery items.',
+            liveSupport: 'Live Support',
+            welcomeMsg: 'How can we help you today? Send us a message or choose a topic below.',
+            inputPlaceholder: 'Ask support anything...'
+        },
     },
     jp: {
         common: {
@@ -877,6 +905,20 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
                 employeeGuide: '従業員ガイド',
             },
         },
+        support: {
+            quickHelp: 'クイックヘルプ',
+            hours: '営業時間',
+            orderStatus: '注文状況',
+            customCakes: 'カスタムケーキ',
+            createOrder: '注文作成',
+            hoursMsg: 'こんにちは！今日の営業時間を教えてください。',
+            orderStatusMsg: 'こんにちは、最近の注文の状況を確認したいです。',
+            customCakesMsg: 'カスタムケーキの注文に興味があります。相談に乗っていただけますか？',
+            createOrderMsg: '管理者様、新しい注文の作成を手伝っていただきたいです。',
+            liveSupport: 'ライブサポート',
+            welcomeMsg: '本日はどのようなご用件でしょうか？メッセージを送るか、以下のトピックから選択してください。',
+            inputPlaceholder: 'サポートに質問する...'
+        },
     },
     vn: {
         common: {
@@ -1168,6 +1210,20 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
                 coupons: 'Mã giảm giá',
                 employeeGuide: 'Dành cho nhân viên',
             },
+        },
+        support: {
+            quickHelp: 'Hỗ trợ nhanh',
+            hours: 'Giờ mở cửa',
+            orderStatus: 'Trạng thái đơn hàng',
+            customCakes: 'Bánh theo yêu cầu',
+            createOrder: 'Tạo đơn hàng',
+            hoursMsg: 'Xin chào! Giờ mở cửa của tiệm hôm nay như thế nào?',
+            orderStatusMsg: 'Chào bạn, tôi muốn kiểm tra trạng thái đơn hàng gần đây của mình.',
+            customCakesMsg: 'Tôi muốn đặt bánh theo yêu cầu. Bạn có thể tư vấn cho tôi không?',
+            createOrderMsg: 'Chào Admin, tôi muốn nhờ bạn hỗ trợ tạo một đơn hàng mới.',
+            liveSupport: 'Hỗ trợ trực tuyến',
+            welcomeMsg: 'Chúng tôi có thể giúp gì cho bạn hôm nay? Hãy gửi tin nhắn hoặc chọn một chủ đề bên dưới.',
+            inputPlaceholder: 'Hỏi hỗ trợ bất cứ điều gì...'
         },
     }
 }

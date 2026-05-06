@@ -10,16 +10,19 @@ const getProducts = async (req, res) => {
                    fsi.sale_price as flash_sale_price,
                    fsi.flash_sale_stock,
                    fsi.sold_quantity as flash_sale_sold,
-                   fs.end_time as flash_sale_end
+                   fsi.end_time as flash_sale_end
             FROM products p
             LEFT JOIN product_ratings pr ON p.id = pr.product_id
-            LEFT JOIN flash_sale_items fsi ON p.id = fsi.product_id
-            LEFT JOIN flash_sales fs ON fsi.flash_sale_id = fs.id 
-                AND fs.is_active = TRUE 
-                AND fs.start_time <= CURRENT_TIMESTAMP 
-                AND fs.end_time >= CURRENT_TIMESTAMP
+            LEFT JOIN (
+                SELECT i.*, s.end_time
+                FROM flash_sale_items i
+                JOIN flash_sales s ON i.flash_sale_id = s.id
+                WHERE s.is_active = TRUE 
+                  AND s.start_time <= CURRENT_TIMESTAMP 
+                  AND s.end_time >= CURRENT_TIMESTAMP
+            ) fsi ON p.id = fsi.product_id
             WHERE p.is_active = TRUE
-            GROUP BY p.id, fsi.sale_price, fsi.flash_sale_stock, fsi.sold_quantity, fs.end_time
+            GROUP BY p.id, fsi.sale_price, fsi.flash_sale_stock, fsi.sold_quantity, fsi.end_time
             ORDER BY p.id ASC
         `);
 
@@ -60,11 +63,23 @@ const getProductById = async (req, res) => {
         const result = await query(`
             SELECT p.*, 
                    COALESCE(AVG(pr.rating), 0) as avg_rating,
-                   COUNT(pr.rating) as total_votes
+                   COUNT(pr.rating) as total_votes,
+                   fsi.sale_price as flash_sale_price,
+                   fsi.flash_sale_stock,
+                   fsi.sold_quantity as flash_sale_sold,
+                   fsi.end_time as flash_sale_end
             FROM products p
             LEFT JOIN product_ratings pr ON p.id = pr.product_id
+            LEFT JOIN (
+                SELECT i.*, s.end_time
+                FROM flash_sale_items i
+                JOIN flash_sales s ON i.flash_sale_id = s.id
+                WHERE s.is_active = TRUE 
+                  AND s.start_time <= CURRENT_TIMESTAMP 
+                  AND s.end_time >= CURRENT_TIMESTAMP
+            ) fsi ON p.id = fsi.product_id
             WHERE p.id = $1
-            GROUP BY p.id
+            GROUP BY p.id, fsi.sale_price, fsi.flash_sale_stock, fsi.sold_quantity, fsi.end_time
         `, [id]);
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
@@ -73,7 +88,13 @@ const getProductById = async (req, res) => {
         const product = {
             ...p,
             rating: parseFloat(p.avg_rating).toFixed(1),
-            totalVotes: parseInt(p.total_votes)
+            totalVotes: parseInt(p.total_votes),
+            flashSale: p.flash_sale_price ? {
+                salePrice: parseFloat(p.flash_sale_price),
+                stock: p.flash_sale_stock,
+                sold: p.flash_sale_sold,
+                endTime: p.flash_sale_end
+            } : null
         };
         res.json(product);
     } catch (err) {

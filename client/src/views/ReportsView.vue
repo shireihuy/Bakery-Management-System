@@ -217,7 +217,9 @@ const handleExport = () => {
                         <div class="absolute w-full h-full rounded-full border-16 border-green-400 border-l-transparent border-t-transparent rotate-45"></div>
                         <div class="absolute w-full h-full rounded-full border-16 border-blue-400 border-r-transparent border-t-transparent border-b-transparent -rotate-12"></div>
                         <div class="text-center">
-                            <span class="text-3xl font-black text-emerald-700">45%</span>
+                            <span class="text-3xl font-black text-emerald-700">
+                                {{ categoryDistribution[0]?.value ?? 0 }}%
+                            </span>
                             <p class="text-[10px] font-bold text-gray-400 uppercase">{{ t('products.category') }}</p>
                         </div>
                     </div>

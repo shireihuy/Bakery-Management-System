@@ -46,6 +46,7 @@ const getReportData = async (req, res) => {
             WHERE o.order_date >= CURRENT_DATE - INTERVAL '6 days'
             AND o.status != 'Cancelled'
             GROUP BY p.category
+            ORDER BY revenue DESC
         `);
 
         const categories = categoryResult.rows.map(cat => ({

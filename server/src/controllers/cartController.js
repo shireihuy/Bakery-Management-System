@@ -27,11 +27,14 @@ const getCart = async (req, res) => {
                 fs.end_time as flash_sale_end
             FROM cart_items ci
             JOIN products p ON ci.product_id = p.id
-            LEFT JOIN flash_sale_items fsi ON p.id = fsi.product_id
-            LEFT JOIN flash_sales fs ON fsi.flash_sale_id = fs.id 
-                AND fs.is_active = TRUE 
-                AND fs.start_time <= CURRENT_TIMESTAMP 
-                AND fs.end_time >= CURRENT_TIMESTAMP
+            LEFT JOIN (
+                SELECT i.*, s.end_time
+                FROM flash_sale_items i
+                JOIN flash_sales s ON i.flash_sale_id = s.id
+                WHERE s.is_active = TRUE 
+                  AND s.start_time <= CURRENT_TIMESTAMP 
+                  AND s.end_time >= CURRENT_TIMESTAMP
+            ) fsi ON p.id = fsi.product_id
             WHERE ci.user_id = $1
             ORDER BY ci.created_at ASC
         `, [userId]);

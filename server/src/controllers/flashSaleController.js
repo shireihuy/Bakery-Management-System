@@ -142,6 +142,74 @@ const toggleFlashSale = async (req, res) => {
     }
 };
 
+const updateFlashSale = async (req, res) => {
+    const { id } = req.params;
+    const { name, start_time, end_time, items, is_active } = req.body;
+    const client = await pool.connect();
+    
+    try {
+        await client.query('BEGIN');
+
+        // 1. Update the main sale record
+        let updateFields = [];
+        let params = [];
+        let paramCount = 1;
+
+        if (name !== undefined) { updateFields.push(`name = $${paramCount++}`); params.push(name); }
+        if (start_time !== undefined) { updateFields.push(`start_time = $${paramCount++}`); params.push(start_time); }
+        if (end_time !== undefined) { updateFields.push(`end_time = $${paramCount++}`); params.push(end_time); }
+        if (is_active !== undefined) { updateFields.push(`is_active = $${paramCount++}`); params.push(is_active); }
+
+        if (updateFields.length > 0) {
+            params.push(id);
+            await client.query(`UPDATE flash_sales SET ${updateFields.join(', ')} WHERE id = $${paramCount}`, params);
+        }
+
+        // 2. If items are provided, update/replace them
+        if (items && Array.isArray(items)) {
+            // Delete existing items and re-insert (simplest way to handle updates/removals)
+            await client.query('DELETE FROM flash_sale_items WHERE flash_sale_id = $1', [id]);
+            
+            for (const item of items) {
+                await client.query(
+                    'INSERT INTO flash_sale_items (flash_sale_id, product_id, sale_price, flash_sale_stock, sold_quantity) VALUES ($1, $2, $3, $4, $5)',
+                    [id, item.product_id, item.sale_price, item.flash_sale_stock, item.sold_quantity || 0]
+                );
+            }
+        }
+
+        await client.query('COMMIT');
+
+        // Fetch updated sale
+        const updatedResult = await client.query(`
+            SELECT fs.*, 
+                   COALESCE(json_agg(json_build_object(
+                       'id', fsi.id,
+                       'product_id', fsi.product_id,
+                       'sale_price', fsi.sale_price,
+                       'flash_sale_stock', fsi.flash_sale_stock,
+                       'sold_quantity', fsi.sold_quantity
+                   )) FILTER (WHERE fsi.id IS NOT NULL), '[]') as items
+            FROM flash_sales fs
+            LEFT JOIN flash_sale_items fsi ON fs.id = fsi.flash_sale_id
+            WHERE fs.id = $1
+            GROUP BY fs.id
+        `, [id]);
+
+        if (global.io) {
+            global.io.emit('flash_sale:updated', updatedResult.rows[0]);
+        }
+
+        res.json(updatedResult.rows[0]);
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Error updating flash sale:', err);
+        res.status(500).json({ message: 'Server error updating flash sale', error: err.message });
+    } finally {
+        client.release();
+    }
+};
+
 const deleteFlashSale = async (req, res) => {
     const { id } = req.params;
     try {
@@ -161,5 +229,6 @@ module.exports = {
     getActiveFlashSales,
     createFlashSale,
     toggleFlashSale,
+    updateFlashSale,
     deleteFlashSale
 };

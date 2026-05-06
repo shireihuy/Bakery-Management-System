@@ -13,54 +13,125 @@
       </button>
     </div>
 
-    <!-- Active & Scheduled Sales -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="sale in flashSales" :key="sale.id" class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all">
-        <div class="p-5 border-b border-gray-50">
-          <div class="flex justify-between items-start mb-3">
-            <h3 class="font-bold text-lg text-gray-900">{{ sale.name }}</h3>
-            <span :class="getStatusBadgeClass(sale)" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
-              {{ getStatusLabel(sale) }}
-            </span>
-          </div>
-          <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
-            <span class="w-4">📅</span> {{ formatDate(sale.start_time) }}
-          </div>
-          <div class="flex items-center gap-2 text-sm text-gray-500">
-            <span class="w-4">🏁</span> {{ formatDate(sale.end_time) }}
-          </div>
-        </div>
-        
-        <div class="p-5 space-y-4">
-          <div v-for="item in sale.items" :key="item.id || item.product_id" class="flex items-center gap-3">
-            <img :src="item.image || getProductImage(item.product_id)" class="w-10 h-10 rounded-lg object-cover" />
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-bold text-gray-900 truncate">{{ item.name }}</p>
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-green-600 font-black">${{ parseFloat(item.sale_price).toFixed(2) }}</span>
-                <span class="text-[10px] text-gray-400 line-through">${{ parseFloat(item.original_price).toFixed(2) }}</span>
-              </div>
+    <!-- Current & Upcoming Sales -->
+    <div v-if="activeAndUpcomingSales.length > 0" class="space-y-6">
+      <div class="flex items-center gap-3">
+        <div class="w-1.5 h-6 bg-bakery-600 rounded-full"></div>
+        <h2 class="text-xl font-black text-gray-900 tracking-tight">Active & Scheduled</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div v-for="sale in activeAndUpcomingSales" :key="sale.id" class="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all">
+          <div class="p-5 border-b border-gray-50">
+            <div class="flex justify-between items-start mb-3">
+              <h3 class="font-bold text-lg text-gray-900">{{ sale.name }}</h3>
+              <span :class="getStatusBadgeClass(sale)" class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                {{ getStatusLabel(sale) }}
+              </span>
             </div>
-            <div class="text-right">
-              <p class="text-[10px] font-bold text-gray-500 uppercase">{{ item.sold_quantity }} / {{ item.flash_sale_stock }}</p>
-              <div class="w-16 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
-                <div class="h-full bg-bakery-600" :style="{ width: (item.sold_quantity / item.flash_sale_stock * 100) + '%' }"></div>
-              </div>
+            <div class="flex items-center gap-2 text-sm text-gray-500 mb-1">
+              <span class="w-4 text-xs">📅</span> {{ formatDate(sale.start_time) }}
+            </div>
+            <div class="flex items-center gap-2 text-sm text-gray-500">
+              <span class="w-4 text-xs">🏁</span> {{ formatDate(sale.end_time) }}
             </div>
           </div>
-        </div>
+          
+          <div class="p-5 space-y-4">
+            <div v-for="item in sale.items" :key="item.id || item.product_id" class="flex items-center gap-3">
+              <img :src="item.image || getProductImage(item.product_id)" class="w-10 h-10 rounded-lg object-cover" />
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-gray-900 truncate">{{ item.name }}</p>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-green-600 font-black">${{ parseFloat(item.sale_price).toFixed(2) }}</span>
+                  <span class="text-[10px] text-gray-400 line-through">${{ parseFloat(item.original_price).toFixed(2) }}</span>
+                </div>
+              </div>
+              <div class="text-right">
+                <p class="text-[10px] font-bold text-gray-500 uppercase">{{ item.sold_quantity }} / {{ item.flash_sale_stock }}</p>
+                <div class="w-16 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                  <div class="h-full bg-bakery-600" :style="{ width: (item.sold_quantity / item.flash_sale_stock * 100) + '%' }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <div class="p-5 bg-gray-50 flex justify-between gap-3">
-          <button 
-            @click="toggleSale(sale)" 
-            class="flex-1 py-2 rounded-lg text-xs font-bold transition-all border"
-            :class="sale.is_active ? 'bg-white border-yellow-200 text-yellow-600 hover:bg-yellow-50' : 'bg-white border-green-200 text-green-600 hover:bg-green-50'"
-          >
-            {{ sale.is_active ? 'Deactivate' : 'Activate' }}
-          </button>
-          <button @click="deleteSale(sale.id)" class="px-3 py-2 rounded-lg border border-red-100 text-red-500 hover:bg-red-50 transition-all">
-            🗑️
-          </button>
+          <div class="p-5 bg-gray-50 flex justify-between gap-3">
+            <div v-if="getStatusLabel(sale) === 'Active'" class="flex-1 flex gap-2">
+              <button 
+                @click="toggleSale(sale)" 
+                class="flex-1 py-2 rounded-lg text-xs font-bold border border-yellow-200 text-yellow-600 hover:bg-yellow-50 transition-all bg-white"
+              >
+                Deactivate
+              </button>
+              <button 
+                @click="extendSale(sale)" 
+                class="flex-1 py-2 rounded-lg text-xs font-bold border border-bakery-200 text-bakery-600 hover:bg-bakery-50 transition-all bg-white"
+              >
+                +1 Hour
+              </button>
+            </div>
+            <div v-else class="flex-1">
+              <button 
+                @click="toggleSale(sale)" 
+                class="w-full py-2 rounded-lg text-xs font-bold transition-all border bg-white"
+                :class="sale.is_active ? 'border-yellow-200 text-yellow-600 hover:bg-yellow-50' : 'border-green-200 text-green-600 hover:bg-green-50'"
+              >
+                {{ sale.is_active ? 'Deactivate' : 'Activate' }}
+              </button>
+            </div>
+            <button 
+              @click="openEditModal(sale)" 
+              class="px-3 py-2 rounded-lg border border-bakery-100 text-bakery-600 hover:bg-bakery-50 transition-all bg-white"
+              title="Edit Sale Info"
+            >
+              📝
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Past Sales Section -->
+    <div v-if="pastSales.length > 0" class="space-y-6 pt-12 border-t border-gray-100">
+      <div class="flex items-center gap-3 opacity-60">
+        <div class="w-1.5 h-6 bg-gray-400 rounded-full"></div>
+        <h2 class="text-xl font-black text-gray-500 tracking-tight">Past Events</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-80">
+        <div v-for="sale in pastSales" :key="sale.id" class="bg-white/60 rounded-2xl overflow-hidden border border-gray-100 shadow-sm transition-all grayscale-20 hover:grayscale-0">
+          <div class="p-5 border-b border-gray-50 bg-gray-50/50">
+            <div class="flex justify-between items-start mb-3">
+              <h3 class="font-bold text-lg text-gray-400">{{ sale.name }}</h3>
+              <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-gray-200 text-gray-500">
+                Ended
+              </span>
+            </div>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Ended on {{ formatDate(sale.end_time) }}</p>
+          </div>
+          
+          <div class="p-5 space-y-3">
+             <div v-for="item in sale.items" :key="item.id || item.product_id" class="flex items-center gap-3 opacity-60">
+                <p class="text-xs font-bold text-gray-600 truncate">{{ item.name }}</p>
+                <div class="flex-1 h-px bg-gray-100"></div>
+                <p class="text-[10px] font-bold text-gray-500">{{ item.sold_quantity }} Sold</p>
+             </div>
+          </div>
+
+          <div class="p-4 bg-gray-50/50 flex justify-between gap-3">
+            <button 
+              @click="duplicateSale(sale)" 
+              class="flex-1 py-2.5 rounded-xl text-xs font-black bg-bakery-900 text-white hover:bg-black transition-all shadow-lg shadow-bakery-100/50"
+            >
+              Rerun This Sale
+            </button>
+            <button 
+              @click="openEditModal(sale)" 
+              class="px-3 py-2 rounded-xl border border-gray-100 text-bakery-600 hover:bg-white transition-all shadow-sm"
+              title="Edit Sale Info"
+            >
+              📝
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -69,9 +140,14 @@
     <div v-if="isModalOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="isModalOpen = false"></div>
       <div class="relative bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in duration-300">
-        <div class="p-8 border-b border-gray-100">
-          <h2 class="text-2xl font-black text-gray-900">Create New Flash Sale</h2>
-          <p class="text-gray-500">Define the schedule and pick products to discount</p>
+        <div class="p-8 border-b border-gray-100 flex justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-black text-gray-900">{{ isEditMode ? 'Edit Flash Sale' : 'Create New Flash Sale' }}</h2>
+            <p class="text-gray-500">Define the schedule and pick products to discount</p>
+          </div>
+          <button v-if="isEditMode" @click="deleteSale(editingSaleId)" class="text-red-500 hover:text-red-700 text-sm font-bold flex items-center gap-1 p-2 rounded-lg hover:bg-red-50">
+            🗑️ Delete Sale
+          </button>
         </div>
         
         <div class="p-8 space-y-6 max-h-[60vh] overflow-y-auto">
@@ -154,11 +230,11 @@
         <div class="p-8 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
           <button @click="isModalOpen = false" class="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-white transition-all">Cancel</button>
           <button 
-            @click="createSale" 
+            @click="saveSale" 
             :disabled="!isFormValid"
             class="px-8 py-3 rounded-xl bg-bakery-900 text-white font-bold hover:bg-black transition-all disabled:opacity-30 shadow-xl shadow-bakery-200"
           >
-            Create Flash Sale
+            {{ isEditMode ? 'Update Flash Sale' : 'Create Flash Sale' }}
           </button>
         </div>
       </div>
@@ -173,6 +249,8 @@ import { useProducts } from '../composables/useProducts';
 const { products, fetchProducts } = useProducts();
 const flashSales = ref([]);
 const isModalOpen = ref(false);
+const isEditMode = ref(false);
+const editingSaleId = ref(null);
 const isDropdownOpen = ref(false);
 const productSearch = ref('');
 
@@ -208,11 +286,38 @@ const fetchFlashSales = async () => {
 };
 
 const openCreateModal = () => {
+    isEditMode.value = false;
+    editingSaleId.value = null;
     newSale.value = {
         name: '',
         start_time: '',
         end_time: '',
         items: []
+    };
+    isModalOpen.value = true;
+};
+
+const openEditModal = (sale) => {
+    isEditMode.value = true;
+    editingSaleId.value = sale.id;
+    
+    // Format to YYYY-MM-DDThh:mm for datetime-local
+    const formatDateForInput = (dStr) => {
+        const d = new Date(dStr);
+        const pad = (n) => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    newSale.value = {
+        name: sale.name,
+        start_time: formatDateForInput(sale.start_time),
+        end_time: formatDateForInput(sale.end_time),
+        items: sale.items.map(item => ({
+            product_id: item.product_id,
+            sale_price: item.sale_price,
+            flash_sale_stock: item.flash_sale_stock,
+            sold_quantity: item.sold_quantity
+        }))
     };
     isModalOpen.value = true;
 };
@@ -242,6 +347,14 @@ const availableProducts = computed(() => {
     return products.value.filter(p => !newSale.value.items.some(i => i.product_id === parseInt(p.id)));
 });
 
+const activeAndUpcomingSales = computed(() => {
+    return flashSales.value.filter(s => getStatusLabel(s) !== 'Ended');
+});
+
+const pastSales = computed(() => {
+    return flashSales.value.filter(s => getStatusLabel(s) === 'Ended');
+});
+
 const filteredAvailableProducts = computed(() => {
     if (!productSearch.value) return availableProducts.value;
     const query = productSearch.value.toLowerCase();
@@ -258,16 +371,25 @@ const isFormValid = computed(() => {
            newSale.value.items.length > 0;
 });
 
-const createSale = async () => {
+const saveSale = async () => {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_URL}/flash-sales`, {
-            method: 'POST',
+        const saleData = {
+            ...newSale.value,
+            start_time: new Date(newSale.value.start_time).toISOString(),
+            end_time: new Date(newSale.value.end_time).toISOString()
+        };
+
+        const url = isEditMode.value ? `${API_URL}/flash-sales/${editingSaleId.value}` : `${API_URL}/flash-sales`;
+        const method = isEditMode.value ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method,
             headers: { 
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}` 
             },
-            body: JSON.stringify(newSale.value)
+            body: JSON.stringify(saleData)
         });
         
         if (response.ok) {
@@ -275,10 +397,10 @@ const createSale = async () => {
             isModalOpen.value = false;
         } else {
             const data = await response.json();
-            alert(data.message || 'Failed to create flash sale');
+            alert(data.message || 'Failed to save flash sale');
         }
     } catch (err) {
-        alert('Server error creating flash sale');
+        alert('Server error saving flash sale');
     }
 };
 
@@ -296,6 +418,61 @@ const toggleSale = async (sale) => {
         if (response.ok) await fetchFlashSales();
     } catch (err) {
         console.error('Failed to toggle sale:', err);
+    }
+};
+
+const duplicateSale = (sale) => {
+    const now = new Date();
+    const start = new Date(now.getTime() + 5 * 60 * 1000); // 5 mins from now
+    const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hour duration
+    
+    // Format to YYYY-MM-DDThh:mm
+    const formatDateForInput = (d) => {
+        const pad = (n) => n.toString().padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    newSale.value = {
+        name: `${sale.name} (Copy)`,
+        start_time: formatDateForInput(start),
+        end_time: formatDateForInput(end),
+        items: sale.items.map(item => ({
+            product_id: item.product_id,
+            sale_price: item.sale_price,
+            flash_sale_stock: item.flash_sale_stock
+        }))
+    };
+    isModalOpen.value = true;
+};
+
+const extendSale = async (sale) => {
+    try {
+        const currentEnd = new Date(sale.end_time);
+        const now = new Date();
+        const baseTime = currentEnd < now ? now : currentEnd;
+        const newEnd = new Date(baseTime.getTime() + 60 * 60 * 1000); // +1 hour
+
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_URL}/flash-sales/${sale.id}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ 
+                end_time: newEnd.toISOString(),
+                // Refresh items: reset sold_quantity to 0 but keep same prices/stock
+                items: sale.items.map(item => ({
+                    product_id: item.product_id,
+                    sale_price: item.sale_price,
+                    flash_sale_stock: item.flash_sale_stock,
+                    sold_quantity: 0 
+                }))
+            })
+        });
+        if (response.ok) await fetchFlashSales();
+    } catch (err) {
+        console.error('Failed to extend sale:', err);
     }
 };
 

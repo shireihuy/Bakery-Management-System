@@ -3,8 +3,11 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { useChat, type ChatMessage } from '../composables/useChat';
 import { useAuth } from '../composables/useAuth';
 import { socketService } from '../services/socket';
-import { MessageSquare, X, Send, Clock, User } from 'lucide-vue-next';
+import { MessageSquare, X, Send, Clock, User, Sparkles } from 'lucide-vue-next';
 import { useChatUI } from '../composables/useChatUI';
+import { useI18n } from '../composables/useI18n';
+
+const { t } = useI18n();
 
 const { messages: liveMessages, sendMessage, fetchHistory } = useChat();
 const { user } = useAuth();
@@ -55,10 +58,25 @@ const handleIncomingMessage = (newMessage: ChatMessage) => {
     }
 };
 
+const showQuickActions = ref(true);
+
+const quickOptions = computed(() => [
+    { text: t('support.hours'), icon: '⏰', message: t('support.hoursMsg') },
+    { text: t('support.orderStatus'), icon: '🚚', message: t('support.orderStatusMsg') },
+    { text: t('support.customCakes'), icon: '🎂', message: t('support.customCakesMsg') },
+    { text: t('support.createOrder'), icon: '📝', message: t('support.createOrderMsg'), isOrderRequest: true }
+]);
+
 const handleSend = () => {
     if (!userInput.value.trim()) return;
     sendMessage(null, userInput.value);
     userInput.value = '';
+    showQuickActions.value = false;
+};
+
+const handleQuickAction = (opt: any) => {
+    sendMessage(null, opt.message);
+    showQuickActions.value = false;
 };
 
 onMounted(() => {
@@ -117,7 +135,7 @@ watch(displayMessages, () => { if (isOpen.value) scrollToBottom(); }, { deep: tr
               <User class="w-6 h-6" />
             </div>
             <div>
-              <h3 class="font-black text-xs uppercase tracking-widest">Live Support</h3>
+              <h3 class="font-black text-xs uppercase tracking-widest">{{ t('support.liveSupport') }}</h3>
               <div class="flex items-center gap-1.5">
                 <span class="w-1.5 h-1.5 bg-bakery-900 rounded-full animate-pulse"></span>
                 <span class="text-[9px] font-bold opacity-70">Agent Online</span>
@@ -130,12 +148,12 @@ watch(displayMessages, () => { if (isOpen.value) scrollToBottom(); }, { deep: tr
         </div>
 
         <!-- Messages Area -->
-        <div ref="messageContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
+        <div ref="messageContainer" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50 scrollbar-hide">
           <div v-if="displayMessages.length === 0" class="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
             <div class="w-16 h-16 bg-accent-gold/20 rounded-full flex items-center justify-center">
               <MessageSquare class="w-8 h-8 text-accent-gold" />
             </div>
-            <p class="text-xs text-gray-500 font-medium">How can we help you today? Send us a message and our team will get back to you shortly.</p>
+            <p class="text-xs text-gray-500 font-medium">{{ t('support.welcomeMsg') }}</p>
           </div>
           <div
             v-for="msg in displayMessages"
@@ -159,14 +177,51 @@ watch(displayMessages, () => { if (isOpen.value) scrollToBottom(); }, { deep: tr
           </div>
         </div>
 
+        <!-- Quick Actions -->
+        <Transition
+          enter-active-class="transition duration-200 ease-out"
+          enter-from-class="transform translate-y-2 opacity-0"
+          enter-to-class="transform translate-y-0 opacity-100"
+          leave-active-class="transition duration-150 ease-in"
+          leave-from-class="transform translate-y-0 opacity-100"
+          leave-to-class="transform translate-y-2 opacity-0"
+        >
+          <div v-if="showQuickActions" class="px-4 py-3 bg-white border-t border-bakery-50">
+            <div class="flex items-center gap-1.5 mb-2.5">
+              <Sparkles class="w-3 h-3 text-accent-gold" />
+              <span class="text-[10px] font-black uppercase tracking-widest text-bakery-400">{{ t('support.quickHelp') }}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button 
+                v-for="opt in quickOptions" 
+                :key="opt.text"
+                @click="handleQuickAction(opt)"
+                class="flex flex-col items-start p-2.5 rounded-xl border border-bakery-100 bg-bakery-50/30 hover:border-accent-gold hover:bg-accent-gold/5 transition-all text-left group"
+              >
+                <span class="text-lg mb-1 group-hover:scale-110 transition-transform">{{ opt.icon }}</span>
+                <span class="text-[9px] font-bold text-bakery-700 leading-tight">{{ opt.text }}</span>
+              </button>
+            </div>
+          </div>
+        </Transition>
+
         <!-- Input Area -->
         <div class="p-3 bg-white border-t border-bakery-50">
           <form @submit.prevent="handleSend" class="flex items-center gap-2">
+            <button 
+              type="button"
+              @click="showQuickActions = !showQuickActions"
+              class="p-2.5 rounded-xl border transition-all"
+              :class="showQuickActions ? 'bg-accent-gold border-accent-gold text-bakery-900' : 'bg-gray-50 border-gray-100 text-gray-400 hover:text-bakery-900'"
+              title="Toggle Quick Actions"
+            >
+              <Sparkles class="w-4 h-4" />
+            </button>
             <input
               v-model="userInput"
               type="text"
-              placeholder="Ask support anything..."
-              class="w-full bg-gray-50 border border-gray-100 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-accent-gold/30 focus:border-accent-gold transition-all"
+              :placeholder="t('support.inputPlaceholder')"
+              class="flex-1 bg-gray-50 border border-gray-100 rounded-xl py-2.5 px-4 text-xs focus:outline-none focus:ring-2 focus:ring-accent-gold/30 focus:border-accent-gold transition-all"
             />
             <button
               type="submit"
@@ -189,5 +244,13 @@ watch(displayMessages, () => { if (isOpen.value) scrollToBottom(); }, { deep: tr
 }
 .animate-bounce-subtle {
   animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>

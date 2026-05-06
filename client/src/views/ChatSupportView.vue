@@ -5,19 +5,91 @@ import {
     Send,
     User,
     MessageSquare,
-    Clock
+    Clock,
+    PlusCircle,
+    ShoppingBag,
+    Trash2,
+    X
 } from 'lucide-vue-next';
 import { useChat, type Conversation, type ChatMessage } from '../composables/useChat';
 import { useAuth } from '../composables/useAuth';
 import { socketService } from '../services/socket';
+import { useProducts } from '../composables/useProducts';
+import { useOrders } from '../composables/useOrders';
+import { useCurrency } from '../composables/useCurrency';
 
 const { conversations, messages, fetchConversations, fetchHistory, sendMessage, joinAdminRoom } = useChat();
 const { user } = useAuth();
+const { products, fetchProducts } = useProducts();
+const { addOrder } = useOrders();
+const { formatPrice } = useCurrency();
 
 const selectedConversation = ref<Conversation | null>(null);
 const searchQuery = ref('');
 const newMessage = ref('');
 const messageContainer = ref<HTMLElement | null>(null);
+
+// Order Creation Modal State
+const isOrderModalOpen = ref(false);
+const orderItems = ref<any[]>([]);
+const isSubmittingOrder = ref(false);
+
+const openOrderModal = async () => {
+    await fetchProducts();
+    orderItems.value = [];
+    isOrderModalOpen.value = true;
+};
+
+const addToOrder = (product: any) => {
+    const existing = orderItems.value.find(i => i.productId === product.id);
+    if (existing) {
+        existing.quantity++;
+    } else {
+        orderItems.value.push({
+            productId: product.id,
+            productName: product.name,
+            price: product.price,
+            quantity: 1
+        });
+    }
+};
+
+const removeFromOrder = (productId: number) => {
+    orderItems.value = orderItems.value.filter(i => i.productId !== productId);
+};
+
+const orderTotal = computed(() => orderItems.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
+
+const handleCreateOrder = async () => {
+    if (!selectedConversation.value || orderItems.value.length === 0) return;
+    
+    isSubmittingOrder.value = true;
+    try {
+        await addOrder({
+            customerId: selectedConversation.value.id,
+            customerName: selectedConversation.value.name,
+            customerEmail: selectedConversation.value.email,
+            items: orderItems.value,
+            total: orderTotal.value,
+            deliveryType: 'Pick-up'
+        });
+        
+        // Notify user in chat
+        sendMessage(selectedConversation.value.id, `✅ I have created a new order (#...) for you as requested! You can find it in your "My Orders" section.`);
+        
+        isOrderModalOpen.value = false;
+        orderItems.value = [];
+    } catch (err) {
+        alert('Failed to create order: ' + (err as Error).message);
+    } finally {
+        isSubmittingOrder.value = false;
+    }
+};
+
+const isOrderRequest = (text: string) => {
+    const keywords = ['create a new order', 'create an order', 'place an order', 'help me order'];
+    return keywords.some(k => text.toLowerCase().includes(k));
+};
 
 const filteredConversations = computed(() => {
     return conversations.value.filter(c => 
@@ -131,7 +203,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
         <div class="flex-1 flex flex-col bg-white">
             <template v-if="selectedConversation">
                 <!-- Header -->
-                <div class="p-4 border-b border-green-100 flex items-center justify-between">
+                <div class="p-4 border-b border-green-100 flex items-center justify-between bg-white sticky top-0 z-10">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700 capitalize">
                             {{ (selectedConversation.name || 'U').charAt(0) }}
@@ -141,6 +213,13 @@ watch(messages, () => scrollToBottom(), { deep: true });
                             <div class="text-[10px] text-green-600">{{ selectedConversation.email }}</div>
                         </div>
                     </div>
+                    <button 
+                        @click="openOrderModal"
+                        class="flex items-center gap-2 px-4 py-2 bg-bakery-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-all shadow-md shadow-bakery-100 active:scale-95"
+                    >
+                        <PlusCircle class="w-4 h-4" />
+                        Create Order
+                    </button>
                 </div>
 
                 <!-- Messages -->
@@ -152,12 +231,27 @@ watch(messages, () => scrollToBottom(), { deep: true });
                         :class="msg.sender_id === user?.id ? 'items-end' : 'items-start'"
                     >
                         <div 
-                            class="max-w-[70%] p-4 rounded-2xl text-sm shadow-sm"
+                            class="max-w-[70%] p-4 rounded-2xl text-sm shadow-sm relative group"
                             :class="msg.sender_id === user?.id 
                                 ? 'bg-green-600 text-white rounded-tr-none' 
-                                : 'bg-gray-50 text-gray-900 rounded-tl-none border border-gray-100'"
+                                : isOrderRequest(msg.message)
+                                    ? 'bg-amber-50 text-amber-900 rounded-tl-none border border-amber-200 ring-2 ring-amber-100'
+                                    : 'bg-gray-50 text-gray-900 rounded-tl-none border border-gray-100'"
                         >
+                            <div v-if="msg.sender_id !== user?.id && isOrderRequest(msg.message)" class="flex items-center gap-1.5 mb-2 text-[10px] font-black uppercase tracking-widest text-amber-600">
+                                <ShoppingBag class="w-3 h-3" />
+                                Order Request
+                            </div>
                             {{ msg.message }}
+                            
+                            <button 
+                                v-if="msg.sender_id !== user?.id && isOrderRequest(msg.message)"
+                                @click="openOrderModal"
+                                class="mt-3 w-full py-2 bg-amber-600 text-white rounded-lg text-[10px] font-bold hover:bg-amber-700 transition-colors flex items-center justify-center gap-1.5"
+                            >
+                                <PlusCircle class="w-3.5 h-3.5" />
+                                Process Order Request
+                            </button>
                         </div>
                         <div class="text-[10px] text-gray-400 mt-1 px-1 flex items-center gap-1">
                             <Clock class="w-3 h-3" />
@@ -191,6 +285,83 @@ watch(messages, () => scrollToBottom(), { deep: true });
                 </div>
                 <h3 class="font-bold text-gray-600">Select a conversation</h3>
                 <p class="text-sm">Pick a customer from the left to start chatting</p>
+            </div>
+        </div>
+
+        <!-- Order Creation Modal -->
+        <div v-if="isOrderModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-bakery-50">
+                    <div>
+                        <h2 class="text-xl font-bold text-bakery-900">Create Order for {{ selectedConversation?.name }}</h2>
+                        <p class="text-xs text-bakery-400 mt-1">Select items to add to the customer's new order</p>
+                    </div>
+                    <button @click="isOrderModalOpen = false" class="text-gray-400 hover:text-gray-600 p-2"><X class="w-6 h-6" /></button>
+                </div>
+
+                <div class="flex-1 overflow-hidden flex flex-col md:flex-row">
+                    <!-- Product Selection -->
+                    <div class="flex-1 overflow-y-auto p-6 space-y-4 border-r border-gray-100">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div 
+                                v-for="product in products" 
+                                :key="product.id"
+                                class="p-3 border border-gray-100 rounded-2xl hover:border-bakery-900 transition-all cursor-pointer group flex gap-3"
+                                @click="addToOrder(product)"
+                            >
+                                <img :src="product.image" class="w-16 h-16 rounded-xl object-cover" />
+                                <div class="flex-1">
+                                    <div class="font-bold text-sm text-bakery-900">{{ product.name }}</div>
+                                    <div class="text-xs text-bakery-400">{{ formatPrice(product.price) }}</div>
+                                    <button class="mt-2 text-[10px] font-bold text-bakery-900 bg-bakery-50 px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
+                                        + Add to Cart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="w-full md:w-80 bg-gray-50/50 p-6 flex flex-col">
+                        <h3 class="text-sm font-black uppercase tracking-widest text-bakery-400 mb-4">Order Summary</h3>
+                        <div class="flex-1 overflow-y-auto space-y-3">
+                            <div v-if="orderItems.length === 0" class="h-full flex flex-col items-center justify-center text-center opacity-30">
+                                <ShoppingBag class="w-8 h-8 mb-2" />
+                                <p class="text-xs">No items added yet</p>
+                            </div>
+                            <div 
+                                v-for="item in orderItems" 
+                                :key="item.productId"
+                                class="flex items-center justify-between p-3 bg-white rounded-xl shadow-sm border border-gray-100"
+                            >
+                                <div class="min-w-0 flex-1 pr-2">
+                                    <div class="text-xs font-bold truncate">{{ item.productName }}</div>
+                                    <div class="text-[10px] text-gray-500">{{ item.quantity }} x {{ formatPrice(item.price) }}</div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button @click="removeFromOrder(item.productId)" class="text-red-400 hover:text-red-600">
+                                        <Trash2 class="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-gray-200">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-sm font-medium text-gray-500">Total</span>
+                                <span class="text-xl font-black text-bakery-900">{{ formatPrice(orderTotal) }}</span>
+                            </div>
+                            <button 
+                                @click="handleCreateOrder"
+                                :disabled="orderItems.length === 0 || isSubmittingOrder"
+                                class="w-full py-4 bg-bakery-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-lg shadow-bakery-100 disabled:opacity-30 flex items-center justify-center gap-2"
+                            >
+                                <span v-if="isSubmittingOrder" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                {{ isSubmittingOrder ? 'Placing Order...' : 'Confirm Order' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
