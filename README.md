@@ -5,30 +5,23 @@ A specialized, modern, and visually stunning management system designed for arti
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.0-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
+[![Vitest](https://img.shields.io/badge/Vitest-Testing-646CFF?style=flat-square&logo=vitest)](https://vitest.dev/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat-square&logo=docker)](https://www.docker.com/)
 
 ---
 
 ## 📸 Project Overview
-This project was developed to solve the challenges of manual management in small-scale bakeries. It provides a tailor-made experience that generic SaaS solutions often lack, focusing on a cohesive brand identity and bakery-specific workflows.
+This project was developed to solve the challenges of manual management in small-scale bakeries. It provides a tailor-made experience with a focus on cohesive brand identity, bakery-specific workflows, and high-performance automation.
 
 ### 🌟 Key Features
-*   **Customer Portal**: High-impact landing page, interactive product menu, and a seamless shopping cart experience.
-*   **Admin Dashboard**: Real-time business analytics including total revenue, active orders, and product performance.
-*   **Orders Management**: State-based workflow (Pending → Baking → Completed → Cancelled) with detailed tracking.
+*   **⚡ Flash Sale Engine**: Integrated discount management with real-time countdowns and automated price updates.
+*   **💬 Interactive Support**: Smart "Quick Help" support chat with localized response menus (EN, JP, VN).
+*   **Admin Dashboard**: Real-time business analytics including revenue reports, active orders, and product performance.
+*   **Orders Management**: Full state-based workflow (Pending → Baking → Completed → Cancelled).
 *   **Inventory 2.0**: Specialized ingredient tracking with automated low-stock alerts.
-*   **Role-Based Access**: Secure authentication with specific views for Customers, Cashiers, Bakers, and Administrators.
-*   **🌍 Multi-Language Support**: Full internationalization for **English**, **Japanese**, and **Vietnamese**, including dynamic font switching.
-*   **🧪 Localization Lab**: A built-in, live translation editor for Administrators and Managers to fine-tune the shop's voice in real-time.
-
----
-
-## 🌍 Internationalization (i18n)
-The system features a premium localization engine that goes beyond simple text replacement:
-*   **Live Switching**: Change languages instantly without page reloads.
-*   **Dynamic Typography**: Automatically switches between **Outfit** (EN), **Noto Sans JP** (JP), and **Be Vietnam Pro** (VN) for perfect readability.
-*   **Localization Lab**: A specialized UI (restricted to Managers) to edit any translation key live on the site. Search, filter by category, and save changes globally.
+*   **🌍 Multi-Language Support**: Premium internationalization engine with dynamic font switching for **English**, **Japanese**, and **Vietnamese**.
+*   **🧪 Localization Lab**: Live translation editor for Managers to fine-tune the shop's voice in real-time.
 
 ---
 
@@ -36,10 +29,11 @@ The system features a premium localization engine that goes beyond simple text r
 
 | Layer | Technology |
 | :--- | :--- |
-| **Frontend** | Vue 3 (Composition API), Vite, Tailwind CSS, Lucide Icons |
+| **Frontend** | Vue 3 (Composition API), Vite, Tailwind CSS 4.0 |
 | **Backend** | Node.js, Express.js |
 | **Database** | PostgreSQL 15 |
-| **DevOps** | Docker, Docker Compose, Nginx (Production Build) |
+| **Testing** | Vitest, Supertest (Ready for CI/CD) |
+| **DevOps** | Docker, Docker Compose, Nginx |
 | **Language** | TypeScript (Strict Mode) |
 
 ---
@@ -50,40 +44,27 @@ The system features a premium localization engine that goes beyond simple text r
 *   [Node.js](https://nodejs.org/) (v22+)
 *   [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Recommended)
 
-### Option 1: Running with Docker (Recommended)
-1.  Clone the repository:
+### Running with Docker (Recommended)
+1.  **Clone and Start**:
     ```bash
     git clone https://github.com/shireihuy/Bakery-Management-System.git
     cd Bakery-Management-System
+    docker compose up --build -d
     ```
-2.  Start the containers:
-    ```bash
-    docker-compose up --build
-    ```
-3.  Access the apps:
+2.  **Access the apps**:
     *   **Frontend**: `http://localhost:8080`
-    *   **Database UI (Adminer)**: `http://localhost:8085`
     *   **Backend API**: `http://localhost:3000`
+    *   **Adminer (DB UI)**: `http://localhost:8085`
 
-### Option 2: Local Development
-**Frontend:**
+### Running Tests
+The project includes a robust testing infrastructure using Vitest:
 ```bash
-cd client && npm install && npm run dev
+# Run Client Tests
+cd client && npm run test
+
+# Run Server Tests
+cd server && npm run test
 ```
-**Backend:**
-```bash
-cd server && npm install && node src/index.js
-```
-
----
-
-## 🔐 Demo Credentials
-Test the system with these pre-configured roles:
-
-| Role | Email | Password |
-| :--- | :--- | :--- |
-| **Admin** | `admin@bakery.com` | `adminpassword` |
-| **Customer** | `john@example.com` | `password123` |
 
 ---
 
@@ -91,26 +72,18 @@ Test the system with these pre-configured roles:
 ```text
 ├── client/                # Vue 3 Frontend
 │   ├── src/
-│   │   ├── components/    # Reusable UI & Floating Settings
-│   │   ├── composables/   # Business logic & i18n Engine
-│   │   ├── views/         # Role-specific page components
-│   │   └── router/        # Guarded navigation logic
-│   └── Dockerfile
+│   │   ├── components/    # Reusable UI (Support Chat, Tables, Cards)
+│   │   ├── composables/   # Logic, Auth, & i18n Engine
+│   │   ├── views/         # Reports, Flash Sales, Admin Panel
+│   └── vitest.config.ts   # Client test configuration
 ├── server/                # Node.js Express API
 │   ├── src/
-│   │   ├── controllers/   # Business logic handlers
+│   │   ├── controllers/   # Business logic (Cart, Flash Sales, Orders)
 │   │   ├── routes/        # API Endpoints
 │   │   └── index.js       # Entry point
-│   └── Dockerfile
+│   └── vitest.config.js   # Server test configuration
 └── docker-compose.yml     # Infrastructure (Postgres, App, Adminer)
 ```
-
----
-
-## 🎨 Visual Identity
-The system uses a custom **Matcha Twist** design language:
-*   **Primary Colors**: Emerald Green, Forest Matcha, Creamy White.
-*   **Aesthetics**: Glassmorphism, smooth micro-animations, and premium localized typography.
 
 ---
 
