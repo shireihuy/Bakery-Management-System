@@ -304,6 +304,9 @@ export interface TranslationSchema {
         liveSupport: string;
         welcomeMsg: string;
         inputPlaceholder: string;
+        selectItems: string;
+        confirmOrder: string;
+        orderRequestTitle: string;
     };
 }
 
@@ -611,7 +614,10 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             createOrderMsg: 'Hello Admin, I would like you to help me create a new order for some bakery items.',
             liveSupport: 'Live Support',
             welcomeMsg: 'How can we help you today? Send us a message or choose a topic below.',
-            inputPlaceholder: 'Ask support anything...'
+            inputPlaceholder: 'Ask support anything...',
+            selectItems: 'Select Items to Order',
+            confirmOrder: 'Confirm Order Request',
+            orderRequestTitle: '🍞 Order Request Details:'
         },
     },
     jp: {
@@ -917,7 +923,10 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             createOrderMsg: '管理者様、新しい注文の作成を手伝っていただきたいです。',
             liveSupport: 'ライブサポート',
             welcomeMsg: '本日はどのようなご用件でしょうか？メッセージを送るか、以下のトピックから選択してください。',
-            inputPlaceholder: 'サポートに質問する...'
+            inputPlaceholder: 'サポートに質問する...',
+            selectItems: '注文する商品を選択',
+            confirmOrder: '注文リクエストを確定',
+            orderRequestTitle: '🍞 注文リクエスト詳細:'
         },
     },
     vn: {
@@ -1223,7 +1232,10 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             createOrderMsg: 'Chào Admin, tôi muốn nhờ bạn hỗ trợ tạo một đơn hàng mới.',
             liveSupport: 'Hỗ trợ trực tuyến',
             welcomeMsg: 'Chúng tôi có thể giúp gì cho bạn hôm nay? Hãy gửi tin nhắn hoặc chọn một chủ đề bên dưới.',
-            inputPlaceholder: 'Hỏi hỗ trợ bất cứ điều gì...'
+            inputPlaceholder: 'Hỏi hỗ trợ bất cứ điều gì...',
+            selectItems: 'Chọn sản phẩm để đặt hàng',
+            confirmOrder: 'Xác nhận yêu cầu đặt hàng',
+            orderRequestTitle: '🍞 Chi tiết yêu cầu đặt hàng:'
         },
     }
 }

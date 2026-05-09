@@ -3,15 +3,17 @@ import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import { useChat, type ChatMessage } from '../composables/useChat';
 import { useAuth } from '../composables/useAuth';
 import { socketService } from '../services/socket';
-import { MessageSquare, X, Send, Clock, User, Sparkles } from 'lucide-vue-next';
+import { MessageSquare, X, Send, Clock, User, Sparkles, ShoppingBag, Plus, Minus, Check } from 'lucide-vue-next';
 import { useChatUI } from '../composables/useChatUI';
 import { useI18n } from '../composables/useI18n';
+import { useProducts, type Product } from '../composables/useProducts';
 
 const { t } = useI18n();
 
 const { messages: liveMessages, sendMessage, fetchHistory } = useChat();
 const { user } = useAuth();
 const { activeChat, toggleSupportChat, closeAll } = useChatUI();
+const { products, fetchProducts } = useProducts();
 
 const isOpen = computed(() => activeChat.value === 'SUPPORT');
 const userInput = ref('');
@@ -19,13 +21,23 @@ const messageContainer = ref<HTMLElement | null>(null);
 
 const displayMessages = computed(() => {
     // Transform liveMessages to UI format
-    const history = liveMessages.value.map(msg => ({
-        id: msg.id,
-        type: msg.sender_id === user.value?.id ? 'user' : 'support',
-        text: msg.message,
-        time: msg.created_at
-    }));
-    return history;
+    return liveMessages.value.map(msg => {
+        let text = msg.message;
+        if (text.startsWith('[ORDER_REQUEST]')) {
+            try {
+                const payload = JSON.parse(text.replace('[ORDER_REQUEST]', ''));
+                text = payload.summary;
+            } catch (e) {
+                // Keep raw text if parsing fails
+            }
+        }
+        return {
+            id: msg.id,
+            type: msg.sender_id === user.value?.id ? 'user' : 'support',
+            text: text,
+            time: msg.created_at
+        };
+    });
 });
 
 const isVisible = computed(() => {
@@ -59,6 +71,51 @@ const handleIncomingMessage = (newMessage: ChatMessage) => {
 };
 
 const showQuickActions = ref(true);
+const isProductSelectionMode = ref(false);
+const selectedProducts = ref<Map<string, { product: Product, quantity: number }>>(new Map());
+const requestedDeliveryType = ref<'Pick-up' | 'Delivery'>('Pick-up');
+
+const toggleProductInSelection = (product: Product) => {
+    if (selectedProducts.value.has(product.id)) {
+        selectedProducts.value.delete(product.id);
+    } else {
+        selectedProducts.value.set(product.id, { product, quantity: 1 });
+    }
+};
+
+const updateQuantity = (productId: string, delta: number) => {
+    const item = selectedProducts.value.get(productId);
+    if (item) {
+        const newQty = Math.max(1, item.quantity + delta);
+        selectedProducts.value.set(productId, { ...item, quantity: newQty });
+    }
+};
+
+const confirmOrderRequest = () => {
+    if (selectedProducts.value.size === 0) return;
+    
+    // Create a structured data for the admin to process
+    const productsData = Array.from(selectedProducts.value.values()).map(item => ({
+        id: item.product.id,
+        name: item.product.name,
+        price: item.product.price,
+        quantity: item.quantity
+    }));
+
+    const orderPayload = {
+        summary: `${t('support.orderRequestTitle')} (${requestedDeliveryType.value})\n` + productsData.map(p => `• ${p.name} x${p.quantity}`).join('\n'),
+        products: productsData,
+        deliveryType: requestedDeliveryType.value
+    };
+    
+    // Send with a special prefix that the admin view will recognize
+    sendMessage(null, `[ORDER_REQUEST]${JSON.stringify(orderPayload)}`);
+    
+    isProductSelectionMode.value = false;
+    selectedProducts.value.clear();
+    requestedDeliveryType.value = 'Pick-up'; // Reset
+    showQuickActions.value = false;
+};
 
 const quickOptions = computed(() => [
     { text: t('support.hours'), icon: '⏰', message: t('support.hoursMsg') },
@@ -74,9 +131,16 @@ const handleSend = () => {
     showQuickActions.value = false;
 };
 
-const handleQuickAction = (opt: any) => {
-    sendMessage(null, opt.message);
-    showQuickActions.value = false;
+const handleQuickAction = async (opt: any) => {
+    if (opt.isOrderRequest) {
+        await fetchProducts();
+        isProductSelectionMode.value = true;
+        showQuickActions.value = false;
+        await scrollToBottom();
+    } else {
+        sendMessage(null, opt.message);
+        showQuickActions.value = false;
+    }
 };
 
 onMounted(() => {
@@ -101,6 +165,12 @@ const scrollToBottom = async () => {
 };
 
 watch(displayMessages, () => { if (isOpen.value) scrollToBottom(); }, { deep: true });
+
+watch(user, (newUser) => {
+    if (!newUser && isOpen.value) {
+        closeAll();
+    }
+});
 </script>
 
 <template>
@@ -174,6 +244,77 @@ watch(displayMessages, () => { if (isOpen.value) scrollToBottom(); }, { deep: tr
                 <Clock class="w-2.5 h-2.5" />
                 {{ new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
             </div>
+          </div>
+
+          <!-- Product Selection UI -->
+          <div v-if="isProductSelectionMode" class="bg-white rounded-2xl border border-accent-gold/30 p-3 space-y-3 shadow-md animate-in fade-in slide-in-from-bottom-2">
+            <div class="flex items-center justify-between">
+              <h4 class="text-[10px] font-black uppercase tracking-widest text-bakery-900 flex items-center gap-2">
+                <ShoppingBag class="w-3.5 h-3.5 text-accent-gold" />
+                {{ t('support.selectItems') }}
+              </h4>
+              <button @click="isProductSelectionMode = false" class="text-gray-400 hover:text-red-500 transition-colors">
+                <X class="w-3 h-3" />
+              </button>
+            </div>
+            
+            <div class="max-h-48 overflow-y-auto space-y-2 pr-1 scrollbar-hide">
+              <!-- Delivery Toggle -->
+              <div class="grid grid-cols-2 gap-1 p-1 bg-gray-50 rounded-xl border border-gray-100 mb-2">
+                <button 
+                  @click="requestedDeliveryType = 'Pick-up'"
+                  class="py-1.5 rounded-lg text-[9px] font-bold transition-all"
+                  :class="requestedDeliveryType === 'Pick-up' ? 'bg-white text-bakery-900 shadow-sm' : 'text-gray-400'"
+                >
+                  Pick-up
+                </button>
+                <button 
+                  @click="requestedDeliveryType = 'Delivery'"
+                  class="py-1.5 rounded-lg text-[9px] font-bold transition-all"
+                  :class="requestedDeliveryType === 'Delivery' ? 'bg-white text-bakery-900 shadow-sm' : 'text-gray-400'"
+                >
+                  Delivery
+                </button>
+              </div>
+
+              <div v-for="product in products" :key="product.id" 
+                class="flex items-center gap-2 p-2 rounded-xl border transition-all"
+                :class="selectedProducts.has(product.id) ? 'bg-accent-gold/5 border-accent-gold' : 'bg-gray-50 border-gray-100'"
+              >
+                <img :src="product.image" class="w-10 h-10 rounded-lg object-cover bg-white" alt="" />
+                <div class="flex-1 min-w-0">
+                  <p class="text-[10px] font-bold text-bakery-900 truncate">{{ product.name }}</p>
+                  <p class="text-[9px] text-gray-500">${{ product.price }} / {{ product.unit || 'pc' }}</p>
+                </div>
+                
+                <div v-if="selectedProducts.has(product.id)" class="flex items-center gap-2">
+                  <div class="flex items-center gap-1 bg-white border border-bakery-100 rounded-lg p-0.5">
+                    <button @click="updateQuantity(product.id, -1)" class="p-0.5 hover:bg-gray-100 rounded text-bakery-900">
+                      <Minus class="w-2.5 h-2.5" />
+                    </button>
+                    <span class="text-[10px] font-bold w-4 text-center">{{ selectedProducts.get(product.id)?.quantity }}</span>
+                    <button @click="updateQuantity(product.id, 1)" class="p-0.5 hover:bg-gray-100 rounded text-bakery-900">
+                      <Plus class="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+                  <button @click="toggleProductInSelection(product)" class="p-1 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                    <X class="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <button v-else @click="toggleProductInSelection(product)" class="p-1.5 bg-accent-gold text-bakery-900 rounded-lg hover:scale-110 transition-all">
+                  <Plus class="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            <button 
+              @click="confirmOrderRequest"
+              :disabled="selectedProducts.size === 0"
+              class="w-full py-2 bg-bakery-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-bakery-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              <Check class="w-3.5 h-3.5" />
+              {{ t('support.confirmOrder') }} ({{ selectedProducts.size }})
+            </button>
           </div>
         </div>
 

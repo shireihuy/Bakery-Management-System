@@ -30,6 +30,7 @@ import { useCurrency } from '../composables/useCurrency';
 import { useCart } from '../composables/useCart';
 import { useGHN } from '../composables/useGHN';
 import FlashSaleSection from '../components/FlashSaleSection.vue';
+import { useUsers } from '../composables/useUsers';
 
 
 // State
@@ -40,6 +41,7 @@ const { t } = useI18n();
 const { formatPrice } = useCurrency();
 const { cart, fetchCart, addToCart, updateQuantity, removeFromCart, clearCart } = useCart();
 const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards, fetchFee } = useGHN();
+const { users } = useUsers();
 const router = useRouter();
 
 
@@ -55,6 +57,9 @@ const activeTab = ref('menu');
 const isOrderDetailsOpen = ref(false);
 
 const orderCustomerName = ref('');
+const staffSearchQuery = ref('');
+const isSearchingUser = ref(false);
+const selectedUserId = ref<string | null>(null);
 const showLoginPrompt = ref(false);
 
 const userRating = ref(0);
@@ -76,7 +81,38 @@ const selectedWard = ref<string | null>(null);
 const streetAddress = ref('');
 
 // Derived State
-const isCashier = computed(() => user.value?.role?.toLowerCase() === 'cashier');
+const isStaff = computed(() => {
+    const role = user.value?.role?.toLowerCase();
+    return ['admin', 'manager', 'cashier'].includes(role || '');
+});
+
+const filteredSystemUsers = computed(() => {
+    if (!staffSearchQuery.value) return [];
+    const q = staffSearchQuery.value.toLowerCase();
+    return users.value.filter(u => 
+        (u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) &&
+        u.role === 'Customer'
+    ).slice(0, 5);
+});
+
+const selectStaffCustomer = (systemUser: any) => {
+    orderCustomerName.value = systemUser.name;
+    selectedUserId.value = systemUser.id;
+    staffSearchQuery.value = systemUser.name;
+    isSearchingUser.value = false;
+};
+
+const handleStaffNameInput = () => {
+    orderCustomerName.value = staffSearchQuery.value;
+    selectedUserId.value = null; // Clear ID if typing manually
+    isSearchingUser.value = true;
+};
+
+const handleStaffBlur = () => {
+    setTimeout(() => {
+        isSearchingUser.value = false;
+    }, 200);
+};
 
 const customerOrders = computed(() => orders.value);
 
@@ -165,8 +201,8 @@ const handleCheckout = async () => {
         return;
     }
 
-    if (isCashier.value && !orderCustomerName.value) {
-        alert('Please enter a customer name for the Order at Shop.');
+    if (isStaff.value && !orderCustomerName.value) {
+        alert('Please enter a customer name for the Order.');
         return;
     }
 
@@ -179,11 +215,11 @@ const handleCheckout = async () => {
         const fullAddress = addressPartsList.filter(Boolean).join(', ') || user.value.address;
 
         const result = await addOrder({
-            customerId: isCashier.value ? null : user.value.id,
-            customerName: isCashier.value ? orderCustomerName.value : user.value.name,
-            customerEmail: isCashier.value ? 'walkin@example.com' : user.value.email,
-            customerPhone: isCashier.value ? null : user.value.phone,
-            customerAddress: isCashier.value ? null : fullAddress,
+            customerId: isStaff.value ? (selectedUserId.value || 'GUEST') : user.value.id,
+            customerName: isStaff.value ? orderCustomerName.value : user.value.name,
+            customerEmail: isStaff.value ? (selectedUserId.value ? users.value.find(u => u.id === selectedUserId.value)?.email : 'walkin@example.com') : user.value.email,
+            customerPhone: isStaff.value ? (selectedUserId.value ? users.value.find(u => u.id === selectedUserId.value)?.phone : null) : user.value.phone,
+            customerAddress: isStaff.value ? (selectedUserId.value ? users.value.find(u => u.id === selectedUserId.value)?.address : null) : fullAddress,
             deliveryType: selectedDeliveryType.value,
             district_id: selectedDistrict.value,
             ward_code: selectedWard.value,
@@ -200,6 +236,8 @@ const handleCheckout = async () => {
         // Clear cart before redirecting
         await clearCart();
         orderCustomerName.value = '';
+        staffSearchQuery.value = '';
+        selectedUserId.value = null;
         appliedCoupon.value = null;
         couponCodeInput.value = '';
         isCartOpen.value = false;
@@ -398,7 +436,7 @@ onMounted(async () => {
     await fetchCart();
 
     if (user.value) {
-        if (isCashier.value) {
+        if (isStaff.value) {
             await fetchOrders();
         } else {
             await fetchMyOrders();
@@ -462,7 +500,7 @@ const confirmCancelOrder = async () => {
     
     try {
         await updateOrderStatus(orderToCancel.value, 'Cancelled', undefined, reason);
-        if (isCashier.value) {
+        if (isStaff.value) {
             await fetchOrders();
         } else {
             await fetchMyOrders();
@@ -530,7 +568,7 @@ const confirmCancelOrder = async () => {
             class="flex-1 inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200"
         >
             <History class="w-4 h-4 mr-2" />
-            {{ isCashier ? t('shop.shopOrders') : t('shop.myOrders') }}
+            {{ isStaff ? t('shop.shopOrders') : t('shop.myOrders') }}
             <span class="ml-1 opacity-60">({{ customerOrders.length }})</span>
         </button>
     </div>
@@ -826,15 +864,47 @@ const confirmCancelOrder = async () => {
                     </div>
 
                     <div v-if="cart.length > 0" class="p-8 border-t border-bakery-100 bg-white space-y-6">
-                         <!-- Cashier specific input -->
-                         <div v-if="isCashier" class="space-y-3">
+                         <!-- Staff specific input -->
+                         <div v-if="isStaff" class="space-y-3 relative">
                               <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">{{ t('shop.customerInfo') }}</label>
-                              <input 
-                                v-model="orderCustomerName" 
-                                type="text" 
-                                placeholder="Enter customer name..." 
-                                class="w-full h-12 rounded-2xl border border-bakery-100 px-4 focus:outline-none focus:ring-2 focus:ring-bakery-300 text-sm bg-bakery-50/50 transition-all font-medium"
-                              >
+                              <div class="relative group">
+                                  <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-bakery-400" />
+                                  <input 
+                                    v-model="staffSearchQuery" 
+                                    @input="handleStaffNameInput"
+                                    @focus="isSearchingUser = true"
+                                    @blur="handleStaffBlur"
+                                    type="text" 
+                                    placeholder="Search user or enter name..." 
+                                    class="w-full h-12 rounded-2xl border border-bakery-100 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-bakery-300 text-sm bg-bakery-50/50 transition-all font-medium"
+                                  >
+                                  <!-- User search results -->
+                                  <div v-if="isSearchingUser && filteredSystemUsers.length > 0" class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-bakery-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                                      <div class="p-2">
+                                          <button 
+                                            v-for="sysUser in filteredSystemUsers" 
+                                            :key="sysUser.id"
+                                            @click="selectStaffCustomer(sysUser)"
+                                            class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-bakery-50 transition-colors text-left"
+                                          >
+                                              <div class="w-10 h-10 rounded-full bg-bakery-100 flex items-center justify-center text-bakery-700 font-bold">
+                                                  {{ sysUser.name.charAt(0) }}
+                                              </div>
+                                              <div>
+                                                  <p class="text-sm font-bold text-bakery-900">{{ sysUser.name }}</p>
+                                                  <p class="text-xs text-bakery-400">{{ sysUser.email }}</p>
+                                              </div>
+                                              <div v-if="selectedUserId === sysUser.id" class="ml-auto text-bakery-600">
+                                                  <Plus class="w-4 h-4 rotate-45" /> <!-- Using plus icon rotated as a mark, or check if available -->
+                                              </div>
+                                          </button>
+                                      </div>
+                                  </div>
+                              </div>
+                              <div v-if="selectedUserId" class="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-xl border border-green-100 text-[10px] text-green-700 font-bold animate-in zoom-in">
+                                  <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                  Linking to Registered User Account
+                              </div>
                          </div>
                          
                          <!-- Delivery Option Toggle -->

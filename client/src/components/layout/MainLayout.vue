@@ -62,12 +62,12 @@ const navigation = computed(() => {
     tabs.push({ name: t('nav.users'), href: '/users', icon: Users });
   }
 
-  if (['admin', 'manager'].includes(role)) {
+  if (['admin', 'manager', 'cashier'].includes(role)) {
     tabs.push({ name: 'Support', href: '/support-chat', icon: MessageSquare });
   }
   
   // Static tabs for everyone (including guests)
-  if (!role || role === 'customer' || role === 'cashier') {
+  if (!role || ['customer', 'cashier', 'admin', 'manager'].includes(role)) {
     tabs.push({ name: t('nav.shop'), href: '/customer', icon: ShoppingCart });
   }
   

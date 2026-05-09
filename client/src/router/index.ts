@@ -134,7 +134,7 @@ const router = createRouter({
         {
             path: '/support-chat',
             component: MainLayout,
-            meta: { requiresAuth: true, roles: ['admin', 'manager'] },
+            meta: { requiresAuth: true, roles: ['admin', 'manager', 'cashier'] },
             children: [
                 {
                     path: '',

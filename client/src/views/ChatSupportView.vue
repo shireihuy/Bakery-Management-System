@@ -9,6 +9,8 @@ import {
     PlusCircle,
     ShoppingBag,
     Trash2,
+    Plus,
+    Minus,
     X
 } from 'lucide-vue-next';
 import { useChat, type Conversation, type ChatMessage } from '../composables/useChat';
@@ -33,11 +35,38 @@ const messageContainer = ref<HTMLElement | null>(null);
 const isOrderModalOpen = ref(false);
 const orderItems = ref<any[]>([]);
 const isSubmittingOrder = ref(false);
+const modalDeliveryType = ref<'Pick-up' | 'Delivery'>('Pick-up');
 
-const openOrderModal = async () => {
+const openOrderModal = async (initialProducts?: any[], deliveryType?: 'Pick-up' | 'Delivery') => {
     await fetchProducts();
-    orderItems.value = [];
+    if (initialProducts) {
+        orderItems.value = initialProducts.map(p => ({
+            productId: p.id || p.productId,
+            productName: p.name || p.productName,
+            price: p.price,
+            quantity: p.quantity
+        }));
+        if (deliveryType) modalDeliveryType.value = deliveryType;
+    } else {
+        orderItems.value = [];
+        modalDeliveryType.value = 'Pick-up';
+    }
     isOrderModalOpen.value = true;
+};
+
+const parseMessage = (text: string) => {
+    if (text.startsWith('[ORDER_REQUEST]')) {
+        try {
+            const raw = text.replace('[ORDER_REQUEST]', '');
+            return {
+                type: 'ORDER_REQUEST',
+                data: JSON.parse(raw)
+            };
+        } catch (e) {
+            return { type: 'TEXT', text };
+        }
+    }
+    return { type: 'TEXT', text };
 };
 
 const addToOrder = (product: any) => {
@@ -58,6 +87,13 @@ const removeFromOrder = (productId: number) => {
     orderItems.value = orderItems.value.filter(i => i.productId !== productId);
 };
 
+const updateModalItemQuantity = (productId: number, delta: number) => {
+    const item = orderItems.value.find(i => i.productId === productId);
+    if (item) {
+        item.quantity = Math.max(1, item.quantity + delta);
+    }
+};
+
 const orderTotal = computed(() => orderItems.value.reduce((sum, item) => sum + (item.price * item.quantity), 0));
 
 const handleCreateOrder = async () => {
@@ -71,7 +107,7 @@ const handleCreateOrder = async () => {
             customerEmail: selectedConversation.value.email,
             items: orderItems.value,
             total: orderTotal.value,
-            deliveryType: 'Pick-up'
+            deliveryType: modalDeliveryType.value
         });
         
         // Notify user in chat
@@ -86,10 +122,6 @@ const handleCreateOrder = async () => {
     }
 };
 
-const isOrderRequest = (text: string) => {
-    const keywords = ['create a new order', 'create an order', 'place an order', 'help me order'];
-    return keywords.some(k => text.toLowerCase().includes(k));
-};
 
 const filteredConversations = computed(() => {
     return conversations.value.filter(c => 
@@ -214,7 +246,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
                         </div>
                     </div>
                     <button 
-                        @click="openOrderModal"
+                        @click="openOrderModal()"
                         class="flex items-center gap-2 px-4 py-2 bg-bakery-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-all shadow-md shadow-bakery-100 active:scale-95"
                     >
                         <PlusCircle class="w-4 h-4" />
@@ -234,24 +266,28 @@ watch(messages, () => scrollToBottom(), { deep: true });
                             class="max-w-[70%] p-4 rounded-2xl text-sm shadow-sm relative group"
                             :class="msg.sender_id === user?.id 
                                 ? 'bg-green-600 text-white rounded-tr-none' 
-                                : isOrderRequest(msg.message)
+                                : parseMessage(msg.message).type === 'ORDER_REQUEST'
                                     ? 'bg-amber-50 text-amber-900 rounded-tl-none border border-amber-200 ring-2 ring-amber-100'
                                     : 'bg-gray-50 text-gray-900 rounded-tl-none border border-gray-100'"
                         >
-                            <div v-if="msg.sender_id !== user?.id && isOrderRequest(msg.message)" class="flex items-center gap-1.5 mb-2 text-[10px] font-black uppercase tracking-widest text-amber-600">
-                                <ShoppingBag class="w-3 h-3" />
-                                Order Request
-                            </div>
-                            {{ msg.message }}
-                            
-                            <button 
-                                v-if="msg.sender_id !== user?.id && isOrderRequest(msg.message)"
-                                @click="openOrderModal"
-                                class="mt-3 w-full py-2 bg-amber-600 text-white rounded-lg text-[10px] font-bold hover:bg-amber-700 transition-colors flex items-center justify-center gap-1.5"
-                            >
-                                <PlusCircle class="w-3.5 h-3.5" />
-                                Process Order Request
-                            </button>
+                            <template v-if="parseMessage(msg.message).type === 'ORDER_REQUEST'">
+                                <div class="flex items-center gap-1.5 mb-2 text-[10px] font-black uppercase tracking-widest text-amber-600">
+                                    <ShoppingBag class="w-3 h-3" />
+                                    Order Request
+                                </div>
+                                <div class="whitespace-pre-line mb-3 font-medium">{{ parseMessage(msg.message).data.summary }}</div>
+                                
+                                <button 
+                                    @click="openOrderModal(parseMessage(msg.message).data.products, parseMessage(msg.message).data.deliveryType)"
+                                    class="w-full py-2.5 bg-amber-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-amber-700 transition-all flex items-center justify-center gap-2 shadow-md shadow-amber-200 active:scale-95"
+                                >
+                                    <PlusCircle class="w-4 h-4" />
+                                    Process Order Request
+                                </button>
+                            </template>
+                            <template v-else>
+                                {{ msg.message }}
+                            </template>
                         </div>
                         <div class="text-[10px] text-gray-400 mt-1 px-1 flex items-center gap-1">
                             <Clock class="w-3 h-3" />
@@ -323,7 +359,22 @@ watch(messages, () => scrollToBottom(), { deep: true });
 
                     <!-- Order Summary -->
                     <div class="w-full md:w-80 bg-gray-50/50 p-6 flex flex-col">
-                        <h3 class="text-sm font-black uppercase tracking-widest text-bakery-400 mb-4">Order Summary</h3>
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-black uppercase tracking-widest text-bakery-400">Order Summary</h3>
+                            <!-- Delivery Toggle in Modal -->
+                            <div class="flex gap-1 p-1 bg-white rounded-lg border border-gray-100">
+                                <button 
+                                    @click="modalDeliveryType = 'Pick-up'"
+                                    class="px-2 py-1 rounded text-[8px] font-black uppercase"
+                                    :class="modalDeliveryType === 'Pick-up' ? 'bg-bakery-900 text-white' : 'text-gray-400'"
+                                >P</button>
+                                <button 
+                                    @click="modalDeliveryType = 'Delivery'"
+                                    class="px-2 py-1 rounded text-[8px] font-black uppercase"
+                                    :class="modalDeliveryType === 'Delivery' ? 'bg-bakery-900 text-white' : 'text-gray-400'"
+                                >D</button>
+                            </div>
+                        </div>
                         <div class="flex-1 overflow-y-auto space-y-3">
                             <div v-if="orderItems.length === 0" class="h-full flex flex-col items-center justify-center text-center opacity-30">
                                 <ShoppingBag class="w-8 h-8 mb-2" />
@@ -339,7 +390,16 @@ watch(messages, () => scrollToBottom(), { deep: true });
                                     <div class="text-[10px] text-gray-500">{{ item.quantity }} x {{ formatPrice(item.price) }}</div>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <button @click="removeFromOrder(item.productId)" class="text-red-400 hover:text-red-600">
+                                    <div class="flex items-center gap-1 bg-gray-50 rounded-lg p-0.5 border border-gray-100">
+                                        <button @click="updateModalItemQuantity(item.productId, -1)" class="p-1 hover:bg-gray-200 rounded text-bakery-900 transition-colors">
+                                            <Minus class="w-3 h-3" />
+                                        </button>
+                                        <span class="text-[10px] font-bold w-4 text-center">{{ item.quantity }}</span>
+                                        <button @click="updateModalItemQuantity(item.productId, 1)" class="p-1 hover:bg-gray-200 rounded text-bakery-900 transition-colors">
+                                            <Plus class="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                    <button @click="removeFromOrder(item.productId)" class="text-red-400 hover:text-red-600 ml-1">
                                         <Trash2 class="w-4 h-4" />
                                     </button>
                                 </div>

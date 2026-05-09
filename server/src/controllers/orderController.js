@@ -19,12 +19,20 @@ const createOrder = async (req, res) => {
         coupon_code 
     } = req.body;
 
-    const customer_id = body_customer_id || req.user?.id || 'GUEST';
-    let customer_name = body_customer_name || req.user?.name || 'Walk-in Customer';
-    let customer_email = body_customer_email || req.user?.email || (customer_id === 'GUEST' ? 'walkin@example.com' : null);
+    const isStaff = ['Cashier', 'Admin', 'Manager'].includes(req.user?.role);
     
-    // If Admin places order for someone else, respect the provided name
-    if (req.user?.role === 'Cashier' || req.user?.role === 'Admin') {
+    let customer_id = body_customer_id;
+    let customer_name = body_customer_name;
+    let customer_email = body_customer_email;
+
+    if (!isStaff) {
+        // Normal customer ordering for themselves
+        customer_id = req.user?.id || 'GUEST';
+        customer_name = req.user?.name || body_customer_name || 'Walk-in Customer';
+        customer_email = req.user?.email || body_customer_email || 'walkin@example.com';
+    } else {
+        // Staff ordering for someone
+        customer_id = body_customer_id || 'GUEST';
         customer_name = body_customer_name || 'Walk-in Customer';
         customer_email = body_customer_email || 'walkin@example.com';
     }
