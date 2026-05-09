@@ -70,7 +70,7 @@ const getConversations = async (req, res) => {
                 FROM chat_messages
                 WHERE sender_id IS NOT NULL 
             )
-            SELECT u.id, u.name, u.email, lm.message as last_message, lm.created_at as last_message_time
+            SELECT u.id, u.name, u.email, u.phone_number as phone, u.address, lm.message as last_message, lm.created_at as last_message_time
             FROM users u
             JOIN last_messages lm ON u.id = lm.customer_id
             WHERE lm.rn = 1 AND u.id IS NOT NULL 

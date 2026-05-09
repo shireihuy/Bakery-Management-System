@@ -24,7 +24,7 @@ const getCart = async (req, res) => {
                 fsi.sale_price as flash_sale_price,
                 fsi.flash_sale_stock,
                 fsi.sold_quantity as flash_sale_sold,
-                fs.end_time as flash_sale_end
+                fsi.end_time as flash_sale_end
             FROM cart_items ci
             JOIN products p ON ci.product_id = p.id
             LEFT JOIN (

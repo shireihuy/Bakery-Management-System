@@ -15,6 +15,8 @@ export interface Conversation {
     id: string;
     name: string;
     email: string;
+    phone?: string;
+    address?: string;
     last_message: string;
     last_message_time: string;
 }

@@ -11,7 +11,8 @@ import {
     Trash2,
     Plus,
     Minus,
-    X
+    X,
+    MapPin
 } from 'lucide-vue-next';
 import { useChat, type Conversation, type ChatMessage } from '../composables/useChat';
 import { useAuth } from '../composables/useAuth';
@@ -19,12 +20,14 @@ import { socketService } from '../services/socket';
 import { useProducts } from '../composables/useProducts';
 import { useOrders } from '../composables/useOrders';
 import { useCurrency } from '../composables/useCurrency';
+import { useGHN } from '../composables/useGHN';
 
 const { conversations, messages, fetchConversations, fetchHistory, sendMessage, joinAdminRoom } = useChat();
 const { user } = useAuth();
 const { products, fetchProducts } = useProducts();
 const { addOrder } = useOrders();
 const { formatPrice } = useCurrency();
+const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useGHN();
 
 const selectedConversation = ref<Conversation | null>(null);
 const searchQuery = ref('');
@@ -36,9 +39,55 @@ const isOrderModalOpen = ref(false);
 const orderItems = ref<any[]>([]);
 const isSubmittingOrder = ref(false);
 const modalDeliveryType = ref<'Pick-up' | 'Delivery'>('Pick-up');
+const modalPhone = ref('');
+const modalAddress = ref('');
+const modalProvince = ref<number | null>(null);
+const modalDistrict = ref<number | null>(null);
+const modalWard = ref<string | null>(null);
 
-const openOrderModal = async (initialProducts?: any[], deliveryType?: 'Pick-up' | 'Delivery') => {
+const modalMapUrl = computed(() => {
+    let addressParts = [];
+    if (modalWard.value) {
+        const ward = (wards as any).value.find((w: any) => w.WardCode === modalWard.value);
+        if (ward) addressParts.push(ward.WardName);
+    }
+    if (modalDistrict.value) {
+        const district = (districts as any).value.find((d: any) => d.DistrictID === modalDistrict.value);
+        if (district) addressParts.push(district.DistrictName);
+    }
+    if (modalProvince.value) {
+        const province = (provinces as any).value.find((p: any) => p.ProvinceID === modalProvince.value);
+        if (province) addressParts.push(province.ProvinceName);
+    }
+    if (modalAddress.value) {
+        addressParts.unshift(modalAddress.value);
+    }
+    
+    const address = addressParts.length > 0 ? addressParts.join(', ') : 'Vietnam';
+    return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
+});
+
+watch(modalProvince, async (newVal) => {
+    if (newVal) {
+        await fetchDistricts(newVal);
+    } else {
+        modalDistrict.value = null;
+        modalWard.value = null;
+    }
+});
+
+watch(modalDistrict, async (newVal) => {
+    if (newVal) {
+        await fetchWards(newVal);
+    } else {
+        modalWard.value = null;
+    }
+});
+
+const openOrderModal = async (initialProducts?: any[], deliveryType?: 'Pick-up' | 'Delivery', phone?: string, address?: string, provinceId?: number, districtId?: number, wardCode?: string) => {
     await fetchProducts();
+    await fetchProvinces();
+
     if (initialProducts) {
         orderItems.value = initialProducts.map(p => ({
             productId: p.id || p.productId,
@@ -47,9 +96,29 @@ const openOrderModal = async (initialProducts?: any[], deliveryType?: 'Pick-up' 
             quantity: p.quantity
         }));
         if (deliveryType) modalDeliveryType.value = deliveryType;
+        modalPhone.value = phone || selectedConversation.value?.phone || '';
+        modalAddress.value = address || selectedConversation.value?.address || '';
+        
+        // Handle GHN location data
+        if (provinceId) {
+            modalProvince.value = provinceId;
+            await fetchDistricts(provinceId);
+            if (districtId) {
+                modalDistrict.value = districtId;
+                await fetchWards(districtId);
+                if (wardCode) {
+                    modalWard.value = wardCode;
+                }
+            }
+        }
     } else {
         orderItems.value = [];
         modalDeliveryType.value = 'Pick-up';
+        modalPhone.value = selectedConversation.value?.phone || '';
+        modalAddress.value = selectedConversation.value?.address || '';
+        modalProvince.value = null;
+        modalDistrict.value = null;
+        modalWard.value = null;
     }
     isOrderModalOpen.value = true;
 };
@@ -105,6 +174,10 @@ const handleCreateOrder = async () => {
             customerId: selectedConversation.value.id,
             customerName: selectedConversation.value.name,
             customerEmail: selectedConversation.value.email,
+            customerPhone: modalPhone.value,
+            customerAddress: modalAddress.value,
+            district_id: modalDistrict.value,
+            ward_code: modalWard.value,
             items: orderItems.value,
             total: orderTotal.value,
             deliveryType: modalDeliveryType.value
@@ -278,7 +351,15 @@ watch(messages, () => scrollToBottom(), { deep: true });
                                 <div class="whitespace-pre-line mb-3 font-medium">{{ parseMessage(msg.message).data.summary }}</div>
                                 
                                 <button 
-                                    @click="openOrderModal(parseMessage(msg.message).data.products, parseMessage(msg.message).data.deliveryType)"
+                                    @click="openOrderModal(
+                                        parseMessage(msg.message).data.products, 
+                                        parseMessage(msg.message).data.deliveryType, 
+                                        parseMessage(msg.message).data.customerPhone, 
+                                        parseMessage(msg.message).data.customerAddress,
+                                        parseMessage(msg.message).data.province_id,
+                                        parseMessage(msg.message).data.district_id,
+                                        parseMessage(msg.message).data.ward_code
+                                    )"
                                     class="w-full py-2.5 bg-amber-600 text-white rounded-xl text-[11px] font-black uppercase tracking-widest hover:bg-amber-700 transition-all flex items-center justify-center gap-2 shadow-md shadow-amber-200 active:scale-95"
                                 >
                                     <PlusCircle class="w-4 h-4" />
@@ -402,6 +483,87 @@ watch(messages, () => scrollToBottom(), { deep: true });
                                     <button @click="removeFromOrder(item.productId)" class="text-red-400 hover:text-red-600 ml-1">
                                         <Trash2 class="w-4 h-4" />
                                     </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Customer Info -->
+                        <div class="mt-4 pt-4 border-t border-gray-200 space-y-3">
+                            <h3 class="text-[10px] font-black uppercase tracking-widest text-bakery-400 flex items-center gap-2">
+                                <MapPin class="w-3 h-3 text-bakery-900" />
+                                Customer & Delivery Details
+                            </h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="text-[9px] font-bold text-gray-500 uppercase ml-1">Phone Number</label>
+                                    <input 
+                                        v-model="modalPhone"
+                                        type="text" 
+                                        placeholder="Enter phone number" 
+                                        class="w-full px-3 py-2 bg-white border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-bakery-900 outline-none transition-all"
+                                    >
+                                </div>
+
+                                <!-- GHN Location Selectors -->
+                                <div class="grid grid-cols-1 gap-2">
+                                    <div>
+                                        <label class="text-[9px] font-bold text-gray-500 uppercase ml-1">Province</label>
+                                        <select 
+                                            v-model="modalProvince"
+                                            class="w-full px-3 py-2 bg-white border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-bakery-900 outline-none transition-all"
+                                        >
+                                            <option :value="null">Select Province</option>
+                                            <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">{{ p.ProvinceName }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="text-[9px] font-bold text-gray-500 uppercase ml-1">District</label>
+                                            <select 
+                                                v-model="modalDistrict"
+                                                :disabled="!modalProvince"
+                                                class="w-full px-3 py-2 bg-white border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-bakery-900 outline-none transition-all disabled:opacity-50"
+                                            >
+                                                <option :value="null">Select District</option>
+                                                <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">{{ d.DistrictName }}</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-[9px] font-bold text-gray-500 uppercase ml-1">Ward</label>
+                                            <select 
+                                                v-model="modalWard"
+                                                :disabled="!modalDistrict"
+                                                class="w-full px-3 py-2 bg-white border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-bakery-900 outline-none transition-all disabled:opacity-50"
+                                            >
+                                                <option :value="null">Select Ward</option>
+                                                <option v-for="w in wards" :key="w.WardCode" :value="w.WardCode">{{ w.WardName }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="text-[9px] font-bold text-gray-500 uppercase ml-1">Street Address</label>
+                                    <textarea 
+                                        v-model="modalAddress"
+                                        rows="2"
+                                        placeholder="Enter street name, house number..." 
+                                        class="w-full px-3 py-2 bg-white border border-gray-100 rounded-xl text-xs focus:ring-2 focus:ring-bakery-900 outline-none transition-all resize-none"
+                                    ></textarea>
+                                </div>
+
+                                <!-- Map Preview -->
+                                <div class="rounded-2xl overflow-hidden border border-gray-100 h-32 bg-gray-100 relative group">
+                                    <iframe 
+                                        width="100%" 
+                                        height="100%" 
+                                        frameborder="0" 
+                                        scrolling="no" 
+                                        marginheight="0" 
+                                        marginwidth="0" 
+                                        :src="modalMapUrl"
+                                    ></iframe>
+                                    <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                                 </div>
                             </div>
                         </div>

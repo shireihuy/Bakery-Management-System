@@ -105,7 +105,12 @@ const confirmOrderRequest = () => {
     const orderPayload = {
         summary: `${t('support.orderRequestTitle')} (${requestedDeliveryType.value})\n` + productsData.map(p => `• ${p.name} x${p.quantity}`).join('\n'),
         products: productsData,
-        deliveryType: requestedDeliveryType.value
+        deliveryType: requestedDeliveryType.value,
+        customerPhone: user.value?.phone,
+        customerAddress: user.value?.address,
+        province_id: user.value?.province_id,
+        district_id: user.value?.district_id,
+        ward_code: user.value?.ward_code
     };
     
     // Send with a special prefix that the admin view will recognize
