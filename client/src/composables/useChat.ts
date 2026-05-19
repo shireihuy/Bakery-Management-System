@@ -17,6 +17,9 @@ export interface Conversation {
     email: string;
     phone?: string;
     address?: string;
+    province_id?: number;
+    district_id?: number;
+    ward_code?: string;
     last_message: string;
     last_message_time: string;
 }

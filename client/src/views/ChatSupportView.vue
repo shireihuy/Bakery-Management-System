@@ -88,6 +88,12 @@ const openOrderModal = async (initialProducts?: any[], deliveryType?: 'Pick-up' 
     await fetchProducts();
     await fetchProvinces();
 
+    const finalPhone = phone || selectedConversation.value?.phone || '';
+    const finalAddress = address || selectedConversation.value?.address || '';
+    const finalProvinceId = provinceId || selectedConversation.value?.province_id;
+    const finalDistrictId = districtId || selectedConversation.value?.district_id;
+    const finalWardCode = wardCode || selectedConversation.value?.ward_code;
+
     if (initialProducts) {
         orderItems.value = initialProducts.map(p => ({
             productId: p.id || p.productId,
@@ -95,30 +101,43 @@ const openOrderModal = async (initialProducts?: any[], deliveryType?: 'Pick-up' 
             price: p.price,
             quantity: p.quantity
         }));
-        if (deliveryType) modalDeliveryType.value = deliveryType;
-        modalPhone.value = phone || selectedConversation.value?.phone || '';
-        modalAddress.value = address || selectedConversation.value?.address || '';
+        modalDeliveryType.value = deliveryType || (finalAddress ? 'Delivery' : 'Pick-up');
+        modalPhone.value = finalPhone;
+        modalAddress.value = finalAddress;
         
         // Handle GHN location data
-        if (provinceId) {
-            modalProvince.value = provinceId;
-            await fetchDistricts(provinceId);
-            if (districtId) {
-                modalDistrict.value = districtId;
-                await fetchWards(districtId);
-                if (wardCode) {
-                    modalWard.value = wardCode;
+        if (finalProvinceId) {
+            modalProvince.value = finalProvinceId;
+            await fetchDistricts(finalProvinceId);
+            if (finalDistrictId) {
+                modalDistrict.value = finalDistrictId;
+                await fetchWards(finalDistrictId);
+                if (finalWardCode) {
+                    modalWard.value = finalWardCode;
                 }
             }
         }
     } else {
         orderItems.value = [];
-        modalDeliveryType.value = 'Pick-up';
-        modalPhone.value = selectedConversation.value?.phone || '';
-        modalAddress.value = selectedConversation.value?.address || '';
-        modalProvince.value = null;
-        modalDistrict.value = null;
-        modalWard.value = null;
+        modalDeliveryType.value = finalAddress ? 'Delivery' : 'Pick-up';
+        modalPhone.value = finalPhone;
+        modalAddress.value = finalAddress;
+        
+        if (finalProvinceId) {
+            modalProvince.value = finalProvinceId;
+            await fetchDistricts(finalProvinceId);
+            if (finalDistrictId) {
+                modalDistrict.value = finalDistrictId;
+                await fetchWards(finalDistrictId);
+                if (finalWardCode) {
+                    modalWard.value = finalWardCode;
+                }
+            }
+        } else {
+            modalProvince.value = null;
+            modalDistrict.value = null;
+            modalWard.value = null;
+        }
     }
     isOrderModalOpen.value = true;
 };
