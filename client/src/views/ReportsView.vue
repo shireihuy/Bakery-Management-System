@@ -23,27 +23,57 @@ const {
     totalWeeklyRevenue,
     totalWeeklyOrders,
     averageOrderValue,
-    maxDailyRevenue
+    maxDailyRevenue,
+    fetchReports
 } = useReports();
 import { useI18n } from '../composables/useI18n';
 
 const { t } = useI18n();
 const { formatPrice } = useCurrency();
-const selectedRange = ref('Last 7 Days');
+const selectedRange = ref('7days');
+const isOpen = ref(false);
+
+const selectRange = async (range: string) => {
+    selectedRange.value = range;
+    isOpen.value = false;
+    await fetchReports(range);
+};
+
+const formatLabel = (label: string) => {
+    if (selectedRange.value === 'all' && label.includes('/')) {
+        const parts = label.split('/');
+        const monthStr = parts[0];
+        if (monthStr) {
+            const monthNamesEn = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const monthIndex = parseInt(monthStr, 10) - 1;
+            if (monthIndex >= 0 && monthIndex < 12) {
+                const lang = localStorage.getItem('lang') || 'en';
+                if (lang === 'vn') return `Thg ${monthStr}`;
+                if (lang === 'jp') return `${monthStr}月`;
+                return `${monthNamesEn[monthIndex]}`;
+            }
+        }
+    }
+    return label;
+};
 
 const formatCurrency = (value: number) => {
     return formatPrice(value);
 };
 
 const handleExport = () => {
+    const rangeLabel = selectedRange.value === 'all' ? t('reports.allTime') : t('reports.last7Days');
+    const revenueLabel = selectedRange.value === 'all' ? t('dashboard.totalRevenue') : t('reports.totalRevenueWeekly');
+    const ordersLabel = selectedRange.value === 'all' ? t('orders.totalOrders') : t('reports.totalWeeklyOrders');
+
     // 1. Prepare Content for CSV
     let csvContent = "DATA REPORT - BAKERY MANAGEMENT SYSTEM\n";
-    csvContent += `Report Interval: ${selectedRange.value}\n\n`;
+    csvContent += `Report Interval: ${rangeLabel}\n\n`;
     
     // Summary Section
     csvContent += "SUMMARY\n";
-    csvContent += `Total Weekly Revenue,${totalWeeklyRevenue.value}\n`;
-    csvContent += `Total Weekly Orders,${totalWeeklyOrders.value}\n`;
+    csvContent += `"${revenueLabel}",${totalWeeklyRevenue.value}\n`;
+    csvContent += `"${ordersLabel}",${totalWeeklyOrders.value}\n`;
     csvContent += `Average Order Value,${averageOrderValue.value.toFixed(2)}\n\n`;
     
     // Daily History Section
@@ -66,7 +96,7 @@ const handleExport = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `Bakery_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute("download", `Bakery_Report_${selectedRange.value}_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -86,10 +116,34 @@ const handleExport = () => {
                 <p class="text-sm text-green-600">{{ t('reports.trackGrowth') }}</p>
             </div>
             <div class="flex items-center gap-3">
-                <div class="relative bg-white border border-green-100 rounded-lg px-3 py-2 flex items-center gap-2 text-sm shadow-sm group hover:border-green-400 cursor-pointer transition-all">
-                    <Calendar class="w-4 h-4 text-green-600" />
-                    <span class="font-medium text-gray-700">{{ selectedRange }}</span>
-                    <ChevronRight class="w-4 h-4 text-gray-400 transition-transform group-hover:rotate-90" />
+                <div class="relative">
+                    <button 
+                        @click="isOpen = !isOpen"
+                        class="bg-white border border-green-100 rounded-lg px-3 py-2 flex items-center gap-2 text-sm shadow-sm group hover:border-green-400 cursor-pointer transition-all font-medium text-gray-700"
+                    >
+                        <Calendar class="w-4 h-4 text-green-600" />
+                        <span>{{ selectedRange === 'all' ? t('reports.allTime') : t('reports.last7Days') }}</span>
+                        <ChevronRight class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-90': isOpen }" />
+                    </button>
+                    <!-- Dropdown menu -->
+                    <div v-if="isOpen" class="absolute right-0 mt-2 w-48 bg-white border border-green-100 rounded-xl shadow-lg z-50 overflow-hidden py-1">
+                        <button 
+                            @click="selectRange('7days')"
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 transition-colors flex items-center justify-between"
+                            :class="{ 'bg-green-50/50 text-green-700 font-bold': selectedRange === '7days' }"
+                        >
+                            <span>{{ t('reports.last7Days') }}</span>
+                            <span v-if="selectedRange === '7days'" class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
+                        </button>
+                        <button 
+                            @click="selectRange('all')"
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 transition-colors flex items-center justify-between"
+                            :class="{ 'bg-green-50/50 text-green-700 font-bold': selectedRange === 'all' }"
+                        >
+                            <span>{{ t('reports.allTime') }}</span>
+                            <span v-if="selectedRange === 'all'" class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
+                        </button>
+                    </div>
                 </div>
                 <button 
                     @click="handleExport"
@@ -108,9 +162,9 @@ const handleExport = () => {
                     <div class="p-2 bg-white/20 w-fit rounded-lg mb-4">
                         <DollarSign class="w-6 h-6" />
                     </div>
-                    <p class="text-green-50/80 font-medium text-sm">{{ t('reports.totalRevenueWeekly') }}</p>
+                    <p class="text-green-50/80 font-medium text-sm">{{ selectedRange === 'all' ? t('dashboard.totalRevenue') : t('reports.totalRevenueWeekly') }}</p>
                     <h3 class="text-3xl font-bold mt-1">{{ formatCurrency(totalWeeklyRevenue) }}</h3>
-                    <div class="flex items-center gap-1 mt-4 text-sm font-medium bg-white/20 w-fit px-2 py-1 rounded-full">
+                    <div v-if="selectedRange !== 'all'" class="flex items-center gap-1 mt-4 text-sm font-medium bg-white/20 w-fit px-2 py-1 rounded-full">
                         <ArrowUpRight class="w-4 h-4" />
                         +12.5% {{ t('reports.fromLastWeek') }}
                     </div>
@@ -122,9 +176,9 @@ const handleExport = () => {
                 <div class="p-2 bg-blue-50 w-fit rounded-lg mb-4 text-blue-600">
                     <ShoppingBag class="w-6 h-6" />
                 </div>
-                <p class="text-gray-500 font-medium text-sm">{{ t('reports.totalWeeklyOrders') }}</p>
+                <p class="text-gray-500 font-medium text-sm">{{ selectedRange === 'all' ? t('orders.totalOrders') : t('reports.totalWeeklyOrders') }}</p>
                 <h3 class="text-3xl font-bold mt-1 text-gray-900">{{ totalWeeklyOrders }}</h3>
-                <div class="flex items-center gap-1 mt-4 text-sm font-medium text-green-600">
+                <div v-if="selectedRange !== 'all'" class="flex items-center gap-1 mt-4 text-sm font-medium text-green-600">
                     <TrendingUp class="w-4 h-4" />
                     +8.2% {{ t('reports.salesVolume') }}
                 </div>
@@ -136,7 +190,7 @@ const handleExport = () => {
                 </div>
                 <p class="text-gray-500 font-medium text-sm">{{ t('reports.averageOrderValue') }}</p>
                 <h3 class="text-3xl font-bold mt-1 text-gray-900">{{ formatCurrency(averageOrderValue) }}</h3>
-                <div class="flex items-center gap-1 mt-4 text-sm font-medium text-red-500">
+                <div v-if="selectedRange !== 'all'" class="flex items-center gap-1 mt-4 text-sm font-medium text-red-500">
                     <TrendingDown class="w-4 h-4" />
                     -2.1% {{ t('reports.fromAverage') }}
                 </div>
@@ -152,7 +206,9 @@ const handleExport = () => {
                         <TrendingUp class="w-5 h-5 text-green-600" />
                         {{ t('reports.revenueOverTime') }}
                     </h3>
-                    <span class="text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full uppercase tracking-wider">{{ t('reports.sevenDayAnalytics') }}</span>
+                    <span class="text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                        {{ selectedRange === 'all' ? t('reports.allTime') : t('reports.sevenDayAnalytics') }}
+                    </span>
                 </div>
                 <div class="h-64 mb-8">
                     <svg class="w-full h-full" viewBox="0 0 400 230" preserveAspectRatio="none">
@@ -167,6 +223,7 @@ const handleExport = () => {
                         <g v-for="(day, index) in dailyHistory" :key="index">
                             <!-- Revenue Number on Top -->
                             <text
+                                v-if="dailyHistory.length <= 12"
                                 :x="(index * (400 / dailyHistory.length)) + (400 / dailyHistory.length / 2)"
                                 :y="200 - (maxDailyRevenue > 0 ? (day.revenue / maxDailyRevenue) * 170 : 0) - 8"
                                 text-anchor="middle"
@@ -185,18 +242,19 @@ const handleExport = () => {
                                 rx="6"
                                 class="fill-current text-green-600 hover:text-emerald-500 transition-all duration-300 cursor-pointer"
                             >
-                                <title>{{ day.date }}: {{ formatCurrency(day.revenue) }}</title>
+                                <title>{{ formatLabel(day.date) }}: {{ formatCurrency(day.revenue) }}</title>
                             </rect>
 
                             <!-- Day Label Below -->
                             <text
+                                v-if="dailyHistory.length <= 12 || index % Math.ceil(dailyHistory.length / 10) === 0"
                                 :x="(index * (400 / dailyHistory.length)) + (400 / dailyHistory.length / 2)"
                                 y="220"
                                 text-anchor="middle"
                                 class="text-[10px] font-black fill-gray-400 uppercase tracking-tighter"
                                 style="font-size: 10px;"
                             >
-                                {{ day.date }}
+                                {{ formatLabel(day.date) }}
                             </text>
                         </g>
                     </svg>

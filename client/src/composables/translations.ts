@@ -188,6 +188,8 @@ export interface TranslationSchema {
         currentTrend: string;
         performanceScore: string;
         viewRankings: string;
+        last7Days: string;
+        allTime: string;
     };
     users: {
         userManagement: string;
@@ -498,7 +500,9 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             totalRevenue: 'Total Revenue',
             currentTrend: 'Current Trend',
             performanceScore: 'Performance Score',
-            viewRankings: 'View Detailed Rankings'
+            viewRankings: 'View Detailed Rankings',
+            last7Days: 'Last 7 Days',
+            allTime: 'All Time'
         },
         users: {
             userManagement: 'User Management',
@@ -807,7 +811,9 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             totalRevenue: '総収益',
             currentTrend: '現在のトレンド',
             performanceScore: 'パフォーマンススコア',
-            viewRankings: '詳細ランキングを表示'
+            viewRankings: '詳細ランキングを表示',
+            last7Days: '過去7日間',
+            allTime: '全期間'
         },
         users: {
             userManagement: 'ユーザー管理',
@@ -1116,7 +1122,9 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             totalRevenue: 'Tổng Doanh Thu',
             currentTrend: 'Xu hướng',
             performanceScore: 'Điểm Hiệu Suất',
-            viewRankings: 'Xem bảng xếp hạng chi tiết'
+            viewRankings: 'Xem bảng xếp hạng chi tiết',
+            last7Days: '7 ngày qua',
+            allTime: 'Tất cả thời gian'
         },
         users: {
             userManagement: 'Quản Lý Người Dùng',

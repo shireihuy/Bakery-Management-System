@@ -20,11 +20,11 @@ const categoryDistribution = ref<{ name: string; value: number }[]>([]);
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export function useReports() {
-    const fetchReports = async () => {
+    const fetchReports = async (range: string = '7days') => {
         try {
             const token = localStorage.getItem('token');
 
-            const response = await fetch(`${API_URL}/reports/data`, {
+            const response = await fetch(`${API_URL}/reports/data?range=${range}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
