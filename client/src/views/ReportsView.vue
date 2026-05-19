@@ -346,7 +346,7 @@ const handleExport = () => {
                 <table class="w-full text-left text-sm">
                     <thead class="bg-green-50/50 text-green-900 font-bold border-b border-green-100">
                         <tr>
-                            <th class="px-6 py-4">{{ t('reports.productName') || t('products.productName') }}</th>
+                            <th class="px-6 py-4">{{ t('products.productName') }}</th>
                             <th class="px-6 py-4">{{ t('reports.totalSales') }}</th>
                             <th class="px-6 py-4">{{ t('reports.totalRevenue') }}</th>
                             <th class="px-6 py-4">{{ t('reports.currentTrend') }}</th>
