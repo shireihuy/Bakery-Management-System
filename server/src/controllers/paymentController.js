@@ -68,7 +68,7 @@ const initiatePayment = async (req, res) => {
                 // ✅ REUSE existing link if one was already created for this order
                 // This prevents PayOS error 231 "Đơn thanh toán đã tồn tại" (order already exists)
                 if (order.transaction_id && order.qr_code && order.payment_url) {
-                    console.log(`Reusing existing PayOS link for order #${orderId}`);
+                    
                     return res.status(200).json({
                         message: 'PayOS link reused',
                         paymentUrl: order.payment_url,
@@ -157,7 +157,7 @@ const verifyPayment = async (req, res) => {
                 const payosInfo = await payos.paymentRequests.get(orderId);
                 
                 if (payosInfo && payosInfo.status === 'PAID') {
-                    console.log(`Fail-safe: PayOS confirmed order #${orderId} is PAID. Updating DB...`);
+                    
                     
                     // Update DB exactly like the webhook does
                     const updateQuery = `
@@ -193,7 +193,7 @@ const verifyPayment = async (req, res) => {
                         );
                     }
                 } else if (payosInfo && payosInfo.status === 'CANCELLED') {
-                    console.log(`Fail-safe: PayOS confirmed order #${orderId} is CANCELLED. Updating DB...`);
+                    
                     
                     const updateQuery = `
                         UPDATE orders 
@@ -212,7 +212,7 @@ const verifyPayment = async (req, res) => {
                 }
             } catch (err) {
                 // Ignore PayOS check errors (might be because link was never created or has expired)
-                // console.log('PayOS status check skipped:', err.message);
+                // 
             }
         }
 

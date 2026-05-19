@@ -16,7 +16,7 @@ class GHNClient {
      */
     async _request(endpoint, body, method = 'POST') {
         const url = this.baseUrl.endsWith('/') ? `${this.baseUrl}${endpoint}` : `${this.baseUrl}/${endpoint}`;
-        console.log(`[GHN Request] ${method} ${url}`, body ? JSON.stringify(body) : 'No body');
+        
         
         try {
             const response = await fetch(url, {
@@ -70,19 +70,19 @@ class GHNClient {
      */
     async calculateFee({ from_district_id = 1454, to_district_id, to_ward_code, weight = 500, length = 10, width = 10, height = 10 }) {
         // Find available services first (standard, fast, etc.)
-        console.log(`[GHN] Fetching services for district: ${to_district_id}`);
+        
         const services = await this._request('shipping-order/available-services', {
             shop_id: this.shopId,
             from_district: from_district_id,
             to_district: to_district_id
         });
         
-        console.log(`[GHN] Available services found: ${services.length}`);
+        
 
         if (services.length === 0) throw new Error('No shipping services available for this route');
         
         const serviceId = services[0].service_id;
-        console.log(`[GHN] Selected service_id: ${serviceId}. Requesting final fee...`);
+        
 
         return this._request('shipping-order/fee', {
             service_id: serviceId,

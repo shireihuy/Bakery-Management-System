@@ -40,7 +40,7 @@ const handleSubmit = async () => {
     
     try {
         const redirectPath = await login(email.value, password.value);
-        console.log('Logged in as:', email.value);
+        
         router.push(redirectPath);
     } catch (err: any) {
         error.value = err.message || 'Login failed. Please check your credentials.';

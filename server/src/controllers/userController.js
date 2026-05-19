@@ -5,7 +5,7 @@ const updateProfile = async (req, res) => {
     const normalizedEmail = email ? email.toLowerCase() : '';
     const userId = req.user.id; // From authenticateToken middleware
 
-    console.log('Update profile attempt for user ID:', userId, { name, email: normalizedEmail, phone, address });
+    
 
     try {
         // Handle empty strings as null for optional fields
@@ -34,7 +34,7 @@ const updateUser = async (req, res) => {
     const { name, email, role, phone, address, province_id, district_id, ward_code, status } = req.body;
     const normalizedEmail = email ? email.toLowerCase() : '';
 
-    console.log('Admin update user ID:', id, { name, email: normalizedEmail, role, status });
+    
 
     try {
         const finalPhone = (phone === '' || phone === undefined) ? null : phone;

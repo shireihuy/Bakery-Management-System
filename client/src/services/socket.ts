@@ -14,12 +14,12 @@ class SocketService {
         });
 
         this.socket.on('connect', () => {
-            console.log('Connected to socket server');
+            
             this.joinUserRoom();
         });
 
         this.socket.on('disconnect', () => {
-            console.log('Disconnected from socket server');
+            
         });
     }
 
@@ -29,7 +29,7 @@ class SocketService {
             try {
                 const user = JSON.parse(storedUser);
                 if (user.id) {
-                    console.log(`[Socket] Joining room user_${user.id}`);
+                    
                     this.socket.emit('join:user', user.id);
                 }
             } catch (err) {

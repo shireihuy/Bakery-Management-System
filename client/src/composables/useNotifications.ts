@@ -61,7 +61,7 @@ const handleNewNotification = (notification: Notification) => {
     // Check for duplicate by ID before adding
     const exists = notifications.value.some(n => n.id === notification.id);
     if (!exists) {
-        console.log('New notification received via socket:', notification);
+        
         notifications.value.unshift(notification);
         // Show in-app toast popup
         addToast(notification);

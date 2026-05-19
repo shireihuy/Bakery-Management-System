@@ -27,16 +27,16 @@ app.use(express.json());
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
+  
 
   socket.on('join:user', (userId) => {
     socket.join(`user_${userId}`);
-    console.log(`Socket ${socket.id} joined room user_${userId}`);
+    
   });
 
   socket.on('join:admin', () => {
     socket.join('admin_support');
-    console.log(`Socket ${socket.id} joined admin_support room`);
+    
   });
 
   socket.on('message:send', async (data) => {
@@ -65,13 +65,13 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    
   });
 });
 
 // Global logger to debug requests
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  
   next();
 });
 
@@ -114,7 +114,7 @@ app.use('/api/chat', chatRoutes);
 
 
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  
 });
 
 module.exports = app;

@@ -204,7 +204,7 @@ const filteredConversations = computed(() => {
 });
 
 const selectConversation = async (conv: Conversation) => {
-    console.log('Selected conversation:', conv);
+    
     selectedConversation.value = conv;
     await fetchHistory(conv.id);
     scrollToBottom();
@@ -212,7 +212,7 @@ const selectConversation = async (conv: Conversation) => {
 
 const handleSend = () => {
     if (!selectedConversation.value || !newMessage.value.trim()) return;
-    console.log('Sending message to:', selectedConversation.value.id);
+    
     sendMessage(selectedConversation.value.id, newMessage.value);
     newMessage.value = '';
 };
@@ -225,20 +225,20 @@ const scrollToBottom = async () => {
 };
 
 const handleIncomingMessage = (msg: ChatMessage) => {
-    console.log('Admin received message:', msg);
+    
     // If message is from/to the selected user, add to messages
     if (selectedConversation.value && (
         msg.sender_id === selectedConversation.value.id || 
         msg.receiver_id === selectedConversation.value.id
     )) {
-        console.log('Message belongs to current view, adding to messages list');
+        
         // Check for duplicates
         if (!messages.value.some(m => m.id === msg.id)) {
             messages.value.push(msg);
             scrollToBottom();
         }
     } else {
-        console.log('Message is for another user or no user selected');
+        
     }
     // Refresh conversation list to show latest message preview
     fetchConversations();

@@ -15,11 +15,7 @@ const authenticateToken = (req, res, next) => {
 
 const authorizeRoles = (...roles) => {
     return (req, res, next) => {
-        console.log('Authorizing Access:', {
-            userRole: req.user?.role,
-            requiredRoles: roles,
-            isAuthorized: roles.includes(req.user?.role)
-        });
+        
         if (!roles.includes(req.user.role)) {
             return res.status(403).json({ message: `Access Denied: Role '${req.user.role}' not authorized` });
         }

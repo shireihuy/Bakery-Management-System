@@ -14,7 +14,7 @@ class DeliveryService {
      * Called immediately when a delivery order is placed.
      */
     async initializeDelivery(orderId, fee = 0.50) {
-        console.log(`[MockDelivery] Initializing delivery record for Order #${orderId} with fee: ${fee}`);
+        
         try {
             const result = await query(
                 `INSERT INTO deliveries (order_id, status, delivery_fee) 
@@ -35,7 +35,7 @@ class DeliveryService {
      * Called when the order is 'Ready'.
      */
     async dispatchDelivery(orderId) {
-        console.log(`[GHN] Dispatching delivery for Order #${orderId}`);
+        
         
         try {
             // 1. Fetch complete order details for GHN request
@@ -60,7 +60,7 @@ class DeliveryService {
                 items: itemsRes.rows
             });
 
-            console.log(`[GHN] Order created successfully: ${ghnResponse.order_code}`);
+            
 
             // 4. Update local delivery record with GHN info
             const result = await query(
@@ -131,7 +131,7 @@ class DeliveryService {
     }
 
     async updateDeliveryStatus(deliveryId, status) {
-        console.log(`[MockDelivery] Status Update: ${deliveryId} -> ${status}`);
+        
         const result = await query(
             'UPDATE deliveries SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
             [status, deliveryId]

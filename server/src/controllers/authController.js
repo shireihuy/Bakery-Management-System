@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const register = async (req, res) => {
     const { name, email, password, phone_number, address, province_id, district_id, ward_code, role, status } = req.body;
 
-    console.log('Registration attempt:', { name, email, role, phone_number, address, status });
+    
 
     try {
         // Handle empty strings as null for optional fields
@@ -20,13 +20,13 @@ const register = async (req, res) => {
 
         const userExists = await pool.query('SELECT * FROM users WHERE email = $1', [normalizedEmail]);
         if (userExists.rows.length > 0) {
-            console.log('Registration failed: User already exists -', normalizedEmail);
+            
             return res.status(400).json({ message: `User with email ${normalizedEmail} already exists` });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        console.log('Inserting new user into database...');
+        
         const newUser = await pool.query(
             'INSERT INTO users (name, email, password, phone_number, address, province_id, district_id, ward_code, role, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, name, email, role, status, phone_number as phone, address, province_id, district_id, ward_code',
             [name, normalizedEmail, hashedPassword, finalPhone, finalAddress, province_id || null, district_id || null, ward_code || null, userRole, userStatus]
@@ -36,7 +36,7 @@ const register = async (req, res) => {
             throw new Error('Failed to insert user - no rows returned');
         }
 
-        console.log('User registered successfully:', newUser.rows[0].email, 'assigned ID:', newUser.rows[0].id);
+        
         
         const user = newUser.rows[0];
         const token = jwt.sign(

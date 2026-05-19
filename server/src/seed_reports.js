@@ -15,7 +15,7 @@ const tryConnection = async (host) => {
         await pool.query('SELECT 1');
         return pool;
     } catch (e) {
-        console.log(`Failed to connect to ${host}:`, e.message);
+        
         return null;
     }
 };
@@ -29,9 +29,9 @@ const seed = async () => {
         process.exit(1);
     }
 
-    console.log('Connected to database. Generating test data...');
+    
 
-    console.log('Connected to database. Fetching products...');
+    
     const productRes = await pool.query('SELECT id, price FROM products');
     const products = productRes.rows;
 
@@ -83,7 +83,7 @@ const seed = async () => {
         }
 
         await pool.query('COMMIT');
-        console.log('Test data generated successfully for the last 7 days.');
+        
     } catch (err) {
         await pool.query('ROLLBACK');
         console.error('Error seeding data:', err);

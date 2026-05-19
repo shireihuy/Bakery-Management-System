@@ -39,7 +39,7 @@ const createOrder = async (req, res) => {
 
     const finalPhone = customer_phone || req.user?.phone || null;
     
-    console.log('Creating order with backend calculation:', { customer_id, customer_name, itemsCount: items?.length, coupon_code });
+    
 
     const client = await pool.connect();
     let DELIVERY_FEE = 0.50; // Minimum default
@@ -137,7 +137,7 @@ const createOrder = async (req, res) => {
                         weight: verifiedItems.length * 200 // Mock 200g per item
                     });
                     DELIVERY_FEE = Number(feeResult.total) / 25000; // Convert to USD approximately
-                    console.log(`[GHN] Calculated Fee: $${DELIVERY_FEE.toFixed(2)} for District ${district_id}`);
+                    
                 } catch (ghnErr) {
                     console.error('[GHN] Fee calculation failed, falling back to default:', ghnErr.message);
                 }
@@ -225,7 +225,7 @@ const createOrder = async (req, res) => {
         if (delivery_type === 'Delivery') {
             try {
                 await DeliveryService.initializeDelivery(orderId, DELIVERY_FEE);
-                console.log(`[OrderController] Delivery record initialized for Order #${orderId} with fee: $${DELIVERY_FEE.toFixed(2)}`);
+                
             } catch (deliveryErr) {
                 console.error('[OrderController] Failed to initialize delivery record:', deliveryErr);
             }
@@ -415,7 +415,7 @@ const updateOrderStatus = async (req, res) => {
                     // Dispatch the delivery (assign driver, start simulation)
                     try {
                         await DeliveryService.dispatchDelivery(id);
-                        console.log(`[OrderController] Delivery dispatched for Order #${id}`);
+                        
                     } catch (deliveryErr) {
                         console.error('[OrderController] Failed to dispatch delivery:', deliveryErr);
                     }
@@ -518,7 +518,7 @@ const updateOrderStatus = async (req, res) => {
             // Sync PayOS cancellation
             if (currentOrder.payment_method === 'qr' || currentOrder.payment_method === 'QR (PayOS)') {
                 try {
-                    console.log(`[OrderController] Cancelling PayOS link for Order #${id}`);
+                    
                     await payos.paymentRequests.cancel(id);
                 } catch (payosErr) {
                     console.error('[OrderController] Failed to cancel PayOS link:', payosErr.message);

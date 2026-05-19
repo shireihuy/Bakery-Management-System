@@ -104,8 +104,8 @@ const getProductById = async (req, res) => {
 };
 
 const createProduct = async (req, res) => {
-    console.log('Create Product Request Body:', req.body);
-    console.log('Create Product Request File:', req.file);
+    
+    
     const { name, category, price, description, unit, ingredients, allergens } = req.body;
     let image_url = req.body.image_url || req.body.image; // Default if provided as string
 
@@ -126,7 +126,7 @@ const createProduct = async (req, res) => {
             'INSERT INTO products (name, category, price, description, image_url, stock_quantity, min_stock_level, unit, ingredients, allergens) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
             [name, category, price, description, image_url, reqStock || 0, reqMinStock || 5, unit || 'pcs', JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens)]
         );
-        console.log('Product created successfully:', result.rows[0]);
+        
         res.status(201).json(result.rows[0]);
     } catch (err) {
         console.error('Error creating product:', err);
@@ -135,8 +135,8 @@ const createProduct = async (req, res) => {
 };
 
 const updateProduct = async (req, res) => {
-    console.log('Update Product Request Body:', req.body);
-    console.log('Update Product Request File:', req.file);
+    
+    
     const { id } = req.params;
     const { name, category, price, description, unit, ingredients, allergens } = req.body;
     let image_url = req.body.image_url || req.body.image;
@@ -184,7 +184,7 @@ const updateProduct = async (req, res) => {
 
         const result = await query(updateQuery + ' RETURNING *', params);
 
-        console.log('Product updated successfully:', result.rows[0]);
+        
         res.json(result.rows[0]);
     } catch (err) {
         console.error('Error updating product:', err);
@@ -236,7 +236,7 @@ const updateStock = async (req, res) => {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        console.log(`Stock updated for product ${id}: ${result.rows[0].stock_quantity}`);
+        
 
         // Emit real-time update
         if (global.io) {
