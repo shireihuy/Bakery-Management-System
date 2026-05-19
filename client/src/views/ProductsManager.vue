@@ -29,6 +29,7 @@ onMounted(async () => {
 
 const isDialogOpen = ref(false);
 const editingProduct = ref<Product | null>(null);
+const originalStock = ref('');
 const searchTerm = ref('');
 const filterCategory = ref('all');
 
@@ -73,12 +74,14 @@ const resetForm = () => {
         allergens: []
     };
     editingProduct.value = null;
+    originalStock.value = '';
     selectedFile.value = null;
     imagePreview.value = '';
 };
 
 const handleEdit = (product: Product) => {
     editingProduct.value = product;
+    originalStock.value = product.stock.toString();
     formData.value = {
         name: product.name,
         category: product.category,
@@ -102,12 +105,11 @@ const handleDelete = (id: string) => {
 };
 
 const handleSubmit = async () => {
-    const productData = {
+    const productData: any = {
         name: formData.value.name,
         category: formData.value.category,
         price: formData.value.price,
         cost: formData.value.cost,
-        stock: formData.value.stock,
         unit: formData.value.unit,
         description: formData.value.description,
         // Send file if selected, otherwise send existing image URL string
@@ -115,6 +117,11 @@ const handleSubmit = async () => {
         ingredients: formData.value.ingredients,
         allergens: formData.value.allergens
     };
+
+    // Only include stock if creating a new product or explicitly modified in the editor
+    if (!editingProduct.value || formData.value.stock !== originalStock.value) {
+        productData.stock = formData.value.stock;
+    }
 
     try {
         if (editingProduct.value) {

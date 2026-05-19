@@ -106,8 +106,11 @@ const getProductById = async (req, res) => {
 const createProduct = async (req, res) => {
     console.log('Create Product Request Body:', req.body);
     console.log('Create Product Request File:', req.file);
-    const { name, category, price, description, stock_quantity, min_stock_level, unit, ingredients, allergens } = req.body;
+    const { name, category, price, description, unit, ingredients, allergens } = req.body;
     let image_url = req.body.image_url || req.body.image; // Default if provided as string
+
+    const reqStock = req.body.stock_quantity !== undefined ? req.body.stock_quantity : req.body.stock;
+    const reqMinStock = req.body.min_stock_level !== undefined ? req.body.min_stock_level : req.body.min_stock;
 
     // Parse ingredients and allergens if they are strings (from FormData)
     const parsedIngredients = typeof ingredients === 'string' ? JSON.parse(ingredients || '[]') : (ingredients || []);
@@ -121,7 +124,7 @@ const createProduct = async (req, res) => {
     try {
         const result = await query(
             'INSERT INTO products (name, category, price, description, image_url, stock_quantity, min_stock_level, unit, ingredients, allergens) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-            [name, category, price, description, image_url, stock_quantity || 0, min_stock_level || 5, unit || 'pcs', JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens)]
+            [name, category, price, description, image_url, reqStock || 0, reqMinStock || 5, unit || 'pcs', JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens)]
         );
         console.log('Product created successfully:', result.rows[0]);
         res.status(201).json(result.rows[0]);
@@ -135,7 +138,7 @@ const updateProduct = async (req, res) => {
     console.log('Update Product Request Body:', req.body);
     console.log('Update Product Request File:', req.file);
     const { id } = req.params;
-    const { name, category, price, description, stock_quantity, min_stock_level, unit, ingredients, allergens } = req.body;
+    const { name, category, price, description, unit, ingredients, allergens } = req.body;
     let image_url = req.body.image_url || req.body.image;
 
     // Parse ingredients and allergens if they are strings (from FormData)
@@ -147,21 +150,40 @@ const updateProduct = async (req, res) => {
     }
 
     try {
+        // Fetch existing product to preserve stock and min stock level if not provided
+        const existingResult = await query('SELECT stock_quantity, min_stock_level FROM products WHERE id = $1', [id]);
+        if (existingResult.rows.length === 0) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        const existingProduct = existingResult.rows[0];
+
+        const reqStock = req.body.stock_quantity !== undefined ? req.body.stock_quantity : req.body.stock;
+        const reqMinStock = req.body.min_stock_level !== undefined ? req.body.min_stock_level : req.body.min_stock;
+
+        // Parse float values cleanly, falling back to DB values if omitted, empty, or invalid number
+        const parsedReqStock = parseFloat(reqStock);
+        const parsedReqMinStock = parseFloat(reqMinStock);
+
+        const finalStock = (!isNaN(parsedReqStock) && reqStock !== '' && reqStock !== undefined) 
+            ? parsedReqStock 
+            : parseFloat(existingProduct.stock_quantity || 0);
+
+        const finalMinStock = (!isNaN(parsedReqMinStock) && reqMinStock !== '' && reqMinStock !== undefined) 
+            ? parsedReqMinStock 
+            : parseFloat(existingProduct.min_stock_level || 5);
+
         let updateQuery = 'UPDATE products SET name = $1, category = $2, price = $3, description = $4, stock_quantity = $5, min_stock_level = $6, unit = $7, ingredients = $8, allergens = $9';
-        let params = [name, category, price, description, stock_quantity, min_stock_level, unit, JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens), id];
+        let params = [name, category, price, description, finalStock, finalMinStock, unit, JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens), id];
 
         if (image_url !== undefined) {
             updateQuery += ', image_url = $10 WHERE id = $11';
-            params = [name, category, price, description, stock_quantity, min_stock_level, unit, JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens), image_url, id];
+            params = [name, category, price, description, finalStock, finalMinStock, unit, JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens), image_url, id];
         } else {
             updateQuery += ' WHERE id = $10';
         }
 
         const result = await query(updateQuery + ' RETURNING *', params);
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
         console.log('Product updated successfully:', result.rows[0]);
         res.json(result.rows[0]);
     } catch (err) {
