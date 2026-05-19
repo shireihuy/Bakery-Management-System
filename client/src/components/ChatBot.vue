@@ -162,7 +162,9 @@ const sendToAI = async (text: string) => {
         prompt: text,
         language: currentLocale.value,
         history: (() => {
-          let h = messages.value.slice(-6).map(m => ({
+          // Exclude the current active prompt message that we just pushed to messages.value
+          const priorMessages = messages.value.slice(0, -1);
+          let h = priorMessages.slice(-6).map(m => ({
             role: m.type === 'user' ? 'user' : 'model',
             parts: [{ text: m.text }]
           }));
