@@ -19,7 +19,9 @@ import {
   Coffee,
   ArrowRight,
   Truck,
-  MapPin
+  MapPin,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-vue-next';
 import { useProducts, type Product } from '../composables/useProducts';
 import DeliveryTracker from '../components/DeliveryTracker.vue';
@@ -79,6 +81,7 @@ const selectedProvince = ref<number | null>(null);
 const selectedDistrict = ref<number | null>(null);
 const selectedWard = ref<string | null>(null);
 const streetAddress = ref('');
+const isAddressExpanded = ref(true);
 
 // Derived State
 const isStaff = computed(() => {
@@ -462,8 +465,11 @@ onMounted(async () => {
 });
 
 watch(selectedDeliveryType, (newVal) => {
-    if (newVal === 'Delivery' && provinces.value.length === 0) {
-        fetchProvinces();
+    if (newVal === 'Delivery') {
+        isAddressExpanded.value = true;
+        if (provinces.value.length === 0) {
+            fetchProvinces();
+        }
     }
 });
 
@@ -926,32 +932,65 @@ const confirmCancelOrder = async () => {
                                         <Truck class="w-3.5 h-3.5" /> Delivery
                                    </button>
                               </div>
-                              <div v-if="selectedDeliveryType === 'Delivery'" class="p-3 bg-bakery-50 rounded-xl border border-bakery-100 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
-                                   <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-bakery-600 shadow-xs">
-                                        <MapPin class="w-4 h-4" />
+                              <div v-if="selectedDeliveryType === 'Delivery'" class="bg-bakery-50 rounded-2xl border border-bakery-100 overflow-hidden transition-all duration-300">
+                                   <!-- Collapsible Header -->
+                                   <div 
+                                        @click="isAddressExpanded = !isAddressExpanded"
+                                        class="p-4 flex items-center justify-between cursor-pointer hover:bg-bakery-100/30 transition-colors select-none"
+                                   >
+                                        <div class="flex items-center gap-3 min-w-0">
+                                             <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-bakery-600 shadow-xs shrink-0">
+                                                  <MapPin class="w-4 h-4" />
+                                             </div>
+                                             <div class="text-left min-w-0">
+                                                  <p class="text-[10px] font-black text-bakery-400 uppercase tracking-widest leading-none mb-1">Delivery Address</p>
+                                                  <p v-if="!isAddressExpanded" class="text-xs font-bold text-bakery-700 truncate mt-0.5 animate-in fade-in max-w-[200px]">
+                                                       {{ streetAddress || 'Click to set address...' }}
+                                                  </p>
+                                             </div>
+                                        </div>
+                                        <button class="text-bakery-400 hover:text-bakery-900 transition-colors ml-2">
+                                             <ChevronUp v-if="isAddressExpanded" class="w-4 h-4" />
+                                             <ChevronDown v-else class="w-4 h-4" />
+                                        </button>
                                    </div>
-                                   <div class="flex-1 min-w-0">
-                                        <p class="text-[10px] font-black text-bakery-400 uppercase tracking-widest">Delivery Address</p>
+
+                                   <!-- Expandable Body Content -->
+                                   <div v-show="isAddressExpanded" class="p-4 pt-0 border-t border-bakery-100/50 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
                                         <input 
                                             v-model="streetAddress" 
                                             type="text" 
                                             placeholder="Enter street name, house number..." 
-                                            class="w-full mt-1 border-b border-bakery-100 bg-transparent text-xs font-bold text-bakery-900 focus:outline-none focus:border-bakery-400 pb-1 placeholder:text-bakery-300"
+                                            class="w-full mt-2 border-b border-bakery-100 bg-transparent text-xs font-bold text-bakery-900 focus:outline-none focus:border-bakery-400 pb-1 placeholder:text-bakery-300"
                                         />
-                                        <div class='mt-3 grid grid-cols-1 gap-2 pt-2 border-t border-bakery-100/50'><select v-model='selectedProvince' @change='fetchDistricts(selectedProvince!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'><option :value='null' disabled>Province</option><option v-for='p in provinces' :key='p.ProvinceID' :value='p.ProvinceID'>{{p.ProvinceName}}</option></select><select v-if='selectedProvince' v-model='selectedDistrict' @change='fetchWards(selectedDistrict!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'><option :value='null' disabled>District</option><option v-for='d in districts' :key='d.DistrictID' :value='d.DistrictID'>{{d.DistrictName}}</option></select><select v-if='selectedDistrict' v-model='selectedWard' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'><option :value='null' disabled>Ward</option><option v-for='w in wards' :key='w.WardCode' :value='w.WardCode'>{{w.WardName}}</option></select></div>
+                                        <div class='grid grid-cols-1 gap-2'>
+                                             <select v-model='selectedProvince' @change='fetchDistricts(selectedProvince!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'>
+                                                  <option :value='null' disabled>Province</option>
+                                                  <option v-for='p in provinces' :key='p.ProvinceID' :value='p.ProvinceID'>{{p.ProvinceName}}</option>
+                                             </select>
+                                             <select v-if='selectedProvince' v-model='selectedDistrict' @change='fetchWards(selectedDistrict!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'>
+                                                  <option :value='null' disabled>District</option>
+                                                  <option v-for='d in districts' :key='d.DistrictID' :value='d.DistrictID'>{{d.DistrictName}}</option>
+                                             </select>
+                                             <select v-if='selectedDistrict' v-model='selectedWard' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'>
+                                                  <option :value='null' disabled>Ward</option>
+                                                  <option v-for='w in wards' :key='w.WardCode' :value='w.WardCode'>{{w.WardName}}</option>
+                                             </select>
+                                        </div>
+
+                                        <!-- Map block inside collapsible area -->
+                                        <div class="h-32 rounded-xl overflow-hidden shadow-xs border border-bakery-100 relative group">
+                                             <iframe 
+                                                 :key="mapUrl"
+                                                 width="100%" 
+                                                 height="100%" 
+                                                 style="border:0;" 
+                                                 loading="lazy" 
+                                                 allowfullscreen 
+                                                 :src="mapUrl">
+                                             </iframe>
+                                        </div>
                                    </div>
-                              </div>
-                              <div v-if="selectedDeliveryType === 'Delivery'" class="h-32 mt-2 rounded-xl overflow-hidden shadow-sm border border-bakery-100 relative group animate-in fade-in slide-in-from-top-2">
-                                  <iframe 
-                                      :key="mapUrl"
-                                      width="100%" 
-                                      height="100%" 
-                                      style="border:0;" 
-                                      loading="lazy" 
-                                      allowfullscreen 
-                                      :src="mapUrl">
-                                  </iframe>
-                                  <!-- Pointer overlay to make it non-interactive to not break scroll if you want, but for maps interaction is nice -->
                               </div>
                          </div>
                          
