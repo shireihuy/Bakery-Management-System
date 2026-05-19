@@ -10,7 +10,7 @@
         <div class="banner-tag">LIVE NOW</div>
         <div class="banner-text">
           <span class="bolt-text">⚡</span>
-          {{ activeSales[0].name }} — Exclusive Discounts Available!
+          {{ saleNames }} — Exclusive Discounts Available!
         </div>
         <button class="banner-action">VIEW DEALS</button>
       </div>
@@ -31,10 +31,6 @@
             <span class="l-bolt">⚡</span>
             <h2>FLASH DEALS</h2>
           </div>
-          <div class="h-timer">
-            <span class="t-label">ENDS IN</span>
-            <span class="t-value">{{ countdowns[activeSales[0].id]?.h || '00' }}:{{ countdowns[activeSales[0].id]?.m || '00' }}:{{ countdowns[activeSales[0].id]?.s || '00' }}</span>
-          </div>
           <button @click="isOpen = false" class="sheet-close">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
@@ -42,6 +38,15 @@
 
         <div class="sheet-body scrollbar-hide">
           <div v-for="sale in activeSales" :key="sale.id" class="sheet-sale-section">
+            <!-- Sale Title and Individual Countdown -->
+            <div class="sale-section-header">
+              <span class="sale-title-text">{{ sale.name }}</span>
+              <div class="sale-section-timer">
+                <span class="t-label-mini">ENDS IN</span>
+                <span class="t-value-mini">{{ countdowns[sale.id]?.h || '00' }}:{{ countdowns[sale.id]?.m || '00' }}:{{ countdowns[sale.id]?.s || '00' }}</span>
+              </div>
+            </div>
+            
             <div class="sheet-items">
               <div v-for="item in sale.items" :key="item.id" class="sheet-item-row">
                 <div class="s-img">
@@ -105,6 +110,11 @@ let interval;
 
 const totalItems = computed(() => {
     return props.activeSales.reduce((acc, sale) => acc + sale.items.length, 0);
+});
+
+const saleNames = computed(() => {
+    if (!props.activeSales || props.activeSales.length === 0) return '';
+    return props.activeSales.map(s => s.name).join(' & ');
 });
 
 const updateCountdowns = () => {
@@ -306,6 +316,53 @@ onUnmounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 1.5rem;
+}
+
+.sheet-sale-section {
+  margin-bottom: 2rem;
+}
+
+.sheet-sale-section:last-child {
+  margin-bottom: 0;
+}
+
+.sale-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding: 0 0.5rem;
+}
+
+.sale-title-text {
+  color: #ff4757;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.sale-section-timer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0.25rem 0.75rem;
+  border-radius: 2rem;
+}
+
+.t-label-mini {
+  font-size: 0.55rem;
+  color: #888;
+  font-weight: 800;
+}
+
+.t-value-mini {
+  color: #fff;
+  font-family: monospace;
+  font-weight: 800;
+  font-size: 0.8rem;
 }
 
 .sheet-items {
