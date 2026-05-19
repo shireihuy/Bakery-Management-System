@@ -24,7 +24,7 @@ exports.chat = async (req, res) => {
         const chat = model.startChat({
             history: history || [],
             generationConfig: {
-                maxOutputTokens: 150,
+                maxOutputTokens: 800,
             },
         });
 
