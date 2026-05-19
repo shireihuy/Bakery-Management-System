@@ -60,33 +60,69 @@ const formatLabel = (label: string) => {
 const formatCurrency = (value: number) => {
     return formatPrice(value);
 };
-
 const handleExport = () => {
     const rangeLabel = selectedRange.value === 'all' ? t('reports.allTime') : t('reports.last7Days');
     const revenueLabel = selectedRange.value === 'all' ? t('dashboard.totalRevenue') : t('reports.totalRevenueWeekly');
     const ordersLabel = selectedRange.value === 'all' ? t('orders.totalOrders') : t('reports.totalWeeklyOrders');
+    const lang = localStorage.getItem('lang') || 'en';
 
-    // 1. Prepare Content for CSV
-    let csvContent = "DATA REPORT - BAKERY MANAGEMENT SYSTEM\n";
-    csvContent += `Report Interval: ${rangeLabel}\n\n`;
+    // Multi-language text map for CSV Export
+    const csvTexts = {
+        en: {
+            title: "DATA REPORT - BAKERY MANAGEMENT SYSTEM",
+            interval: "Report Interval",
+            summary: "SUMMARY",
+            avgOrderValue: "Average Order Value",
+            dailyHistory: "DAILY REVENUE HISTORY",
+            dailyCols: "Day,Revenue,Orders",
+            prodPerf: "PRODUCT PERFORMANCE (BEST SELLERS)",
+            prodCols: "Product Name,Total Sales,Total Revenue"
+        },
+        jp: {
+            title: "データレポート - ベーカリー管理システム",
+            interval: "レポート期間",
+            summary: "概要",
+            avgOrderValue: "平均注文金額",
+            dailyHistory: "日次収益履歴",
+            dailyCols: "日,収益,注文数",
+            prodPerf: "商品パフォーマンス (売筋商品)",
+            prodCols: "商品名,総販売数,総収益"
+        },
+        vn: {
+            title: "BÁO CÁO DỮ LIỆU - HỆ THỐNG QUẢN LÝ TIỆM BÁNH",
+            interval: "Khoảng thời gian báo cáo",
+            summary: "TỔNG QUAN",
+            avgOrderValue: "Giá trị đơn hàng trung bình",
+            dailyHistory: "LỊCH SỬ DOANH THU HÀNG NGÀY",
+            dailyCols: "Ngày,Doanh thu,Đơn hàng",
+            prodPerf: "HIỆU SUẤT SẢN PHẨM (SẢN PHẨM BÁN CHẠY)",
+            prodCols: "Tên sản phẩm,Tổng đã bán,Tổng doanh thu"
+        }
+    };
+
+    const texts = csvTexts[lang as keyof typeof csvTexts] || csvTexts.en;
+
+    // 1. Prepare Content for CSV with UTF-8 BOM to prevent Excel display issues
+    let csvContent = `\uFEFF${texts.title}\n`;
+    csvContent += `${texts.interval}: ${rangeLabel}\n\n`;
     
     // Summary Section
-    csvContent += "SUMMARY\n";
+    csvContent += `${texts.summary}\n`;
     csvContent += `"${revenueLabel}",${totalWeeklyRevenue.value}\n`;
     csvContent += `"${ordersLabel}",${totalWeeklyOrders.value}\n`;
-    csvContent += `Average Order Value,${averageOrderValue.value.toFixed(2)}\n\n`;
+    csvContent += `"${texts.avgOrderValue}",${averageOrderValue.value.toFixed(2)}\n\n`;
     
     // Daily History Section
-    csvContent += "DAILY REVENUE HISTORY\n";
-    csvContent += "Day,Revenue,Orders\n";
+    csvContent += `${texts.dailyHistory}\n`;
+    csvContent += `${texts.dailyCols}\n`;
     dailyHistory.value.forEach(day => {
         csvContent += `${day.date},${day.revenue},${day.orders}\n`;
     });
     csvContent += "\n";
     
     // Product Performance Section
-    csvContent += "PRODUCT PERFORMANCE (BEST SELLERS)\n";
-    csvContent += "Product Name,Total Sales,Total Revenue\n";
+    csvContent += `${texts.prodPerf}\n`;
+    csvContent += `${texts.prodCols}\n`;
     productPerformance.value.forEach(p => {
         csvContent += `"${p.name}",${p.sales},${p.revenue}\n`;
     });
