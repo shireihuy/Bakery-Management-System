@@ -8,6 +8,9 @@ export interface User {
     status: 'active' | 'inactive';
     phone?: string;
     address?: string;
+    province_id?: number | null;
+    district_id?: number | null;
+    ward_code?: string | null;
     joinDate: string;
 }
 

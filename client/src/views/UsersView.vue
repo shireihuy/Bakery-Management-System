@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { 
     Search, 
     UserPlus, 
@@ -9,13 +9,16 @@ import {
     Trash2, 
     Edit, 
     Filter,
-    X
+    X,
+    MapPin
 } from 'lucide-vue-next';
 import { useUsers, type User } from '../composables/useUsers';
 import { useI18n } from '../composables/useI18n';
+import { useGHN } from '../composables/useGHN';
 
 const { users, addUser, updateUser, deleteUser } = useUsers();
 const { t } = useI18n();
+const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useGHN();
 
 const searchQuery = ref('');
 const roleFilter = ref('all');
@@ -34,6 +37,9 @@ const form = ref<{
     status: User['status'];
     phone: string;
     address: string;
+    province_id: number | null;
+    district_id: number | null;
+    ward_code: string | null;
     password?: string;
 }>({
     name: '',
@@ -42,8 +48,30 @@ const form = ref<{
     status: 'active',
     phone: '',
     address: '',
+    province_id: null,
+    district_id: null,
+    ward_code: null,
     password: ''
 });
+
+onMounted(() => {
+    fetchProvinces();
+});
+
+const onProvinceChange = () => {
+    form.value.district_id = null;
+    form.value.ward_code = null;
+    if (form.value.province_id) {
+        fetchDistricts(form.value.province_id);
+    }
+};
+
+const onDistrictChange = () => {
+    form.value.ward_code = null;
+    if (form.value.district_id) {
+        fetchWards(form.value.district_id);
+    }
+};
 
 const filteredUsers = computed(() => {
     return users.value.filter(user => {
@@ -64,12 +92,15 @@ const openAddModal = () => {
         status: 'active',
         phone: '',
         address: '',
+        province_id: null,
+        district_id: null,
+        ward_code: null,
         password: ''
     };
     isModalOpen.value = true;
 };
 
-const openEditModal = (user: User) => {
+const openEditModal = async (user: User) => {
     editingUser.value = user;
     form.value = {
         name: user.name,
@@ -78,8 +109,20 @@ const openEditModal = (user: User) => {
         status: user.status,
         phone: user.phone || '',
         address: user.address || '',
+        province_id: user.province_id || null,
+        district_id: user.district_id || null,
+        ward_code: user.ward_code || null,
         password: '' // Reset password field when editing
     };
+    
+    // Fetch corresponding locations for editing user
+    if (user.province_id) {
+        await fetchDistricts(user.province_id);
+        if (user.district_id) {
+            await fetchWards(user.district_id);
+        }
+    }
+    
     isModalOpen.value = true;
 };
 
@@ -214,10 +257,15 @@ const getRoleBadgeColor = (role: string) => {
                             </td>
                             <td class="px-6 py-4">
                                 <div class="space-y-1 text-xs text-gray-600">
-                                    <div v-if="user.phone" class="flex items-center gap-1">
-                                        <Phone class="w-3 h-3" /> {{ user.phone }}
+                                    <div v-if="user.phone" class="flex items-center gap-1 font-medium">
+                                        <Phone class="w-3 h-3 text-green-600" /> {{ user.phone }}
                                     </div>
                                     <div v-else class="text-gray-400 italic">No phone</div>
+                                    
+                                    <div v-if="user.address" class="flex items-start gap-1 max-w-[220px] text-gray-500" :title="user.address">
+                                        <MapPin class="w-3 h-3 mt-0.5 shrink-0 text-green-600" />
+                                        <span class="truncate">{{ user.address }}</span>
+                                    </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-gray-600">
@@ -311,9 +359,61 @@ const getRoleBadgeColor = (role: string) => {
                         <input v-model="form.phone" type="tel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none">
                     </div>
 
-                    <div class="space-y-1">
-                        <label class="text-sm font-medium text-gray-700">{{ t('users.address') }}</label>
-                        <textarea v-model="form.address" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none resize-none"></textarea>
+                    <!-- GHN Address Fields -->
+                    <div class="space-y-3 p-4 bg-green-50/20 border border-green-100 rounded-xl">
+                        <label class="text-sm font-semibold text-green-900 flex items-center gap-1.5">
+                            <MapPin class="w-4 h-4 text-green-600" />
+                            Delivery Address (GHN Format)
+                        </label>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-gray-500">Province / City</label>
+                                <select 
+                                    v-model="form.province_id" 
+                                    @change="onProvinceChange"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-sm"
+                                >
+                                    <option :value="null" disabled>Select Province</option>
+                                    <option v-for="p in provinces" :key="p.ProvinceID" :value="p.ProvinceID">{{ p.ProvinceName }}</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-gray-500">District</label>
+                                <select 
+                                    v-model="form.district_id" 
+                                    @change="onDistrictChange"
+                                    :disabled="!form.province_id"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-sm disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                >
+                                    <option :value="null" disabled>Select District</option>
+                                    <option v-for="d in districts" :key="d.DistrictID" :value="d.DistrictID">{{ d.DistrictName }}</option>
+                                </select>
+                            </div>
+
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-gray-500">Ward</label>
+                                <select 
+                                    v-model="form.ward_code"
+                                    :disabled="!form.district_id"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white text-sm disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+                                >
+                                    <option :value="null" disabled>Select Ward</option>
+                                    <option v-for="w in wards" :key="w.WardCode" :value="w.WardCode">{{ w.WardName }}</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-medium text-gray-500">Detailed Address (Street, House Number)</label>
+                            <input 
+                                v-model="form.address" 
+                                type="text"
+                                placeholder="House No, Street name..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm"
+                            >
+                        </div>
                     </div>
 
                     <div class="flex justify-end gap-3 pt-4">
