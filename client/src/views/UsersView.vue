@@ -15,10 +15,12 @@ import {
 import { useUsers, type User } from '../composables/useUsers';
 import { useI18n } from '../composables/useI18n';
 import { useGHN } from '../composables/useGHN';
+import { useAuth } from '../composables/useAuth';
 
 const { users, addUser, updateUser, deleteUser } = useUsers();
 const { t } = useI18n();
 const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useGHN();
+const { user: currentUser } = useAuth();
 
 const searchQuery = ref('');
 const roleFilter = ref('all');
@@ -283,6 +285,7 @@ const getRoleBadgeColor = (role: string) => {
                                         <Edit class="w-4 h-4" />
                                     </button>
                                     <button 
+                                        v-if="user.id !== currentUser?.id"
                                         @click="handleDelete(user)"
                                         class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                         :title="t('common.delete')"
@@ -347,10 +350,17 @@ const getRoleBadgeColor = (role: string) => {
                         </div>
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">{{ t('users.status') }}</label>
-                            <select v-model="form.status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white">
+                            <select 
+                                v-model="form.status" 
+                                :disabled="editingUser?.id === currentUser?.id"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                            >
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                             </select>
+                            <p v-if="editingUser?.id === currentUser?.id" class="text-xs text-amber-600 mt-1 font-medium">
+                                {{ t('users.cannotDisableSelf') }}
+                            </p>
                         </div>
                     </div>
 

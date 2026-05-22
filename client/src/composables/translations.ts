@@ -216,6 +216,7 @@ export interface TranslationSchema {
         deleteWarning: string;
         understandPermanent: string;
         deletePermanently: string;
+        cannotDisableSelf: string;
     };
     inventory: {
         inventoryManagement: string;
@@ -528,7 +529,8 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             confirmDeletion: 'Confirm Account Deletion',
             deleteWarning: 'Warning: This action cannot be undone. All data associated with this user will be permanently removed.',
             understandPermanent: 'I confirm that I understand this action is permanent and I want to proceed.',
-            deletePermanently: 'Delete Permanently'
+            deletePermanently: 'Delete Permanently',
+            cannotDisableSelf: 'You cannot disable your own account.'
         },
         inventory: {
             inventoryManagement: 'Inventory Management',
@@ -839,7 +841,8 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             confirmDeletion: 'アカウント削除の確認',
             deleteWarning: '警告：この操作は取り消せません。このユーザーに関連するすべてのデータが完全に削除されます。',
             understandPermanent: 'この操作が永続的であることを理解し、続行することを確認します。',
-            deletePermanently: '完全に削除する'
+            deletePermanently: '完全に削除する',
+            cannotDisableSelf: '自分のアカウントを無効化することはできません。'
         },
         inventory: {
             inventoryManagement: '在庫管理',
@@ -1150,7 +1153,8 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             confirmDeletion: 'Xác Nhận Xóa Tài Khoản',
             deleteWarning: 'Cảnh báo: Hành động này không thể hoàn tác. Tất cả dữ liệu liên quan sẽ bị xóa vĩnh viễn.',
             understandPermanent: 'Tôi xác nhận rằng mình hiểu hành động này là vĩnh viễn và muốn tiếp tục.',
-            deletePermanently: 'Xóa vĩnh viễn'
+            deletePermanently: 'Xóa vĩnh viễn',
+            cannotDisableSelf: 'Bạn không thể vô hiệu hóa tài khoản của chính mình.'
         },
         inventory: {
             inventoryManagement: 'Quản lý kho',

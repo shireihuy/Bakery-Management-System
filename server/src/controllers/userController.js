@@ -33,8 +33,11 @@ const updateUser = async (req, res) => {
     const { id } = req.params;
     const { name, email, role, phone, address, province_id, district_id, ward_code, status } = req.body;
     const normalizedEmail = email ? email.toLowerCase() : '';
+    const updaterId = req.user.id;
 
-    
+    if (updaterId.toString() === id.toString() && status === 'inactive') {
+        return res.status(400).json({ message: 'You cannot disable/deactivate your own account for safety reasons.' });
+    }
 
     try {
         const finalPhone = (phone === '' || phone === undefined) ? null : phone;
