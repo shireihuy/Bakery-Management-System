@@ -96,6 +96,7 @@ const cartRoutes = require('./routes/cartRoutes');
 const deliveryRoutes = require('./routes/deliveryRoutes');
 const flashSaleRoutes = require('./routes/flashSaleRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const migrate = require('./scripts/migrate');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -114,9 +115,16 @@ app.use('/api/chat', chatRoutes);
 
 
 if (process.env.NODE_ENV !== 'test') {
-  server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-  });
+  migrate()
+    .then(() => {
+      server.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+      });
+    })
+    .catch((err) => {
+      console.error('Failed to run startup migration:', err);
+      process.exit(1);
+    });
 }
 
 module.exports = app;

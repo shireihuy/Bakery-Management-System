@@ -15,6 +15,11 @@ const syncProductStock = async (productId) => {
     `, [productId]);
 };
 
+const parsePositiveQuantity = (value) => {
+    const parsed = parseFloat(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+};
+
 // GET /products/:id/batches
 const getBatches = async (req, res) => {
     const { id } = req.params;
@@ -49,45 +54,51 @@ const addBatch = async (req, res) => {
     const { id: productId } = req.params;
     const { quantity, expirationDate, notes } = req.body;
 
-    if (!quantity || parseFloat(quantity) <= 0) {
+    const parsedQuantity = parsePositiveQuantity(quantity);
+    if (parsedQuantity === null) {
         return res.status(400).json({ message: 'Quantity must be greater than 0' });
     }
 
     try {
-        // Verify product exists
-        const productCheck = await query('SELECT id, name, min_stock_level FROM products WHERE id = $1 AND is_active = TRUE', [productId]);
+        const productCheck = await query(
+            'SELECT id, name, min_stock_level, stock_quantity FROM products WHERE id = $1 AND is_active = TRUE',
+            [productId]
+        );
         if (productCheck.rows.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
 
+        const product = productCheck.rows[0];
         const finalExpiry = (expirationDate && expirationDate.toString().trim() !== '') ? expirationDate : null;
 
-        const result = await query(`
+        const batchResult = await query(`
             INSERT INTO product_batches (product_id, quantity, expiration_date, notes)
             VALUES ($1, $2, $3, $4)
             RETURNING *
-        `, [productId, parseFloat(quantity), finalExpiry, notes || null]);
+        `, [productId, parsedQuantity, finalExpiry, notes || null]);
 
-        // Sync the product's cached stock_quantity
         await syncProductStock(productId);
 
-        // Fetch updated product for low-stock check
         const updated = await query('SELECT stock_quantity, min_stock_level, name FROM products WHERE id = $1', [productId]);
-        const product = updated.rows[0];
-        if (product.stock_quantity <= product.min_stock_level) {
-            await NotificationController.notifyAdmins(
+        const updatedProduct = updated.rows[0] || product;
+        const currentStock = Number.parseFloat(updatedProduct.stock_quantity ?? product.stock_quantity ?? 0);
+        const minStock = Number.parseFloat(updatedProduct.min_stock_level ?? product.min_stock_level ?? 0);
+
+        if (currentStock <= minStock) {
+            NotificationController.notifyAdmins(
                 'Low Stock Alert',
-                `Product "${product.name}" is low on stock (${product.stock_quantity} left).`,
+                `Product "${updatedProduct.name}" is low on stock (${currentStock} left).`,
                 'warning'
-            );
+            ).catch((notifyErr) => {
+                console.error('Error notifying admins after batch add:', notifyErr);
+            });
         }
 
-        // Emit real-time update
         if (global.io) {
-            global.io.emit('stock:updated', { productId, newStock: product.stock_quantity });
+            global.io.emit('stock:updated', { productId, newStock: currentStock });
         }
 
-        const batch = result.rows[0];
+        const batch = batchResult.rows[0];
         res.status(201).json({
             id: batch.id,
             productId: batch.product_id,
@@ -119,7 +130,7 @@ const deleteBatch = async (req, res) => {
 
         if (global.io) {
             const updated = await query('SELECT stock_quantity FROM products WHERE id = $1', [productId]);
-            global.io.emit('stock:updated', { productId, newStock: updated.rows[0]?.stock_quantity });
+            global.io.emit('stock:updated', { productId, newStock: updated.rows[0]?.stock_quantity ?? 0 });
         }
 
         res.json({ message: 'Batch deleted successfully' });
