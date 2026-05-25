@@ -808,7 +808,7 @@ const confirmCancelOrder = async () => {
                 class="relative w-screen max-w-md transform transition-transform duration-500 ease-in-out animate-in slide-in-from-right h-full"
             >
                 <div class="h-full flex flex-col bg-white shadow-2xl border-l border-bakery-100">
-                    <div class="p-8 border-b border-bakery-50 flex justify-between items-center bg-bakery-50/50">
+                    <div class="p-8 border-b border-bakery-50 flex justify-between items-center bg-bakery-50/50 shrink-0">
                         <div>
                             <h3 class="font-black text-2xl text-bakery-900">{{ t('shop.yourBasket') }}</h3>
                             <p class="text-bakery-500 text-sm font-medium">{{ totalItems }} {{ t('shop.items').toLowerCase() }} selected</p>
@@ -834,226 +834,230 @@ const confirmCancelOrder = async () => {
                                 {{ t('shop.startBrowsing').split(' ')[0] }}
                             </button>
                         </div>
-                        <div v-else class="space-y-6">
-                            <div v-for="item in cart" :key="item.id" class="flex gap-4 group">
-                                <div class="w-20 h-20 rounded-2xl overflow-hidden border border-bakery-100 shrink-0">
-                                    <img :src="item.image" :alt="item.name" class="w-full h-full object-cover">
+                        <div v-else class="space-y-8">
+                            <!-- Items List -->
+                            <div class="space-y-6">
+                                <div v-for="item in cart" :key="item.id" class="flex gap-4 group">
+                                    <div class="w-20 h-20 rounded-2xl overflow-hidden border border-bakery-100 shrink-0">
+                                        <img :src="item.image" :alt="item.name" class="w-full h-full object-cover">
+                                    </div>
+                                    <div class="flex-1 flex flex-col justify-between py-1">
+                                        <div class="flex justify-between items-start">
+                                            <h4 class="font-bold text-bakery-900 leading-tight">{{ item.name }}</h4>
+                                            <button @click="removeFromCart(item.id)" class="text-bakery-200 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                                                <Trash2 class="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <div class="flex items-center justify-between mt-1">
+                                            <div class="flex flex-col">
+                                                <span v-if="item.flashSale" class="text-[10px] text-bakery-300 line-through font-bold mb-0.5">{{ formatPrice(item.price * item.quantity) }}</span>
+                                                <p :class="item.flashSale ? 'text-red-500' : 'text-bakery-600'" class="font-bold leading-none">
+                                                    {{ formatPrice(
+                                                        item.flashSale 
+                                                        ? (Math.min(item.quantity, Math.max(0, item.flashSale.stock - item.flashSale.sold)) * item.flashSale.salePrice) + (Math.max(0, item.quantity - Math.max(0, item.flashSale.stock - item.flashSale.sold)) * item.price)
+                                                        : (item.price * item.quantity)
+                                                    ) }}
+                                                </p>
+                                            </div>
+                                            <div class="flex items-center gap-3 bg-bakery-50 p-1 rounded-xl">
+                                                 <button @click="updateQuantity(item.id, -1)" class="w-7 h-7 rounded-lg bg-white border border-bakery-100 flex items-center justify-center hover:bg-bakery-100 transition-colors"><Minus class="w-3 h-3" /></button>
+                                                 <span class="text-sm w-4 text-center font-bold text-bakery-900">{{ item.quantity }}</span>
+                                                 <button @click="updateQuantity(item.id, 1)" class="w-7 h-7 rounded-lg bg-white border border-bakery-100 flex items-center justify-center hover:bg-bakery-100 transition-colors"><Plus class="w-3 h-3" /></button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="flex-1 flex flex-col justify-between py-1">
-                                    <div class="flex justify-between items-start">
-                                        <h4 class="font-bold text-bakery-900 leading-tight">{{ item.name }}</h4>
-                                        <button @click="removeFromCart(item.id)" class="text-bakery-200 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
-                                            <Trash2 class="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                    <div class="flex items-center justify-between mt-1">
-                                        <div class="flex flex-col">
-                                            <span v-if="item.flashSale" class="text-[10px] text-bakery-300 line-through font-bold mb-0.5">{{ formatPrice(item.price * item.quantity) }}</span>
-                                            <p :class="item.flashSale ? 'text-red-500' : 'text-bakery-600'" class="font-bold leading-none">
-                                                {{ formatPrice(
-                                                    item.flashSale 
-                                                    ? (Math.min(item.quantity, Math.max(0, item.flashSale.stock - item.flashSale.sold)) * item.flashSale.salePrice) + (Math.max(0, item.quantity - Math.max(0, item.flashSale.stock - item.flashSale.sold)) * item.price)
-                                                    : (item.price * item.quantity)
-                                                ) }}
-                                            </p>
-                                        </div>
-                                        <div class="flex items-center gap-3 bg-bakery-50 p-1 rounded-xl">
-                                             <button @click="updateQuantity(item.id, -1)" class="w-7 h-7 rounded-lg bg-white border border-bakery-100 flex items-center justify-center hover:bg-bakery-100 transition-colors"><Minus class="w-3 h-3" /></button>
-                                             <span class="text-sm w-4 text-center font-bold text-bakery-900">{{ item.quantity }}</span>
-                                             <button @click="updateQuantity(item.id, 1)" class="w-7 h-7 rounded-lg bg-white border border-bakery-100 flex items-center justify-center hover:bg-bakery-100 transition-colors"><Plus class="w-3 h-3" /></button>
-                                        </div>
-                                    </div>
+                            </div>
 
-                                </div>
+                            <!-- Checkout Settings (Moved inside scrollable body) -->
+                            <div class="border-t border-bakery-100 pt-6 space-y-6">
+                                 <!-- Staff specific input -->
+                                 <div v-if="isStaff" class="space-y-3 relative">
+                                      <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">{{ t('shop.customerInfo') }}</label>
+                                      <div class="relative group">
+                                          <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-bakery-400" />
+                                          <input 
+                                            v-model="staffSearchQuery" 
+                                            @input="handleStaffNameInput"
+                                            @focus="isSearchingUser = true"
+                                            @blur="handleStaffBlur"
+                                            type="text" 
+                                            placeholder="Search user or enter name..." 
+                                            class="w-full h-12 rounded-2xl border border-bakery-100 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-bakery-300 text-sm bg-bakery-50/50 transition-all font-medium"
+                                          >
+                                          <!-- User search results -->
+                                          <div v-if="isSearchingUser && filteredSystemUsers.length > 0" class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-bakery-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                                              <div class="p-2">
+                                                  <button 
+                                                    v-for="sysUser in filteredSystemUsers" 
+                                                    :key="sysUser.id"
+                                                    @click="selectStaffCustomer(sysUser)"
+                                                    class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-bakery-50 transition-colors text-left"
+                                                  >
+                                                      <div class="w-10 h-10 rounded-full bg-bakery-100 flex items-center justify-center text-bakery-700 font-bold">
+                                                          {{ sysUser.name.charAt(0) }}
+                                                      </div>
+                                                      <div>
+                                                          <p class="text-sm font-bold text-bakery-900">{{ sysUser.name }}</p>
+                                                          <p class="text-xs text-bakery-400">{{ sysUser.email }}</p>
+                                                      </div>
+                                                      <div v-if="selectedUserId === sysUser.id" class="ml-auto text-bakery-600">
+                                                          <Plus class="w-4 h-4 rotate-45" />
+                                                      </div>
+                                                  </button>
+                                              </div>
+                                          </div>
+                                      </div>
+                                      <div v-if="selectedUserId" class="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-xl border border-green-100 text-[10px] text-green-700 font-bold animate-in zoom-in">
+                                          <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                                          Linking to Registered User Account
+                                      </div>
+                                 </div>
+                                 
+                                 <!-- Delivery Option Toggle -->
+                                 <div class="space-y-3">
+                                      <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">Delivery Choice</label>
+                                      <div class="grid grid-cols-2 gap-2 bg-bakery-50 p-1.5 rounded-2xl border border-bakery-100">
+                                           <button 
+                                                @click="selectedDeliveryType = 'Pick-up'"
+                                                :class="[selectedDeliveryType === 'Pick-up' ? 'bg-white text-bakery-900 shadow-sm' : 'text-bakery-400 hover:text-bakery-600']"
+                                                class="h-10 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+                                           >
+                                                <MapPin class="w-3.5 h-3.5" /> Pick-up
+                                           </button>
+                                           <button 
+                                                @click="selectedDeliveryType = 'Delivery'"
+                                                :class="[selectedDeliveryType === 'Delivery' ? 'bg-white text-bakery-900 shadow-sm' : 'text-bakery-400 hover:text-bakery-600']"
+                                                class="h-10 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
+                                           >
+                                                <Truck class="w-3.5 h-3.5" /> Delivery
+                                           </button>
+                                      </div>
+                                      <div v-if="selectedDeliveryType === 'Delivery'" class="bg-bakery-50 rounded-2xl border border-bakery-100 overflow-hidden transition-all duration-300">
+                                           <!-- Collapsible Header -->
+                                           <div 
+                                                @click="isAddressExpanded = !isAddressExpanded"
+                                                class="p-4 flex items-center justify-between cursor-pointer hover:bg-bakery-100/30 transition-colors select-none"
+                                           >
+                                                <div class="flex items-center gap-3 min-w-0">
+                                                     <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-bakery-600 shadow-xs shrink-0">
+                                                          <MapPin class="w-4 h-4" />
+                                                     </div>
+                                                     <div class="text-left min-w-0">
+                                                          <p class="text-[10px] font-black text-bakery-400 uppercase tracking-widest leading-none mb-1">Delivery Address</p>
+                                                          <p v-if="!isAddressExpanded" class="text-xs font-bold text-bakery-700 truncate mt-0.5 animate-in fade-in max-w-[200px]">
+                                                               {{ streetAddress || 'Click to set address...' }}
+                                                          </p>
+                                                     </div>
+                                                </div>
+                                                <button class="text-bakery-400 hover:text-bakery-900 transition-colors ml-2">
+                                                     <ChevronUp v-if="isAddressExpanded" class="w-4 h-4" />
+                                                     <ChevronDown v-else class="w-4 h-4" />
+                                                </button>
+                                           </div>
+
+                                           <!-- Expandable Body Content -->
+                                           <div v-show="isAddressExpanded" class="p-4 pt-0 border-t border-bakery-100/50 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                <input 
+                                                    v-model="streetAddress" 
+                                                    type="text" 
+                                                    placeholder="Enter street name, house number..." 
+                                                    class="w-full mt-2 border-b border-bakery-100 bg-transparent text-xs font-bold text-bakery-900 focus:outline-none focus:border-bakery-400 pb-1 placeholder:text-bakery-300"
+                                                />
+                                                <div class='grid grid-cols-1 gap-2'>
+                                                     <select v-model='selectedProvince' @change='fetchDistricts(selectedProvince!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'>
+                                                          <option :value='null' disabled>Province</option>
+                                                          <option v-for='p in provinces' :key='p.ProvinceID' :value='p.ProvinceID'>{{p.ProvinceName}}</option>
+                                                     </select>
+                                                     <select v-if='selectedProvince' v-model='selectedDistrict' @change='fetchWards(selectedDistrict!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'>
+                                                          <option :value='null' disabled>District</option>
+                                                          <option v-for='d in districts' :key='d.DistrictID' :value='d.DistrictID'>{{d.DistrictName}}</option>
+                                                     </select>
+                                                     <select v-if='selectedDistrict' v-model='selectedWard' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'>
+                                                          <option :value='null' disabled>Ward</option>
+                                                          <option v-for='w in wards' :key='w.WardCode' :value='w.WardCode'>{{w.WardName}}</option>
+                                                     </select>
+                                                </div>
+
+                                                <!-- Map block inside collapsible area -->
+                                                <div class="h-32 rounded-xl overflow-hidden shadow-xs border border-bakery-100 relative group">
+                                                     <iframe 
+                                                         :key="mapUrl"
+                                                         width="100%" 
+                                                         height="100%" 
+                                                         style="border:0;" 
+                                                         loading="lazy" 
+                                                         allowfullscreen 
+                                                         :src="mapUrl">
+                                                     </iframe>
+                                                </div>
+                                           </div>
+                                      </div>
+                                 </div>
+
+                                 <!-- Coupon Section -->
+                                 <div class="space-y-2">
+                                     <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">Promo Code</label>
+                                     <div class="flex gap-2">
+                                          <input 
+                                              v-model="couponCodeInput" 
+                                              :disabled="!!appliedCoupon"
+                                              type="text" 
+                                              placeholder="Enter code..." 
+                                              class="flex-1 h-10 rounded-xl border border-bakery-100 px-3 focus:outline-none focus:ring-2 focus:ring-bakery-300 text-sm bg-bakery-50/50 uppercase"
+                                          >
+                                          <button 
+                                              v-if="!appliedCoupon"
+                                              @click="applyCoupon"
+                                              :disabled="isApplyingCoupon || !couponCodeInput"
+                                              class="px-4 h-10 bg-bakery-900 text-white text-sm font-bold rounded-xl hover:bg-bakery-800 disabled:opacity-50 transition-colors"
+                                          >
+                                              {{ isApplyingCoupon ? '...' : 'Apply' }}
+                                          </button>
+                                          <button 
+                                              v-else
+                                              @click="removeCoupon"
+                                              class="px-4 h-10 bg-red-100 text-red-700 text-sm font-bold rounded-xl hover:bg-red-200 transition-colors"
+                                          >
+                                              Remove
+                                          </button>
+                                     </div>
+                                     <p v-if="couponError" class="text-xs text-red-500 font-medium">{{ couponError }}</p>
+                                     <p v-if="appliedCoupon" class="text-xs text-green-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
+                                         Applied: -{{ formatPrice(discountAmount) }} off
+                                     </p>
+                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div v-if="cart.length > 0" class="p-8 border-t border-bakery-100 bg-white space-y-6">
-                         <!-- Staff specific input -->
-                         <div v-if="isStaff" class="space-y-3 relative">
-                              <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">{{ t('shop.customerInfo') }}</label>
-                              <div class="relative group">
-                                  <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-bakery-400" />
-                                  <input 
-                                    v-model="staffSearchQuery" 
-                                    @input="handleStaffNameInput"
-                                    @focus="isSearchingUser = true"
-                                    @blur="handleStaffBlur"
-                                    type="text" 
-                                    placeholder="Search user or enter name..." 
-                                    class="w-full h-12 rounded-2xl border border-bakery-100 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-bakery-300 text-sm bg-bakery-50/50 transition-all font-medium"
-                                  >
-                                  <!-- User search results -->
-                                  <div v-if="isSearchingUser && filteredSystemUsers.length > 0" class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-bakery-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
-                                      <div class="p-2">
-                                          <button 
-                                            v-for="sysUser in filteredSystemUsers" 
-                                            :key="sysUser.id"
-                                            @click="selectStaffCustomer(sysUser)"
-                                            class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-bakery-50 transition-colors text-left"
-                                          >
-                                              <div class="w-10 h-10 rounded-full bg-bakery-100 flex items-center justify-center text-bakery-700 font-bold">
-                                                  {{ sysUser.name.charAt(0) }}
-                                              </div>
-                                              <div>
-                                                  <p class="text-sm font-bold text-bakery-900">{{ sysUser.name }}</p>
-                                                  <p class="text-xs text-bakery-400">{{ sysUser.email }}</p>
-                                              </div>
-                                              <div v-if="selectedUserId === sysUser.id" class="ml-auto text-bakery-600">
-                                                  <Plus class="w-4 h-4 rotate-45" /> <!-- Using plus icon rotated as a mark, or check if available -->
-                                              </div>
-                                          </button>
-                                      </div>
-                                  </div>
-                              </div>
-                              <div v-if="selectedUserId" class="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-xl border border-green-100 text-[10px] text-green-700 font-bold animate-in zoom-in">
-                                  <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                                  Linking to Registered User Account
-                              </div>
-                         </div>
-                         
-                         <!-- Delivery Option Toggle -->
-                         <div class="space-y-3">
-                              <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">Delivery Choice</label>
-                              <div class="grid grid-cols-2 gap-2 bg-bakery-50 p-1.5 rounded-2xl border border-bakery-100">
-                                   <button 
-                                        @click="selectedDeliveryType = 'Pick-up'"
-                                        :class="[selectedDeliveryType === 'Pick-up' ? 'bg-white text-bakery-900 shadow-sm' : 'text-bakery-400 hover:text-bakery-600']"
-                                        class="h-10 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
-                                   >
-                                        <MapPin class="w-3.5 h-3.5" /> Pick-up
-                                   </button>
-                                   <button 
-                                        @click="selectedDeliveryType = 'Delivery'"
-                                        :class="[selectedDeliveryType === 'Delivery' ? 'bg-white text-bakery-900 shadow-sm' : 'text-bakery-400 hover:text-bakery-600']"
-                                        class="h-10 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
-                                   >
-                                        <Truck class="w-3.5 h-3.5" /> Delivery
-                                   </button>
-                              </div>
-                              <div v-if="selectedDeliveryType === 'Delivery'" class="bg-bakery-50 rounded-2xl border border-bakery-100 overflow-hidden transition-all duration-300">
-                                   <!-- Collapsible Header -->
-                                   <div 
-                                        @click="isAddressExpanded = !isAddressExpanded"
-                                        class="p-4 flex items-center justify-between cursor-pointer hover:bg-bakery-100/30 transition-colors select-none"
-                                   >
-                                        <div class="flex items-center gap-3 min-w-0">
-                                             <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-bakery-600 shadow-xs shrink-0">
-                                                  <MapPin class="w-4 h-4" />
-                                             </div>
-                                             <div class="text-left min-w-0">
-                                                  <p class="text-[10px] font-black text-bakery-400 uppercase tracking-widest leading-none mb-1">Delivery Address</p>
-                                                  <p v-if="!isAddressExpanded" class="text-xs font-bold text-bakery-700 truncate mt-0.5 animate-in fade-in max-w-[200px]">
-                                                       {{ streetAddress || 'Click to set address...' }}
-                                                  </p>
-                                             </div>
-                                        </div>
-                                        <button class="text-bakery-400 hover:text-bakery-900 transition-colors ml-2">
-                                             <ChevronUp v-if="isAddressExpanded" class="w-4 h-4" />
-                                             <ChevronDown v-else class="w-4 h-4" />
-                                        </button>
-                                   </div>
-
-                                   <!-- Expandable Body Content -->
-                                   <div v-show="isAddressExpanded" class="p-4 pt-0 border-t border-bakery-100/50 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
-                                        <input 
-                                            v-model="streetAddress" 
-                                            type="text" 
-                                            placeholder="Enter street name, house number..." 
-                                            class="w-full mt-2 border-b border-bakery-100 bg-transparent text-xs font-bold text-bakery-900 focus:outline-none focus:border-bakery-400 pb-1 placeholder:text-bakery-300"
-                                        />
-                                        <div class='grid grid-cols-1 gap-2'>
-                                             <select v-model='selectedProvince' @change='fetchDistricts(selectedProvince!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'>
-                                                  <option :value='null' disabled>Province</option>
-                                                  <option v-for='p in provinces' :key='p.ProvinceID' :value='p.ProvinceID'>{{p.ProvinceName}}</option>
-                                             </select>
-                                             <select v-if='selectedProvince' v-model='selectedDistrict' @change='fetchWards(selectedDistrict!)' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'>
-                                                  <option :value='null' disabled>District</option>
-                                                  <option v-for='d in districts' :key='d.DistrictID' :value='d.DistrictID'>{{d.DistrictName}}</option>
-                                             </select>
-                                             <select v-if='selectedDistrict' v-model='selectedWard' class='w-full h-8 rounded-lg border border-bakery-100 px-3 text-[10px] bg-white font-bold opacity-80 focus:opacity-100'>
-                                                  <option :value='null' disabled>Ward</option>
-                                                  <option v-for='w in wards' :key='w.WardCode' :value='w.WardCode'>{{w.WardName}}</option>
-                                             </select>
-                                        </div>
-
-                                        <!-- Map block inside collapsible area -->
-                                        <div class="h-32 rounded-xl overflow-hidden shadow-xs border border-bakery-100 relative group">
-                                             <iframe 
-                                                 :key="mapUrl"
-                                                 width="100%" 
-                                                 height="100%" 
-                                                 style="border:0;" 
-                                                 loading="lazy" 
-                                                 allowfullscreen 
-                                                 :src="mapUrl">
-                                             </iframe>
-                                        </div>
-                                   </div>
-                              </div>
-                         </div>
-                         
-                         <div class="space-y-4">
-                             <!-- Coupon Section -->
-                             <div class="space-y-2">
-                                 <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">Promo Code</label>
-                                 <div class="flex gap-2">
-                                      <input 
-                                          v-model="couponCodeInput" 
-                                          :disabled="!!appliedCoupon"
-                                          type="text" 
-                                          placeholder="Enter code..." 
-                                          class="flex-1 h-10 rounded-xl border border-bakery-100 px-3 focus:outline-none focus:ring-2 focus:ring-bakery-300 text-sm bg-bakery-50/50 uppercase"
-                                      >
-                                      <button 
-                                          v-if="!appliedCoupon"
-                                          @click="applyCoupon"
-                                          :disabled="isApplyingCoupon || !couponCodeInput"
-                                          class="px-4 h-10 bg-bakery-900 text-white text-sm font-bold rounded-xl hover:bg-bakery-800 disabled:opacity-50 transition-colors"
-                                      >
-                                          {{ isApplyingCoupon ? '...' : 'Apply' }}
-                                      </button>
-                                      <button 
-                                          v-else
-                                          @click="removeCoupon"
-                                          class="px-4 h-10 bg-red-100 text-red-700 text-sm font-bold rounded-xl hover:bg-red-200 transition-colors"
-                                      >
-                                          Remove
-                                      </button>
-                                 </div>
-                                 <p v-if="couponError" class="text-xs text-red-500 font-medium">{{ couponError }}</p>
-                                 <p v-if="appliedCoupon" class="text-xs text-green-600 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
-                                     Applied: -{{ formatPrice(discountAmount) }} off
-                                 </p>
+                    <!-- Sticky Footer Summary & Checkout Button -->
+                    <div v-if="cart.length > 0" class="p-6 border-t border-bakery-100 bg-white space-y-4 shrink-0 shadow-[0_-4px_20px_0_rgba(0,0,0,0.03)] animate-in slide-in-from-bottom duration-300">
+                         <div class="space-y-2.5">
+                             <div class="flex justify-between items-center text-bakery-500 font-medium text-xs">
+                                  <span>Subtotal</span>
+                                  <span>{{ formatPrice(subTotalPrice) }}</span>
                              </div>
-
-                             <div class="space-y-3 pt-3 border-t border-bakery-100">
-                                 <div class="flex justify-between items-center text-bakery-500 font-medium text-sm">
-                                      <span>Subtotal</span>
-                                      <span>{{ formatPrice(subTotalPrice) }}</span>
-                                 </div>
-                                 <div v-if="appliedCoupon" class="flex justify-between items-center text-green-600 font-medium text-sm">
-                                      <span>Discount ({{ appliedCoupon.code }})</span>
-                                      <span>-{{ formatPrice(discountAmount) }}</span>
-                                  </div>
-                                  <div v-if="selectedDeliveryType === 'Delivery'" class="flex justify-between items-center text-bakery-500 font-medium text-sm">
-                                       <span>Delivery Fee</span>
-                                       <span>{{ formatPrice(DELIVERY_FEE) }}</span>
-                                  </div>
-                                  <div class="flex justify-between items-center text-2xl font-black text-bakery-900 pt-2 border-t border-bakery-100">
-                                      <span>{{ t('shop.total') }}</span>
-                                      <span>{{ formatPrice(totalPrice) }}</span>
-                                 </div>
+                             <div v-if="appliedCoupon" class="flex justify-between items-center text-green-600 font-medium text-xs">
+                                  <span>Discount ({{ appliedCoupon.code }})</span>
+                                  <span>-{{ formatPrice(discountAmount) }}</span>
+                             </div>
+                             <div v-if="selectedDeliveryType === 'Delivery'" class="flex justify-between items-center text-bakery-500 font-medium text-xs">
+                                  <span>Delivery Fee</span>
+                                  <span>{{ formatPrice(DELIVERY_FEE) }}</span>
+                             </div>
+                             <div class="flex justify-between items-center text-xl font-black text-bakery-900 pt-2 border-t border-bakery-100/60">
+                                  <span>{{ t('shop.total') }}</span>
+                                  <span>{{ formatPrice(totalPrice) }}</span>
                              </div>
                          </div>
 
                          <button 
                             @click="handleCheckout"
-                            class="w-full h-14 rounded-2xl bg-bakery-600 text-white font-bold text-lg hover:bg-bakery-700 shadow-2xl shadow-bakery-100 transition-all active:scale-95 flex items-center justify-center gap-3"
+                            class="w-full h-12 rounded-xl bg-bakery-600 text-white font-bold text-base hover:bg-bakery-700 shadow-lg shadow-bakery-100 transition-all active:scale-95 flex items-center justify-center gap-2"
                         >
                             {{ t('shop.checkout') }}
-                            <ArrowRight class="w-5 h-5" />
+                            <ArrowRight class="w-4 h-4" />
                         </button>
                     </div>
                 </div>
