@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { 
     Search, 
     Filter, 
@@ -25,6 +25,9 @@ const statusFilter = ref<'all' | 'Pending' | 'Baking' | 'Ready' | 'Completed' | 
 const viewingOrder = ref<any | null>(null); // Use any to avoid DeepReadonly mismatch with the composable's readonly() wrapper
 const isDetailOpen = ref(false);
 
+const currentPage = ref(1);
+const itemsPerPage = ref(10);
+
 onMounted(async () => {
     await fetchOrders();
 });
@@ -39,6 +42,49 @@ const filteredOrders = computed(() => {
         
         return matchesSearch && matchesStatus;
     });
+});
+
+const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value);
+const endIndex = computed(() => currentPage.value * itemsPerPage.value);
+
+const paginatedOrders = computed(() => {
+    return filteredOrders.value.slice(startIndex.value, endIndex.value);
+});
+
+const totalPages = computed(() => {
+    return Math.ceil(filteredOrders.value.length / itemsPerPage.value) || 1;
+});
+
+const pageRange = computed(() => {
+    const range: (number | string)[] = [];
+    const total = totalPages.value;
+    const current = currentPage.value;
+    
+    if (total <= 5) {
+        for (let i = 1; i <= total; i++) range.push(i);
+    } else {
+        range.push(1);
+        if (current > 3) {
+            range.push('...');
+        }
+        
+        const start = Math.max(2, current - 1);
+        const end = Math.min(total - 1, current + 1);
+        
+        for (let i = start; i <= end; i++) {
+            range.push(i);
+        }
+        
+        if (current < total - 2) {
+            range.push('...');
+        }
+        range.push(total);
+    }
+    return range;
+});
+
+watch([searchQuery, statusFilter, itemsPerPage], () => {
+    currentPage.value = 1;
 });
 
 const stats = computed(() => {
@@ -192,11 +238,11 @@ const confirmCancel = async () => {
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <tr v-if="filteredOrders.length === 0">
-                             <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                             <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                                 {{ t('orders.noOrdersFound') }}
                             </td>
                         </tr>
-                        <tr v-for="order in filteredOrders" :key="order.id" class="hover:bg-gray-50 transition-colors">
+                        <tr v-for="order in paginatedOrders" :key="order.id" class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4 font-medium text-gray-900">#{{ order.id }}</td>
                             <td class="px-6 py-4">
                                 <div class="font-medium text-gray-900">{{ order.customerName }}</div>
@@ -223,6 +269,61 @@ const confirmCancel = async () => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="p-4 border-t border-green-100 bg-green-50/10 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                    <div>
+                        {{ t('orders.showing') || 'Showing' }} 
+                        <span class="font-semibold text-gray-900">{{ startIndex + 1 }}</span> 
+                        {{ t('orders.to') || 'to' }} 
+                        <span class="font-semibold text-gray-900">{{ Math.min(endIndex, filteredOrders.length) }}</span> 
+                        {{ t('orders.of') || 'of' }} 
+                        <span class="font-semibold text-gray-900">{{ filteredOrders.length }}</span> 
+                        {{ t('orders.entries') || 'entries' }}
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-xs text-gray-500 uppercase font-bold tracking-wider">Per page:</span>
+                        <select 
+                            v-model="itemsPerPage" 
+                            class="text-xs border border-gray-200 rounded-lg py-1 px-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white font-semibold text-gray-700"
+                        >
+                            <option :value="5">5</option>
+                            <option :value="10">10</option>
+                            <option :value="25">25</option>
+                            <option :value="50">50</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-1.5" v-if="totalPages > 1">
+                    <button 
+                        @click="currentPage = Math.max(1, currentPage - 1)" 
+                        :disabled="currentPage === 1"
+                        class="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all leading-none"
+                    >
+                        ◀
+                    </button>
+                    
+                    <button 
+                        v-for="page in pageRange" 
+                        :key="page"
+                        @click="typeof page === 'number' ? currentPage = page : null"
+                        :disabled="page === '...'"
+                        :class="`px-3 py-1.5 text-xs font-black rounded-lg border transition-all ${currentPage === page ? 'bg-bakery-900 border-bakery-900 text-white shadow-md' : page === '...' ? 'border-transparent text-gray-400 bg-transparent cursor-default' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'}`"
+                    >
+                        {{ page }}
+                    </button>
+                    
+                    <button 
+                        @click="currentPage = Math.min(totalPages, currentPage + 1)" 
+                        :disabled="currentPage === totalPages"
+                        class="p-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all leading-none"
+                    >
+                        ▶
+                    </button>
+                </div>
             </div>
         </div>
 
