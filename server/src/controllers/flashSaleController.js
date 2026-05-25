@@ -59,6 +59,11 @@ const getActiveFlashSales = async (req, res) => {
 
 const createFlashSale = async (req, res) => {
     const { name, start_time, end_time, items } = req.body;
+    
+    if (new Date(end_time) <= new Date(start_time)) {
+        return res.status(400).json({ message: 'End time must be after start time' });
+    }
+    
     const client = await pool.connect();
     
     try {
@@ -145,6 +150,13 @@ const toggleFlashSale = async (req, res) => {
 const updateFlashSale = async (req, res) => {
     const { id } = req.params;
     const { name, start_time, end_time, items, is_active } = req.body;
+    
+    if (start_time !== undefined && end_time !== undefined) {
+        if (new Date(end_time) <= new Date(start_time)) {
+            return res.status(400).json({ message: 'End time must be after start time' });
+        }
+    }
+    
     const client = await pool.connect();
     
     try {

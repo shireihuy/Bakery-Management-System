@@ -203,6 +203,9 @@
               <label class="text-xs font-black text-gray-400 uppercase tracking-widest">End Time</label>
               <input v-model="newSale.end_time" type="datetime-local" class="w-full h-12 rounded-xl border border-gray-100 px-4 focus:ring-2 focus:ring-bakery-300" />
             </div>
+            <div v-if="newSale.start_time && newSale.end_time && new Date(newSale.end_time) <= new Date(newSale.start_time)" class="md:col-span-2 text-red-500 text-xs font-bold bg-red-50 p-3 rounded-xl border border-red-100 flex items-center gap-2">
+              <span>⚠️</span> End time must be after start time.
+            </div>
           </div>
 
           <!-- Selected Products List -->
@@ -365,10 +368,13 @@ const filteredAvailableProducts = computed(() => {
 });
 
 const isFormValid = computed(() => {
-    return newSale.value.name && 
+    const hasRequiredFields = newSale.value.name && 
            newSale.value.start_time && 
            newSale.value.end_time && 
            newSale.value.items.length > 0;
+    if (!hasRequiredFields) return false;
+    
+    return new Date(newSale.value.end_time) > new Date(newSale.value.start_time);
 });
 
 const saveSale = async () => {
