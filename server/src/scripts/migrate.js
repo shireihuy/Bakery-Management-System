@@ -28,7 +28,7 @@ async function migrate() {
         `);
         
 
-        // Add inventory-related columns to products
+        // Add inventory-related columns to products (no expiration_date — moved to batches)
         await query(`
             ALTER TABLE products 
             ADD COLUMN IF NOT EXISTS stock_quantity DECIMAL(10, 2) DEFAULT 0,
@@ -36,9 +36,36 @@ async function migrate() {
             ADD COLUMN IF NOT EXISTS unit VARCHAR(50) DEFAULT 'pcs',
             ADD COLUMN IF NOT EXISTS last_restocked TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         `);
-        
 
-        
+        // Remove expiration_date from products if it exists (moved to product_batches)
+        await query(`
+            ALTER TABLE products DROP COLUMN IF EXISTS expiration_date
+        `);
+
+        // Create product_batches table for batch-level expiration tracking
+        await query(`
+            CREATE TABLE IF NOT EXISTS product_batches (
+                id SERIAL PRIMARY KEY,
+                product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+                quantity DECIMAL(10, 2) NOT NULL DEFAULT 0,
+                expiration_date TIMESTAMP WITH TIME ZONE,
+                received_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                notes VARCHAR(255)
+            )
+        `);
+
+        // Seed: for any product with stock > 0 that has no batches yet, create one batch
+        await query(`
+            INSERT INTO product_batches (product_id, quantity, expiration_date, notes)
+            SELECT p.id, p.stock_quantity, NULL, 'Initial stock (migrated)'
+            FROM products p
+            WHERE p.stock_quantity > 0
+              AND NOT EXISTS (
+                  SELECT 1 FROM product_batches b WHERE b.product_id = p.id
+              )
+        `);
+
+
         process.exit(0);
     } catch (err) {
         console.error('❌ Migration failed:', err.message);

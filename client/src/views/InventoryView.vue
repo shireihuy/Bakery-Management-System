@@ -16,7 +16,7 @@ import { useInventory, type InventoryItem } from '../composables/useInventory';
 import { useI18n } from '../composables/useI18n';
 import { useAuth } from '../composables/useAuth';
 
-const { inventory, lowStockItems, fetchInventory, addItem, updateItem, deleteItem } = useInventory();
+const { inventory, lowStockItems, fetchInventory, addItem, updateItem, deleteItem, addBatch, deleteBatch } = useInventory();
 const { t } = useI18n();
 const { user } = useAuth();
 
@@ -24,9 +24,11 @@ const searchQuery = ref('');
 const categoryFilter = ref('all');
 const isModalOpen = ref(false);
 const editingItem = ref<InventoryItem | null>(null);
-
-// Local state for inline quantity adjustments in the table
-const inlineQuantities = ref<Record<string, number>>({});
+const batchForm = ref({
+    quantity: '',
+    expirationDate: '',
+    notes: ''
+});
 
 const isBaker = computed(() => user.value?.role === 'Baker');
 
@@ -40,10 +42,6 @@ const form = ref({
 
 onMounted(async () => {
     await fetchInventory();
-    // Initialize inline quantities
-    inventory.value.forEach(item => {
-        inlineQuantities.value[item.id] = item.quantity;
-    });
 });
 
 const filteredInventory = computed(() => {
@@ -60,10 +58,39 @@ const getStockStatus = (item: InventoryItem) => {
     return { label: t('inventory.inStock'), color: 'bg-green-100 text-green-700 border-green-200' };
 };
 
+const getBatchStatus = (item: InventoryItem) => {
+    const batches = item.batches || [];
+    const todayStart = new Date(new Date().toDateString());
+
+    if (batches.length === 0) {
+        return { label: 'No batches', color: 'bg-gray-100 text-gray-600 border-gray-200' };
+    }
+
+    const activeBatches = batches.filter(batch => !batch.expirationDate || new Date(batch.expirationDate) >= todayStart);
+    const expiredBatches = batches.filter(batch => batch.expirationDate && new Date(batch.expirationDate) < todayStart);
+
+    if (activeBatches.length === 0 && expiredBatches.length > 0) {
+        return { label: 'All expired', color: 'bg-red-100 text-red-700 border-red-200' };
+    }
+    if (expiredBatches.length > 0) {
+        return { label: `${expiredBatches.length} expired`, color: 'bg-amber-100 text-amber-700 border-amber-200' };
+    }
+    if (!item.nearestExpiry) {
+        return { label: 'No expiry', color: 'bg-blue-100 text-blue-700 border-blue-200' };
+    }
+
+    const exp = new Date(item.nearestExpiry);
+    const diffDays = Math.ceil((new Date(exp.getFullYear(), exp.getMonth(), exp.getDate()).getTime() - todayStart.getTime()) / 86400000);
+    if (diffDays <= 0) return { label: 'Expires today', color: 'bg-orange-100 text-orange-700 border-orange-200' };
+    if (diffDays <= 2) return { label: `Expires in ${diffDays}d`, color: 'bg-amber-100 text-amber-700 border-amber-200' };
+    return { label: `${activeBatches.length} active`, color: 'bg-green-100 text-green-700 border-green-200' };
+};
+
 const openAddModal = () => {
     if (isBaker.value) return; 
     editingItem.value = null;
     form.value = { name: '', category: '', quantity: 0, minQuantity: 0, unit: '' };
+    batchForm.value = { quantity: '', expirationDate: '', notes: '' };
     isModalOpen.value = true;
 };
 
@@ -76,12 +103,8 @@ const openEditModal = (item: InventoryItem) => {
         minQuantity: item.minQuantity, 
         unit: item.unit 
     };
+    batchForm.value = { quantity: '', expirationDate: '', notes: '' };
     isModalOpen.value = true;
-};
-
-const handleInlineSave = async (id: string) => {
-    const newQty = inlineQuantities.value[id];
-    await updateItem(id, { quantity: newQty });
 };
 
 const handleSubmit = async () => {
@@ -92,6 +115,27 @@ const handleSubmit = async () => {
     }
     isModalOpen.value = false;
     await fetchInventory();
+};
+
+const handleAddBatch = async () => {
+    if (!editingItem.value || !editingItem.value.isProduct) return;
+    const quantity = parseFloat(batchForm.value.quantity);
+    if (Number.isNaN(quantity) || quantity <= 0) {
+        alert('Batch quantity must be greater than 0');
+        return;
+    }
+
+    await addBatch(editingItem.value.id, {
+        quantity,
+        expirationDate: batchForm.value.expirationDate || undefined,
+        notes: batchForm.value.notes || undefined
+    });
+    batchForm.value = { quantity: '', expirationDate: '', notes: '' };
+};
+
+const handleDeleteBatch = async (itemId: string, batchId: number) => {
+    if (!confirm('Delete this batch?')) return;
+    await deleteBatch(itemId, batchId);
 };
 
 const handleDelete = (id: string) => {
@@ -204,6 +248,7 @@ const handleDelete = (id: string) => {
                             <th class="px-6 py-4">{{ t('inventory.stockLevel') }}</th>
                             <th class="px-6 py-4">{{ t('inventory.status') }}</th>
                             <th class="px-6 py-4">{{ t('inventory.lastRestock') }}</th>
+                            <th class="px-6 py-4">Batch Expiry</th>
                             <th class="px-6 py-4 text-right">{{ t('common.actions') }}</th>
                         </tr>
                     </thead>
@@ -241,66 +286,33 @@ const handleDelete = (id: string) => {
                                 {{ item.lastRestocked }}
                             </td>
                             <td class="px-6 py-4">
-                                    <div class="flex items-center gap-3">
-                                        <!-- Inline Quantity Slider Card -->
-                                        <div class="flex items-center gap-3 bg-gray-50/50 p-2 rounded-2xl border border-gray-100 shadow-sm transition-all group-hover:bg-white group-hover:border-green-200 group-hover:shadow-md">
-                                            <div class="flex flex-col gap-1">
-                                                <div class="relative w-48 h-4 flex items-center">
-                                                    <input 
-                                                        v-model.number="inlineQuantities[item.id]" 
-                                                        type="range" 
-                                                        min="0" 
-                                                        :max="Math.max(item.minQuantity * 10, 100, item.quantity * 2)" 
-                                                        class="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600 hover:accent-green-500 z-10"
-                                                    >
-                                                    <!-- Indicators for 1/4 and 1/2 -->
-                                                    <div class="absolute top-1/2 left-0 right-0 h-4 -translate-y-1/2 flex items-end pointer-events-none px-0.5 opacity-20">
-                                                        <div class="h-2.5 w-0.5 bg-gray-400"></div> <!-- 0 -->
-                                                        <div class="h-2 w-px bg-gray-400 ml-[25%] -translate-x-1/2"></div> <!-- 1/4 -->
-                                                        <div class="h-2.5 w-px bg-gray-400 ml-[25%] -translate-x-1/2"></div> <!-- 1/2 -->
-                                                        <div class="h-2 w-px bg-gray-400 ml-[25%] -translate-x-1/2"></div> <!-- 3/4 -->
-                                                        <div class="h-2.5 w-0.5 bg-gray-400 ml-auto"></div> <!-- 1 -->
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="flex items-center gap-2 border-l border-gray-200 pl-3">
-                                                <input 
-                                                    v-model.number="inlineQuantities[item.id]" 
-                                                    type="number" 
-                                                    class="w-10 text-center text-xs font-black bg-green-50/50 rounded-lg py-1 border-0 focus:ring-1 focus:ring-green-500"
-                                                >
-                                                <div class="w-[50px] flex justify-center">
-                                                    <button 
-                                                        @click="handleInlineSave(item.id)"
-                                                        v-show="inlineQuantities[item.id] !== item.quantity"
-                                                        class="px-3 py-1 bg-green-600 text-white text-[10px] font-bold rounded-lg shadow-sm hover:bg-green-700 transition-all active:scale-95 flex items-center gap-1"
-                                                    >
-                                                        {{ t('common.save') }}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Edit/Delete Action Icons -->
-                                        <div class="flex items-center gap-1 bg-gray-50/50 p-1 rounded-xl border border-gray-100 group-hover:bg-white transition-colors">
-                                            <button 
-                                                @click="openEditModal(item)" 
-                                                class="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                :title="t('inventory.editItem')"
-                                            >
-                                                <Edit class="w-4 h-4" />
-                                            </button>
-                                            <button 
-                                                v-if="!isBaker" 
-                                                @click="handleDelete(item.id)" 
-                                                class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                :title="t('common.delete')"
-                                            >
-                                                <Trash2 class="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div class="flex flex-col gap-2">
+                                    <span :class="`px-2.5 py-1 rounded-full text-xs font-semibold border ${getBatchStatus(item).color}`">
+                                        {{ getBatchStatus(item).label }}
+                                    </span>
+                                    <span class="text-xs text-gray-500">
+                                        {{ item.nearestExpiry ? `Next expiry: ${new Date(item.nearestExpiry).toLocaleDateString()}` : 'No batch expiry' }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-1 bg-gray-50/50 p-1 rounded-xl border border-gray-100 group-hover:bg-white transition-colors w-fit">
+                                    <button 
+                                        @click="openEditModal(item)" 
+                                        class="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                        :title="t('inventory.editItem')"
+                                    >
+                                        <Edit class="w-4 h-4" />
+                                    </button>
+                                    <button 
+                                        v-if="!isBaker" 
+                                        @click="handleDelete(item.id)" 
+                                        class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        :title="t('common.delete')"
+                                    >
+                                        <Trash2 class="w-4 h-4" />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -378,6 +390,59 @@ const handleDelete = (id: string) => {
                                 <input v-model.number="form.minQuantity" type="number" :disabled="isBaker" step="0.1" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
                                 <AlertTriangle class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-400 opacity-50" />
                             </div>
+                        </div>
+                    </div>
+
+                    <div v-if="editingItem?.isProduct" class="space-y-4 rounded-xl border border-green-100 bg-green-50/30 p-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-green-900">Product Batches</h3>
+                            <p class="text-xs text-green-700">Stock changes should happen through batches. Add a batch here instead of editing quantity directly.</p>
+                        </div>
+
+                        <div v-if="editingItem.batches?.length" class="space-y-2">
+                            <div v-for="batch in editingItem.batches" :key="batch.id" class="flex items-center justify-between gap-3 rounded-lg border border-green-100 bg-white px-3 py-2">
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium text-green-900">
+                                        {{ batch.quantity }} {{ editingItem.unit }}
+                                        <span class="text-xs text-gray-500 ml-2">
+                                            {{ batch.expirationDate ? new Date(batch.expirationDate).toLocaleDateString() : 'No expiry' }}
+                                        </span>
+                                    </p>
+                                    <p class="text-[11px] text-gray-500 truncate">{{ batch.notes || 'No notes' }}</p>
+                                </div>
+                                <button
+                                    type="button"
+                                    @click="handleDeleteBatch(editingItem.id, batch.id)"
+                                    class="text-xs font-medium text-red-600 hover:text-red-700"
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else class="text-xs text-gray-500">No batches yet.</div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-gray-700">Batch Qty</label>
+                                <input v-model="batchForm.quantity" type="number" min="0" step="0.01" class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-gray-700">Expiry</label>
+                                <input v-model="batchForm.expirationDate" type="date" class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-medium text-gray-700">Notes</label>
+                                <input v-model="batchForm.notes" type="text" placeholder="Optional" class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button
+                                type="button"
+                                @click="handleAddBatch"
+                                class="px-4 py-2 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 shadow-md transition-all active:scale-95"
+                            >
+                                Add Batch
+                            </button>
                         </div>
                     </div>
 

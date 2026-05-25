@@ -126,7 +126,10 @@ const filteredAndSortedProducts = computed(() => {
         const matchesSearch = product.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
             (product.description?.toLowerCase().includes(searchQuery.value.toLowerCase()) ?? false);
         const matchesCategory = selectedCategory.value === 'All' || product.category === selectedCategory.value;
-        return matchesSearch && matchesCategory;
+        // Hide products where every batch is expired
+        const todayStart = new Date(new Date().toDateString());
+        const isNotExpired = (product.batches || []).some(batch => !batch.expirationDate || new Date(batch.expirationDate) >= todayStart);
+        return matchesSearch && matchesCategory && isNotExpired;
     });
 
     return result.sort((a, b) => {

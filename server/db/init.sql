@@ -38,6 +38,16 @@ CREATE TABLE IF NOT EXISTS products (
     allergens JSONB DEFAULT '[]'
 );
 
+-- Product Batches Table (batch-level expiration tracking)
+CREATE TABLE IF NOT EXISTS product_batches (
+    id SERIAL PRIMARY KEY,
+    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    quantity DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    expiration_date TIMESTAMP WITH TIME ZONE,
+    received_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    notes VARCHAR(255)
+);
+
 -- Product Ratings Table
 CREATE TABLE IF NOT EXISTS product_ratings (
     id SERIAL PRIMARY KEY,

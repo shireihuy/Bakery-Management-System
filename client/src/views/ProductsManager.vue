@@ -6,14 +6,16 @@ import {
   Trash2, 
   Search,
   X,
-  Star 
+  Star,
 } from 'lucide-vue-next';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
 import { useProducts, type Product } from '../composables/useProducts';
+import { useInventory } from '../composables/useInventory';
 import { useCurrency } from '../composables/useCurrency';
 
 const { products, addProduct, updateProduct, deleteProduct, fetchProducts, fetchTags, resetRatings } = useProducts();
+const { addBatch, deleteBatch } = useInventory();
 const { user } = useAuth();
 const { t } = useI18n();
 const { formatPrice } = useCurrency();
@@ -38,7 +40,6 @@ const formData = ref({
     category: '',
     price: '',
     cost: '',
-    stock: '',
     unit: 'pcs',
     image: '',
     description: '',
@@ -48,6 +49,11 @@ const formData = ref({
 
 const selectedFile = ref<File | null>(null);
 const imagePreview = ref('');
+const batchForm = ref({
+    quantity: '',
+    expirationDate: '',
+    notes: ''
+});
 
 const onFileChange = (e: Event) => {
     const target = e.target as HTMLInputElement;
@@ -66,17 +72,17 @@ const resetForm = () => {
         category: '', 
         price: '', 
         cost: '', 
-        stock: '', 
         unit: 'pcs', 
         image: '', 
         description: '', 
         ingredients: [], 
-        allergens: []
+        allergens: [] 
     };
     editingProduct.value = null;
     originalStock.value = '';
     selectedFile.value = null;
     imagePreview.value = '';
+    batchForm.value = { quantity: '', expirationDate: '', notes: '' };
 };
 
 const handleEdit = (product: Product) => {
@@ -87,7 +93,6 @@ const handleEdit = (product: Product) => {
         category: product.category,
         price: product.price.toString(),
         cost: product.cost?.toString() || '',
-        stock: product.stock.toString(),
         unit: product.unit || 'pcs',
         image: product.image,
         description: product.description || '',
@@ -95,6 +100,7 @@ const handleEdit = (product: Product) => {
         allergens: [...(product.allergens || [])]
     };
     imagePreview.value = product.image;
+    batchForm.value = { quantity: '', expirationDate: '', notes: '' };
     isDialogOpen.value = true;
 };
 
@@ -112,21 +118,18 @@ const handleSubmit = async () => {
         cost: formData.value.cost,
         unit: formData.value.unit,
         description: formData.value.description,
-        // Send file if selected, otherwise send existing image URL string
         image: selectedFile.value || formData.value.image,
         ingredients: formData.value.ingredients,
         allergens: formData.value.allergens
     };
 
-    // Only include stock if creating a new product or explicitly modified in the editor
-    if (!editingProduct.value || formData.value.stock !== originalStock.value) {
-        productData.stock = formData.value.stock;
-    }
-
     try {
         if (editingProduct.value) {
             await updateProduct(editingProduct.value.id, productData);
         } else {
+            productData.initialBatchQty = batchForm.value.quantity || '0';
+            productData.initialExpirationDate = batchForm.value.expirationDate || '';
+            productData.initialBatchNotes = batchForm.value.notes || '';
             await addProduct(productData);
         }
         isDialogOpen.value = false;
@@ -162,6 +165,53 @@ const handleResetRatings = async (productId: string) => {
             alert('Failed to reset ratings');
         }
     }
+};
+
+const handleAddBatch = async () => {
+    if (!editingProduct.value) return;
+    const quantity = parseFloat(batchForm.value.quantity);
+    if (Number.isNaN(quantity) || quantity <= 0) {
+        alert('Batch quantity must be greater than 0');
+        return;
+    }
+
+    await addBatch(editingProduct.value.id, {
+        quantity,
+        expirationDate: batchForm.value.expirationDate || undefined,
+        notes: batchForm.value.notes || undefined
+    });
+    await fetchProducts();
+    batchForm.value = { quantity: '', expirationDate: '', notes: '' };
+};
+
+const handleDeleteBatch = async (batchId: number) => {
+    if (!editingProduct.value) return;
+    if (!confirm('Delete this batch?')) return;
+    await deleteBatch(editingProduct.value.id, batchId);
+    await fetchProducts();
+};
+
+const getBatchStatus = (product: Product) => {
+    const batches = product.batches || [];
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    if (product.hasExpiredBatch && batches.filter(b => !b.expirationDate || new Date(b.expirationDate) >= todayStart).length === 0) {
+        return { text: 'All Expired', class: 'bg-red-50 text-red-600 border-red-200 font-bold' };
+    }
+    if (!product.nearestExpiry && !product.hasExpiredBatch) {
+        return batches.length === 0
+            ? { text: 'No Batches', class: 'bg-gray-50 text-gray-400 border-gray-100' }
+            : { text: 'No Expiry', class: 'bg-gray-50 text-gray-500 border-gray-200' };
+    }
+    if (!product.nearestExpiry) {
+        return { text: 'Has Expired Batch', class: 'bg-red-50 text-red-500 border-red-200' };
+    }
+    const exp = new Date(product.nearestExpiry);
+    const diffDays = Math.ceil((new Date(exp.getFullYear(), exp.getMonth(), exp.getDate()).getTime() - todayStart.getTime()) / 86400000);
+    if (diffDays === 0) return { text: 'Expires Today!', class: 'bg-orange-50 text-orange-600 border-orange-200 font-bold animate-pulse' };
+    if (diffDays <= 2) return { text: `Expiring in ${diffDays}d`, class: 'bg-amber-50 text-amber-600 border-amber-200 font-medium' };
+    return { text: `Fresh · ${diffDays}d`, class: 'bg-emerald-50 text-emerald-600 border-emerald-200 font-medium' };
 };
 </script>
 
@@ -211,6 +261,12 @@ const handleResetRatings = async (productId: string) => {
                     class="w-full h-full object-contain"
                   />
                   <span class="absolute top-2 right-2 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-600 text-white shadow-sm">{{ product.category }}</span>
+                  <span 
+                    :class="getBatchStatus(product).class"
+                    class="absolute top-2 left-2 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold shadow-sm"
+                  >
+                    {{ getBatchStatus(product).text }}
+                  </span>
                 </div>
                 <div class="p-4 pt-4">
                   <div class="space-y-3">
@@ -245,18 +301,22 @@ const handleResetRatings = async (productId: string) => {
                             <p class="text-green-900 font-medium">{{ product.rating || '0.0' }} <span class="text-[10px] text-gray-400">({{ product.totalVotes || 0 }})</span></p>
                         </div>
                       </div>
-                      <div>
+                      <div class="col-span-1">
                         <p class="text-green-600 text-xs">{{ t('products.stock') }}</p>
                         <p class="text-green-900 font-medium">{{ product.stock }} {{ product.unit }}</p>
                       </div>
-                      <div class="flex items-end justify-end" v-if="isAdmin">
+                      <div class="col-span-1">
+                        <p class="text-green-600 text-xs">Expires On</p>
+                        <p class="text-green-900 font-medium text-xs truncate">{{ product.nearestExpiry ? new Date(product.nearestExpiry).toLocaleDateString() : 'No Expiry' }}</p>
+                      </div>
+                    </div>
+                    <div class="flex justify-end" v-if="isAdmin">
                          <button 
                             @click="handleResetRatings(product.id)"
                             class="text-[10px] text-red-500 hover:text-red-700 font-medium underline"
                          >
                             Reset Ratings
-                         </button>
-                      </div>
+                          </button>
                     </div>
                     <div v-if="product.ingredients?.length" class="flex flex-wrap gap-1">
                         <span v-for="tag in product.ingredients.slice(0, 3)" :key="tag" class="px-1.5 py-0.5 bg-green-50 text-green-600 rounded text-[10px] border border-green-100 italic">{{ tag }}</span>
@@ -326,17 +386,7 @@ const handleResetRatings = async (productId: string) => {
                       />
                     </div>
                   </div>
-                  <div class="grid grid-cols-2 gap-4">
-                    <div class="space-y-2">
-                      <label for="stock" class="text-sm font-medium text-gray-700">{{ t('products.stock') }}</label>
-                      <input
-                        id="stock"
-                        type="number"
-                        v-model="formData.stock"
-                        required
-                        class="flex h-10 w-full rounded-md border border-gray-200 bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 transition-all"
-                      />
-                    </div>
+                  <div class="grid grid-cols-1 gap-4">
                     <div class="space-y-2">
                       <label for="unit" class="text-sm font-medium text-gray-700">{{ t('products.unit') }}</label>
                       <select 
@@ -348,6 +398,63 @@ const handleResetRatings = async (productId: string) => {
                       </select>
                     </div>
                   </div>
+
+                  <div class="space-y-4 rounded-xl border border-green-100 bg-green-50/30 p-4">
+                    <div>
+                      <h4 class="text-sm font-bold text-green-900">Product Batches</h4>
+                      <p class="text-xs text-green-700">Set the initial batch when creating or manage batches when editing. Stock is derived from batch quantities.</p>
+                    </div>
+
+                    <div v-if="editingProduct?.batches?.length" class="space-y-2">
+                      <div v-for="batch in editingProduct.batches" :key="batch.id" class="flex items-center justify-between gap-3 rounded-lg border border-green-100 bg-white px-3 py-2">
+                        <div class="min-w-0">
+                          <p class="text-sm font-medium text-green-900">
+                            {{ batch.quantity }} {{ editingProduct.unit || 'pcs' }}
+                            <span class="text-xs text-gray-500 ml-2">
+                              {{ batch.expirationDate ? new Date(batch.expirationDate).toLocaleDateString() : 'No expiry' }}
+                            </span>
+                          </p>
+                          <p class="text-[11px] text-gray-500 truncate">{{ batch.notes || 'No notes' }}</p>
+                        </div>
+                        <button
+                          type="button"
+                          @click="handleDeleteBatch(batch.id)"
+                          class="text-xs font-medium text-red-600 hover:text-red-700"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                    <div v-else class="text-xs text-gray-500">
+                      {{ editingProduct ? 'No batches yet.' : 'No initial batch yet.' }}
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div class="space-y-1">
+                        <label class="text-xs font-medium text-gray-700">Batch Qty</label>
+                        <input v-model="batchForm.quantity" type="number" min="0" step="0.01" class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                      </div>
+                      <div class="space-y-1">
+                        <label class="text-xs font-medium text-gray-700">Expiry</label>
+                        <input v-model="batchForm.expirationDate" type="date" class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                      </div>
+                      <div class="space-y-1">
+                        <label class="text-xs font-medium text-gray-700">Notes</label>
+                        <input v-model="batchForm.notes" type="text" placeholder="Optional" class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                      </div>
+                    </div>
+                    <div class="flex justify-end">
+                      <button
+                        v-if="editingProduct"
+                        type="button"
+                        @click="handleAddBatch"
+                        class="inline-flex items-center justify-center rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+                      >
+                        Add Batch
+                      </button>
+                    </div>
+                  </div>
+
                   <div class="space-y-2">
                     <label for="image" class="text-sm font-medium text-gray-700">{{ t('products.uploadImage') }}</label>
                     <div class="flex flex-col gap-3">

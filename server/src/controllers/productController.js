@@ -26,29 +26,63 @@ const getProducts = async (req, res) => {
             ORDER BY p.id ASC
         `);
 
-        const products = result.rows.map(p => ({
-            id: p.id.toString(),
-            name: p.name,
-            category: p.category,
-            price: parseFloat(p.price),
-            description: p.description,
-            image: p.image_url,
-            is_active: p.is_active,
-            stock: parseFloat(p.stock_quantity || 0),
-            min_stock: parseFloat(p.min_stock_level || 5),
-            unit: p.unit || 'pcs',
-            last_restocked: p.last_restocked,
-            ingredients: Array.isArray(p.ingredients) ? p.ingredients : JSON.parse(p.ingredients || '[]'),
-            allergens: Array.isArray(p.allergens) ? p.allergens : JSON.parse(p.allergens || '[]'),
-            rating: parseFloat(p.avg_rating).toFixed(1),
-            totalVotes: parseInt(p.total_votes),
-            flashSale: p.flash_sale_price ? {
-                salePrice: parseFloat(p.flash_sale_price),
-                stock: p.flash_sale_stock,
-                sold: p.flash_sale_sold,
-                endTime: p.flash_sale_end
-            } : null
-        }));
+        // Fetch batches for all products in one query
+        const batchResult = await query(`
+            SELECT id, product_id, quantity, expiration_date, received_at, notes
+            FROM product_batches
+            ORDER BY
+                CASE WHEN expiration_date IS NULL THEN 1 ELSE 0 END,
+                expiration_date ASC
+        `);
+
+        const batchesByProduct = {};
+        batchResult.rows.forEach(b => {
+            if (!batchesByProduct[b.product_id]) batchesByProduct[b.product_id] = [];
+            batchesByProduct[b.product_id].push({
+                id: b.id,
+                quantity: parseFloat(b.quantity),
+                expirationDate: b.expiration_date,
+                receivedAt: b.received_at,
+                notes: b.notes
+            });
+        });
+
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        const products = result.rows.map(p => {
+            const batches = batchesByProduct[p.id] || [];
+            const activeBatches = batches.filter(b => !b.expirationDate || new Date(b.expirationDate) >= todayStart);
+            const expiredBatches = batches.filter(b => b.expirationDate && new Date(b.expirationDate) < todayStart);
+            const nearestExpiry = activeBatches.find(b => b.expirationDate)?.expirationDate || null;
+
+            return {
+                id: p.id.toString(),
+                name: p.name,
+                category: p.category,
+                price: parseFloat(p.price),
+                description: p.description,
+                image: p.image_url,
+                is_active: p.is_active,
+                stock: parseFloat(p.stock_quantity || 0),
+                min_stock: parseFloat(p.min_stock_level || 5),
+                unit: p.unit || 'pcs',
+                last_restocked: p.last_restocked,
+                batches,
+                nearestExpiry,
+                hasExpiredBatch: expiredBatches.length > 0,
+                ingredients: Array.isArray(p.ingredients) ? p.ingredients : JSON.parse(p.ingredients || '[]'),
+                allergens: Array.isArray(p.allergens) ? p.allergens : JSON.parse(p.allergens || '[]'),
+                rating: parseFloat(p.avg_rating).toFixed(1),
+                totalVotes: parseInt(p.total_votes),
+                flashSale: p.flash_sale_price ? {
+                    salePrice: parseFloat(p.flash_sale_price),
+                    stock: p.flash_sale_stock,
+                    sold: p.flash_sale_sold,
+                    endTime: p.flash_sale_end
+                } : null
+            };
+        });
 
         res.json(products);
     } catch (err) {
@@ -85,8 +119,33 @@ const getProductById = async (req, res) => {
             return res.status(404).json({ message: 'Product not found' });
         }
         const p = result.rows[0];
+
+        const batchResult = await query(`
+            SELECT id, product_id, quantity, expiration_date, received_at, notes
+            FROM product_batches
+            WHERE product_id = $1
+            ORDER BY
+                CASE WHEN expiration_date IS NULL THEN 1 ELSE 0 END,
+                expiration_date ASC,
+                received_at ASC
+        `, [id]);
+
+        const batches = batchResult.rows.map(b => ({
+            id: b.id,
+            productId: b.product_id,
+            quantity: parseFloat(b.quantity),
+            expirationDate: b.expiration_date,
+            receivedAt: b.received_at,
+            notes: b.notes
+        }));
+
+        const nearestExpiry = batches.find(b => b.expirationDate)?.expirationDate || null;
         const product = {
             ...p,
+            expirationDate: p.expiration_date,
+            batches,
+            nearestExpiry,
+            hasExpiredBatch: batches.some(b => b.expirationDate && new Date(b.expirationDate) < new Date(new Date().toDateString())),
             rating: parseFloat(p.avg_rating).toFixed(1),
             totalVotes: parseInt(p.total_votes),
             flashSale: p.flash_sale_price ? {
@@ -104,30 +163,43 @@ const getProductById = async (req, res) => {
 };
 
 const createProduct = async (req, res) => {
-    
-    
     const { name, category, price, description, unit, ingredients, allergens } = req.body;
-    let image_url = req.body.image_url || req.body.image; // Default if provided as string
+    let image_url = req.body.image_url || req.body.image;
 
-    const reqStock = req.body.stock_quantity !== undefined ? req.body.stock_quantity : req.body.stock;
     const reqMinStock = req.body.min_stock_level !== undefined ? req.body.min_stock_level : req.body.min_stock;
 
-    // Parse ingredients and allergens if they are strings (from FormData)
+    // Initial batch fields (optional)
+    const initialBatchQty = req.body.initialBatchQty;
+    const initialExpirationDate = req.body.initialExpirationDate;
+    const initialBatchNotes = req.body.initialBatchNotes;
+
     const parsedIngredients = typeof ingredients === 'string' ? JSON.parse(ingredients || '[]') : (ingredients || []);
     const parsedAllergens = typeof allergens === 'string' ? JSON.parse(allergens || '[]') : (allergens || []);
 
-    // If a file was uploaded by multer
     if (req.file) {
         image_url = `/uploads/${req.file.filename}`;
     }
 
+    const initialQty = parseFloat(initialBatchQty) || 0;
+
     try {
         const result = await query(
             'INSERT INTO products (name, category, price, description, image_url, stock_quantity, min_stock_level, unit, ingredients, allergens) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *',
-            [name, category, price, description, image_url, reqStock || 0, reqMinStock || 5, unit || 'pcs', JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens)]
+            [name, category, price, description, image_url, initialQty, reqMinStock || 5, unit || 'pcs', JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens)]
         );
-        
-        res.status(201).json(result.rows[0]);
+
+        const newProduct = result.rows[0];
+
+        // Create initial batch if quantity > 0
+        if (initialQty > 0) {
+            const finalExpiry = (initialExpirationDate && initialExpirationDate.toString().trim() !== '') ? initialExpirationDate : null;
+            await query(
+                'INSERT INTO product_batches (product_id, quantity, expiration_date, notes) VALUES ($1, $2, $3, $4)',
+                [newProduct.id, initialQty, finalExpiry, initialBatchNotes || 'Initial stock']
+            );
+        }
+
+        res.status(201).json(newProduct);
     } catch (err) {
         console.error('Error creating product:', err);
         res.status(500).json({ message: 'Server error creating product', error: err.message });
@@ -135,13 +207,10 @@ const createProduct = async (req, res) => {
 };
 
 const updateProduct = async (req, res) => {
-    
-    
     const { id } = req.params;
     const { name, category, price, description, unit, ingredients, allergens } = req.body;
     let image_url = req.body.image_url || req.body.image;
 
-    // Parse ingredients and allergens if they are strings (from FormData)
     const parsedIngredients = typeof ingredients === 'string' ? JSON.parse(ingredients || '[]') : (ingredients || []);
     const parsedAllergens = typeof allergens === 'string' ? JSON.parse(allergens || '[]') : (allergens || []);
 
@@ -150,41 +219,30 @@ const updateProduct = async (req, res) => {
     }
 
     try {
-        // Fetch existing product to preserve stock and min stock level if not provided
         const existingResult = await query('SELECT stock_quantity, min_stock_level FROM products WHERE id = $1', [id]);
         if (existingResult.rows.length === 0) {
             return res.status(404).json({ message: 'Product not found' });
         }
         const existingProduct = existingResult.rows[0];
 
-        const reqStock = req.body.stock_quantity !== undefined ? req.body.stock_quantity : req.body.stock;
         const reqMinStock = req.body.min_stock_level !== undefined ? req.body.min_stock_level : req.body.min_stock;
-
-        // Parse float values cleanly, falling back to DB values if omitted, empty, or invalid number
-        const parsedReqStock = parseFloat(reqStock);
         const parsedReqMinStock = parseFloat(reqMinStock);
-
-        const finalStock = (!isNaN(parsedReqStock) && reqStock !== '' && reqStock !== undefined) 
-            ? parsedReqStock 
-            : parseFloat(existingProduct.stock_quantity || 0);
-
-        const finalMinStock = (!isNaN(parsedReqMinStock) && reqMinStock !== '' && reqMinStock !== undefined) 
-            ? parsedReqMinStock 
+        const finalMinStock = (!isNaN(parsedReqMinStock) && reqMinStock !== '' && reqMinStock !== undefined)
+            ? parsedReqMinStock
             : parseFloat(existingProduct.min_stock_level || 5);
 
-        let updateQuery = 'UPDATE products SET name = $1, category = $2, price = $3, description = $4, stock_quantity = $5, min_stock_level = $6, unit = $7, ingredients = $8, allergens = $9';
-        let params = [name, category, price, description, finalStock, finalMinStock, unit, JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens), id];
+        // stock_quantity is managed by batches — do not overwrite it here
+        let updateQuery = 'UPDATE products SET name = $1, category = $2, price = $3, description = $4, min_stock_level = $5, unit = $6, ingredients = $7, allergens = $8';
+        let params = [name, category, price, description, finalMinStock, unit, JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens), id];
 
         if (image_url !== undefined) {
-            updateQuery += ', image_url = $10 WHERE id = $11';
-            params = [name, category, price, description, finalStock, finalMinStock, unit, JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens), image_url, id];
+            updateQuery += ', image_url = $9 WHERE id = $10';
+            params = [name, category, price, description, finalMinStock, unit, JSON.stringify(parsedIngredients), JSON.stringify(parsedAllergens), image_url, id];
         } else {
-            updateQuery += ' WHERE id = $10';
+            updateQuery += ' WHERE id = $9';
         }
 
         const result = await query(updateQuery + ' RETURNING *', params);
-
-        
         res.json(result.rows[0]);
     } catch (err) {
         console.error('Error updating product:', err);

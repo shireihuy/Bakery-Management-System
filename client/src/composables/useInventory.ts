@@ -10,6 +10,16 @@ export interface InventoryItem {
     unit: string;
     lastRestocked: string;
     isProduct: boolean; // Flag to differentiate between Baked Goods and Supplies
+    batches?: readonly {
+        id: number;
+        productId: string;
+        quantity: number;
+        expirationDate: string | null;
+        receivedAt: string;
+        notes: string | null;
+    }[];
+    nearestExpiry?: string | null;
+    hasExpiredBatch?: boolean;
 }
 
 const inventory = ref<InventoryItem[]>([]);
@@ -36,7 +46,10 @@ export function useInventory() {
                 minQuantity: p.min_stock || 5,
                 unit: p.unit || 'pcs',
                 lastRestocked: p.last_restocked ? new Date(p.last_restocked).toISOString().split('T')[0] : 'Never',
-                isProduct: true
+                isProduct: true,
+                batches: p.batches || [],
+                nearestExpiry: p.nearestExpiry || null,
+                hasExpiredBatch: p.hasExpiredBatch || false
             }));
 
             // TODO: In the future, fetch from /api/inventory for supplies
@@ -104,6 +117,35 @@ export function useInventory() {
         }
     };
 
+    const addBatch = async (productId: string, batchData: { quantity: number; expirationDate?: string; notes?: string }) => {
+        try {
+            const response = await fetch(`${API_URL}/products/${productId}/batches`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+                body: JSON.stringify(batchData)
+            });
+            if (!response.ok) throw new Error('Failed to add batch');
+            await fetchInventory();
+        } catch (err) {
+            console.error('Error adding batch:', err);
+            throw err;
+        }
+    };
+
+    const deleteBatch = async (productId: string, batchId: number) => {
+        try {
+            const response = await fetch(`${API_URL}/products/${productId}/batches/${batchId}`, {
+                method: 'DELETE',
+                headers: getAuthHeader()
+            });
+            if (!response.ok) throw new Error('Failed to delete batch');
+            await fetchInventory();
+        } catch (err) {
+            console.error('Error deleting batch:', err);
+            throw err;
+        }
+    };
+
     return {
         inventory,
         lowStockItems,
@@ -111,7 +153,9 @@ export function useInventory() {
         addItem,
         updateItem,
         deleteItem,
-        adjustQuantity
+        adjustQuantity,
+        addBatch,
+        deleteBatch
     };
 }
 

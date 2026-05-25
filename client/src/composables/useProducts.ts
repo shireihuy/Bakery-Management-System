@@ -1,6 +1,15 @@
 import { ref, readonly } from 'vue';
 import { socketService } from '../services/socket';
 
+export interface ProductBatch {
+    readonly id: number;
+    readonly productId: string;
+    readonly quantity: number;
+    readonly expirationDate: string | null;
+    readonly receivedAt: string;
+    readonly notes: string | null;
+}
+
 export interface Product {
     readonly id: string;
     readonly name: string;
@@ -15,6 +24,10 @@ export interface Product {
     readonly allergens?: readonly string[];
     readonly rating?: number;
     readonly totalVotes?: number;
+    readonly expirationDate?: string | null;
+    readonly batches?: readonly ProductBatch[];
+    readonly nearestExpiry?: string | null;
+    readonly hasExpiredBatch?: boolean;
     readonly flashSale?: {
         readonly salePrice: number;
         readonly stock: number;
@@ -75,7 +88,9 @@ export function useProducts() {
             });
 
             if (!response.ok) throw new Error('Failed to add product');
+            const created = await response.json();
             await fetchProducts();
+            return created;
         } catch (err) {
             console.error('Error adding product:', err);
             throw err;
@@ -106,7 +121,9 @@ export function useProducts() {
             });
 
             if (!response.ok) throw new Error('Failed to update product');
+            const updated = await response.json();
             await fetchProducts();
+            return updated;
         } catch (err) {
             console.error('Error updating product:', err);
             throw err;

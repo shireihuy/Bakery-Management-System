@@ -67,7 +67,8 @@ const onViewMenu = () => {
 const { products: dbProducts, fetchProducts } = useProducts();
 
 const menuProducts = computed(() => {
-    return dbProducts.value.length > 0 ? dbProducts.value : [];
+    const todayStart = new Date(new Date().toDateString());
+    return dbProducts.value.filter(p => (p.batches || []).some(batch => !batch.expirationDate || new Date(batch.expirationDate) >= todayStart));
 });
 
 const activeFlashSales = ref<any[]>([]);
