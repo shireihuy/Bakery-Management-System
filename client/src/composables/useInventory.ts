@@ -73,15 +73,15 @@ export function useInventory() {
         const item = inventory.value.find(i => i.id === id);
         if (!item) return;
 
-        if (item.isProduct && ('quantity' in updates || 'minQuantity' in updates)) {
+        if (item.isProduct && ('minQuantity' in updates || 'quantity' in updates)) {
             try {
                 const response = await fetch(`${API_URL}/products/${id}/stock`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
                     body: JSON.stringify({ 
-                        quantity: updates.quantity ?? item.quantity, 
+                        quantity: item.quantity,
                         minQuantity: updates.minQuantity ?? item.minQuantity,
-                        reset: true 
+                        reset: true
                     })
                 });
 

@@ -32,6 +32,11 @@ const batchForm = ref({
 
 const isBaker = computed(() => user.value?.role === 'Baker');
 
+const selectedItem = computed(() => {
+    if (!editingItem.value) return null;
+    return inventory.value.find(item => item.id === editingItem.value?.id) || editingItem.value;
+});
+
 const form = ref({
     name: '',
     category: '' as InventoryItem['category'],
@@ -109,7 +114,9 @@ const openEditModal = (item: InventoryItem) => {
 
 const handleSubmit = async () => {
     if (editingItem.value) {
-        await updateItem(editingItem.value.id, form.value);
+        await updateItem(editingItem.value.id, {
+            minQuantity: form.value.minQuantity
+        });
     } else {
         await addItem(form.value);
     }
@@ -338,7 +345,7 @@ const handleDelete = (id: string) => {
                         <input v-model="form.name" type="text" :disabled="isBaker || !!(editingItem && editingItem.isProduct)" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
                     </div>
 
-                    <div v-if="editingItem && editingItem.isProduct" class="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-start gap-3">
+                    <div v-if="selectedItem && selectedItem.isProduct" class="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-start gap-3">
                         <div class="p-1 bg-blue-100 text-blue-600 rounded-lg">
                             <Filter class="w-3 h-3" />
                         </div>
@@ -376,13 +383,17 @@ const handleDelete = (id: string) => {
                                     v-model.number="form.quantity" 
                                     type="number" 
                                     step="0.1" 
+                                    :disabled="!!(editingItem && editingItem.isProduct)"
                                     required 
-                                    class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none font-bold"
+                                    class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none font-bold disabled:bg-gray-50 disabled:text-gray-500"
                                 >
                                 <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 uppercase tracking-wider">
                                     {{ form.unit || 'pcs' }}
                                 </span>
                             </div>
+                            <p v-if="editingItem?.isProduct" class="mt-1 text-xs text-gray-500">
+                                Current quantity is read-only here and comes from batch totals.
+                            </p>
                         </div>
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">{{ t('inventory.minStockAlert') }}</label>
@@ -393,17 +404,17 @@ const handleDelete = (id: string) => {
                         </div>
                     </div>
 
-                    <div v-if="editingItem?.isProduct" class="space-y-4 rounded-xl border border-green-100 bg-green-50/30 p-4">
+                    <div v-if="selectedItem?.isProduct" class="space-y-4 rounded-xl border border-green-100 bg-green-50/30 p-4">
                         <div>
                             <h3 class="text-sm font-bold text-green-900">Product Batches</h3>
                             <p class="text-xs text-green-700">Stock changes should happen through batches. Add a batch here instead of editing quantity directly.</p>
                         </div>
 
-                        <div v-if="editingItem.batches?.length" class="space-y-2">
-                            <div v-for="batch in editingItem.batches" :key="batch.id" class="flex items-center justify-between gap-3 rounded-lg border border-green-100 bg-white px-3 py-2">
+                        <div v-if="selectedItem.batches?.length" class="space-y-2">
+                            <div v-for="batch in selectedItem.batches" :key="batch.id" class="flex items-center justify-between gap-3 rounded-lg border border-green-100 bg-white px-3 py-2">
                                 <div class="min-w-0">
                                     <p class="text-sm font-medium text-green-900">
-                                        {{ batch.quantity }} {{ editingItem.unit }}
+                                        {{ batch.quantity }} {{ selectedItem.unit }}
                                         <span class="text-xs text-gray-500 ml-2">
                                             {{ batch.expirationDate ? new Date(batch.expirationDate).toLocaleDateString() : 'No expiry' }}
                                         </span>
@@ -412,7 +423,7 @@ const handleDelete = (id: string) => {
                                 </div>
                                 <button
                                     type="button"
-                                    @click="handleDeleteBatch(editingItem.id, batch.id)"
+                                    @click="handleDeleteBatch(selectedItem.id, batch.id)"
                                     class="text-xs font-medium text-red-600 hover:text-red-700"
                                 >
                                     Delete
