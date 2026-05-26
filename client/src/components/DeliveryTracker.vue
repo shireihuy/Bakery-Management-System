@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { 
-    Clock, 
-    User, 
-    Truck, 
-
-    CheckCircle2, 
+import {
     AlertCircle,
+    Box as Package,
+    CheckCircle2,
+    Clock,
     Phone,
-    Box as Package
+    Truck,
+    User
 } from 'lucide-vue-next';
 import { useDeliveries } from '../composables/useDeliveries';
 
@@ -29,7 +28,6 @@ const fetchDetails = async () => {
 
 const startPolling = () => {
     stopPolling();
-    // Poll every 5 seconds to catch status updates from the mock simulator
     pollingInterval.value = setInterval(fetchDetails, 5000);
 };
 
@@ -67,13 +65,67 @@ const stages = [
     { key: 'Delivered', label: 'Delivered', icon: CheckCircle2 }
 ];
 
-
 const currentStageIndex = computed(() => {
     if (!delivery.value) return -1;
     const index = stages.findIndex(s => s.key === delivery.value!.status);
     if (index !== -1) return index;
     if (delivery.value.status === 'Failed') return 0;
     return 0;
+});
+
+const statusMeta = computed(() => {
+    const status = delivery.value?.status || 'Pending';
+    switch (status) {
+        case 'Searching':
+            return {
+                label: 'Looking for courier',
+                tone: 'bg-amber-50 text-amber-700 border-amber-100',
+                dot: 'bg-amber-500',
+                hint: 'GHN is finding a driver for this order.'
+            };
+        case 'Assigned':
+            return {
+                label: 'Courier assigned',
+                tone: 'bg-blue-50 text-blue-700 border-blue-100',
+                dot: 'bg-blue-500',
+                hint: 'A driver has accepted the delivery.'
+            };
+        case 'Picked Up':
+            return {
+                label: 'Package picked up',
+                tone: 'bg-violet-50 text-violet-700 border-violet-100',
+                dot: 'bg-violet-500',
+                hint: 'The order has left the bakery.'
+            };
+        case 'In Transit':
+            return {
+                label: 'On the way',
+                tone: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+                dot: 'bg-emerald-500',
+                hint: 'The courier is heading to the destination.'
+            };
+        case 'Delivered':
+            return {
+                label: 'Delivered',
+                tone: 'bg-green-50 text-green-700 border-green-100',
+                dot: 'bg-green-500',
+                hint: 'The order reached the customer.'
+            };
+        case 'Failed':
+            return {
+                label: 'Delivery issue',
+                tone: 'bg-red-50 text-red-700 border-red-100',
+                dot: 'bg-red-500',
+                hint: 'Delivery needs attention.'
+            };
+        default:
+            return {
+                label: 'Preparing',
+                tone: 'bg-stone-50 text-stone-700 border-stone-100',
+                dot: 'bg-stone-500',
+                hint: 'The order is being prepared for dispatch.'
+            };
+    }
 });
 
 const getStageStatus = (index: number) => {
@@ -91,82 +143,89 @@ const mapUrl = computed(() => {
     const address = props.destination || 'Vietnam';
     return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
 });
-
 </script>
 
 <template>
-    <div class="bg-white rounded-2xl border border-bakery-100 p-6 shadow-sm overflow-hidden transition-all duration-500">
-        <div v-if="loading && !delivery" class="flex justify-center items-center py-8">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-bakery-600"></div>
+    <div class="relative overflow-hidden rounded-3xl border border-bakery-100 bg-gradient-to-br from-white via-white to-bakery-50/40 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.05)] transition-all duration-500 sm:p-6">
+        <div class="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-bakery-100/60 blur-3xl"></div>
+        <div class="pointer-events-none absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-amber-100/50 blur-3xl"></div>
+
+        <div v-if="loading && !delivery" class="flex items-center justify-center py-8">
+            <div class="h-8 w-8 animate-spin rounded-full border-b-2 border-bakery-600"></div>
         </div>
 
-        <div v-else-if="error" class="flex items-center gap-3 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 italic">
-            <AlertCircle class="w-5 h-5 shrink-0" />
+        <div v-else-if="error" class="relative flex items-center gap-3 rounded-2xl border border-red-100 bg-red-50 p-4 italic text-red-700">
+            <AlertCircle class="h-5 w-5 shrink-0" />
             <span class="text-sm">Could not find delivery info. It might still be preparing.</span>
         </div>
 
         <div v-else-if="delivery" class="space-y-8">
-            <!-- Header -->
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-bakery-50 pb-4">
-                <div>
-                   <h3 class="text-lg font-black text-bakery-900 flex items-center gap-2">
-                        <Truck class="w-5 h-5 text-bakery-600" />
-                        Live Delivery Tracking
+            <div class="relative flex flex-col items-start justify-between gap-4 border-b border-bakery-50 pb-5 sm:flex-row sm:items-center">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span :class="`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${statusMeta.tone}`">
+                            <span :class="`h-2 w-2 rounded-full ${statusMeta.dot} animate-pulse`"></span>
+                            {{ statusMeta.label }}
+                        </span>
+                    </div>
+                    <h3 class="flex items-center gap-2 text-xl font-black text-bakery-900">
+                        <Truck class="h-5 w-5 text-bakery-600" />
+                        Delivery Tracker
                     </h3>
-                    <p class="text-xs font-bold text-bakery-400 uppercase tracking-widest mt-1">
+                    <p class="mt-1 text-xs font-bold uppercase tracking-widest text-bakery-400">
                         Tracking ID: {{ delivery.tracking_number }}
                     </p>
+                    <p class="mt-1 max-w-xl text-xs text-bakery-500">
+                        {{ statusMeta.hint }}
+                    </p>
                 </div>
-                <div class="bg-bakery-50 px-3 py-1.5 rounded-xl border border-bakery-100">
-                    <span class="text-xs font-black text-bakery-600 flex items-center gap-1.5 capitalize animate-pulse">
+
+                <div class="rounded-2xl border border-bakery-100 bg-white/80 px-3 py-2 shadow-sm backdrop-blur">
+                    <span class="flex items-center gap-1.5 text-xs font-black capitalize text-bakery-600">
                         <span class="relative flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-bakery-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-bakery-600"></span>
+                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-bakery-400 opacity-75"></span>
+                            <span class="relative inline-flex h-2 w-2 rounded-full bg-bakery-600"></span>
                         </span>
                         {{ delivery.status }}
                     </span>
                 </div>
             </div>
 
-            <!-- Tracker Steps -->
             <div class="relative px-2 py-4">
-                <!-- Progress Line Background -->
-                <div class="absolute top-1/2 left-0 w-full h-1 bg-bakery-100 -translate-y-1/2 rounded-full"></div>
-                <!-- Active Progress Line -->
-                <div 
-                    class="absolute top-1/2 left-0 h-1 bg-bakery-600 -translate-y-1/2 rounded-full transition-all duration-1000 ease-in-out shadow-[0_0_10px_rgba(var(--bakery-600-rgb),0.5)]"
+                <div class="absolute left-0 top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-bakery-100/80"></div>
+                <div
+                    class="absolute left-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-gradient-to-r from-bakery-500 via-bakery-600 to-amber-500 transition-all duration-1000 ease-in-out shadow-[0_0_10px_rgba(var(--bakery-600-rgb),0.35)]"
                     :style="{ width: progressWidth }"
                 ></div>
 
-                <!-- Step Points -->
-                <div class="relative flex justify-between">
-                    <div 
-                        v-for="(stage, index) in stages" 
+                <div class="relative flex justify-between gap-2 sm:gap-0">
+                    <div
+                        v-for="(stage, index) in stages"
                         :key="stage.key"
-                        class="flex flex-col items-center gap-2 group"
+                        class="group flex min-w-0 flex-1 flex-col items-center gap-2"
                     >
-                        <div 
+                        <div
                             :class="[
-                                'w-10 h-10 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 z-10',
-                                getStageStatus(index) === 'completed' ? 'bg-bakery-600 border-bakery-600 shadow-lg' :
-                                getStageStatus(index) === 'active' ? 'bg-white border-bakery-600 shadow-md scale-110 ring-4 ring-bakery-50' :
-                                'bg-white border-bakery-100'
+                                'z-10 flex h-10 w-10 items-center justify-center rounded-2xl border-2 transition-all duration-500 sm:h-11 sm:w-11',
+                                getStageStatus(index) === 'completed' ? 'border-bakery-600 bg-bakery-600 shadow-lg shadow-bakery-600/20' :
+                                getStageStatus(index) === 'active' ? 'scale-110 border-bakery-600 bg-white shadow-md ring-4 ring-bakery-50' :
+                                'border-bakery-100 bg-white'
                             ]"
                         >
-                            <component 
-                                :is="stage.icon" 
+                            <component
+                                :is="stage.icon"
                                 :class="[
-                                    'w-5 h-5 transition-colors duration-500',
+                                    'h-5 w-5 transition-colors duration-500',
                                     getStageStatus(index) === 'completed' ? 'text-white' :
                                     getStageStatus(index) === 'active' ? 'text-bakery-600' :
                                     'text-bakery-200 group-hover:text-bakery-300'
-                                ]" 
+                                ]"
                             />
                         </div>
-                        <span 
+                        <span
                             :class="[
-                                'absolute top-full mt-3 text-[10px] sm:text-xs font-bold transition-all duration-500 whitespace-nowrap',
-                                getStageStatus(index) === 'upcoming' ? 'text-bakery-200' : 'text-bakery-900'
+                                'absolute top-full mt-3 px-1 text-center text-[10px] font-bold transition-all duration-500 whitespace-nowrap sm:text-xs',
+                                getStageStatus(index) === 'upcoming' ? 'text-bakery-300' : 'text-bakery-900'
                             ]"
                         >
                             {{ stage.label }}
@@ -175,57 +234,57 @@ const mapUrl = computed(() => {
                 </div>
             </div>
 
-            <!-- Live Map -->
-            <div class="mt-8 rounded-2xl overflow-hidden shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-bakery-100 h-48 sm:h-64 relative group">
-                <iframe 
+            <div class="relative mt-8 h-48 overflow-hidden rounded-3xl border border-bakery-100 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.06)] sm:h-64 group">
+                <iframe
                     :key="mapUrl"
-                    width="100%" 
-                    height="100%" 
-                    style="border:0;" 
-                    loading="lazy" 
-                    allowfullscreen 
-                    :src="mapUrl">
-                </iframe>
-                <div class="absolute bottom-4 left-4 right-4 sm:left-auto sm:right-4 bg-white/95 backdrop-blur-md px-4 py-3 rounded-xl shadow-lg border border-bakery-100 flex items-center justify-between sm:justify-start sm:gap-4 group-hover:-translate-y-1 transition-transform duration-300">
-                     <div class="flex items-center gap-3">
-                         <div class="w-10 h-10 rounded-full bg-bakery-50 flex items-center justify-center text-bakery-600">
-                             <Truck class="w-5 h-5" />
-                         </div>
-                         <div>
-                             <p class="text-[10px] sm:text-xs font-black text-bakery-400 uppercase tracking-widest">Routing to</p>
-                             <p class="text-xs sm:text-sm font-bold text-bakery-900 truncate max-w-[150px] sm:max-w-[200px]">{{ props.destination || 'Destination' }}</p>
-                         </div>
-                     </div>
-                     <div v-if="delivery.status !== 'Delivered' && delivery.status !== 'Failed'" class="text-right sm:text-left pl-3 sm:border-l sm:border-bakery-100">
-                         <p class="text-[10px] sm:text-xs font-black text-bakery-400 uppercase tracking-widest">Est. Time</p>
-                         <p class="text-xs sm:text-sm font-bold text-bakery-900 truncate">25-40 mins</p>
-                     </div>
+                    width="100%"
+                    height="100%"
+                    style="border:0;"
+                    loading="lazy"
+                    allowfullscreen
+                    :src="mapUrl"
+                ></iframe>
+                <div class="absolute bottom-4 left-4 right-4 flex items-center justify-between rounded-2xl border border-bakery-100 bg-white/95 px-4 py-3 shadow-lg backdrop-blur-md transition-transform duration-300 group-hover:-translate-y-1 sm:left-auto sm:right-4 sm:gap-4 sm:justify-start">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-bakery-50 text-bakery-600 ring-4 ring-bakery-50">
+                            <Truck class="h-5 w-5" />
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400">Routing to</p>
+                            <p class="max-w-[150px] truncate text-xs font-bold text-bakery-900 sm:max-w-[200px] sm:text-sm">
+                                {{ props.destination || 'Destination' }}
+                            </p>
+                        </div>
+                    </div>
+                    <div v-if="delivery.status !== 'Delivered' && delivery.status !== 'Failed'" class="pl-3 text-right sm:border-l sm:border-bakery-100 sm:text-left">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400">Est. Time</p>
+                        <p class="truncate text-xs font-bold text-bakery-900 sm:text-sm">25-40 mins</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Driver Info Card -->
-            <div v-if="delivery.driver_name" class="mt-6 flex items-center gap-4 bg-bakery-50/50 p-4 rounded-2xl border border-bakery-100 animate-in fade-in slide-in-from-bottom-2">
-                <div class="w-12 h-12 rounded-xl bg-white border border-bakery-100 flex items-center justify-center text-bakery-600 shadow-sm font-black text-lg uppercase">
+            <div v-if="delivery.driver_name" class="mt-6 flex items-center gap-4 rounded-3xl border border-bakery-100 bg-gradient-to-r from-bakery-50/70 to-white p-4 animate-in fade-in slide-in-from-bottom-2">
+                <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-bakery-100 bg-white text-lg font-black uppercase text-bakery-600 shadow-sm">
                     {{ delivery.driver_name.charAt(0) }}
                 </div>
                 <div class="flex-1">
-                    <p class="text-[10px] font-black text-bakery-400 uppercase tracking-widest">Courier Partner</p>
+                    <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400">Courier Partner</p>
                     <h4 class="text-sm font-bold text-bakery-900">{{ delivery.driver_name }}</h4>
                 </div>
-                <a 
+                <a
                     v-if="delivery.driver_phone"
-                    :href="'tel:' + delivery.driver_phone" 
-                    class="w-10 h-10 rounded-xl bg-bakery-600 text-white flex items-center justify-center shadow-lg hover:bg-bakery-700 hover:-translate-y-1 transition-all active:scale-95"
+                    :href="'tel:' + delivery.driver_phone"
+                    class="flex h-10 w-10 items-center justify-center rounded-2xl bg-bakery-600 text-white shadow-lg transition-all hover:-translate-y-1 hover:bg-bakery-700 active:scale-95"
                 >
-                    <Phone class="w-4 h-4" />
+                    <Phone class="h-4 w-4" />
                 </a>
             </div>
         </div>
 
-        <div v-else class="text-center py-10 opacity-50">
-            <Truck class="w-12 h-12 text-bakery-200 mx-auto mb-3" />
+        <div v-else class="py-10 text-center opacity-50">
+            <Truck class="mx-auto mb-3 h-12 w-12 text-bakery-200" />
             <p class="text-sm font-bold text-bakery-900">Delivery Status Pending</p>
-            <p class="text-xs text-bakery-500 mt-1">We'll show tracking once the order is ready for dispatch.</p>
+            <p class="mt-1 text-xs text-bakery-500">We'll show tracking once the order is ready for dispatch.</p>
         </div>
     </div>
 </template>
@@ -235,6 +294,7 @@ const mapUrl = computed(() => {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.1); }
 }
+
 .animate-cart-bounce {
   animation: cart-bounce 0.6s ease-in-out;
 }
