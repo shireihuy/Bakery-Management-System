@@ -199,6 +199,13 @@ class DeliveryService {
                 'UPDATE orders SET status = $1, completed_time = CURRENT_TIMESTAMP WHERE id = $2',
                 ['Completed', delivery.order_id]
             );
+
+            if (global.io) {
+                global.io.emit('order:status_updated', {
+                    orderId: delivery.order_id,
+                    status: 'Completed'
+                });
+            }
         }
 
         // Create persistent notification

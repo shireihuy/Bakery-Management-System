@@ -1,4 +1,5 @@
 import { ref, readonly } from 'vue';
+import { socketService } from '../services/socket';
 
 export interface OrderItem {
     readonly id?: number;
@@ -41,8 +42,33 @@ export interface Order {
 
 const orders = ref<Order[]>([]);
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+let isSocketInitialized = false;
 
 export function useOrders() {
+    const syncOrderStatusFromSocket = async (payload: { orderId?: number; status?: Order['status'] }) => {
+        if (!payload?.orderId || !payload.status) return;
+
+        const target = orders.value.find(o => o.id === payload.orderId);
+        if (target) {
+            target.status = payload.status;
+            if (payload.status === 'Completed') {
+                (target as any).completedTime = new Date().toLocaleString();
+            }
+            return;
+        }
+
+        try {
+            await fetchOrders();
+        } catch (err) {
+            console.error('Failed to sync order status from socket:', err);
+        }
+    };
+
+    if (!isSocketInitialized) {
+        socketService.on('order:status_updated', syncOrderStatusFromSocket);
+        isSocketInitialized = true;
+    }
+
     const fetchOrders = async () => {
         try {
             const token = localStorage.getItem('token');
