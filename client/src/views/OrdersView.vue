@@ -367,13 +367,6 @@ const confirmCancel = async () => {
                             </button>
                              <button 
                                 v-if="viewingOrder.status === 'Ready'"
-                                @click="changeStatus(viewingOrder, 'Ready')"
-                                class="px-3 py-1.5 bg-green-100 text-green-700 text-sm font-medium rounded hover:bg-green-200 border border-green-200 transition-colors"
-                            >
-                                {{ t('orders.markReady') }}
-                            </button>
-                             <button 
-                                v-if="viewingOrder.status === 'Ready'"
                                 @click="changeStatus(viewingOrder, 'Completed')"
                                 class="px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 border border-green-700 transition-colors"
                             >
