@@ -381,6 +381,11 @@ const updateOrderStatus = async (req, res) => {
         }
         const currentOrder = orderRes.rows[0];
 
+        if (status === 'Cancelled' && currentOrder.payment_status === 'Paid') {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: 'Paid orders cannot be cancelled' });
+        }
+
         // Ensure Customers can only cancel their own pending/unpaid orders.
         if (req.user && req.user.role === 'Customer') {
             if (currentOrder.customer_id !== req.user.id) {

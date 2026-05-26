@@ -204,7 +204,8 @@ export function useOrders() {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to update order status');
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.message || 'Failed to update order status');
             }
 
             // Update local state

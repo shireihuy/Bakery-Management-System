@@ -382,7 +382,7 @@ const confirmCancel = async () => {
                                 {{ t('orders.markCompleted') }}
                             </button>
                             <button 
-                                v-if="['Pending', 'Baking', 'Ready'].includes(viewingOrder.status)"
+                                v-if="['Pending', 'Baking', 'Ready'].includes(viewingOrder.status) && viewingOrder.paymentStatus !== 'Paid'"
                                 @click="openCancelModal"
                                 class="px-3 py-1.5 bg-red-100 text-red-700 text-sm font-medium rounded hover:bg-red-200 border border-red-200 transition-colors"
                             >
