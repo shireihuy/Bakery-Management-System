@@ -200,6 +200,19 @@ const mapUrl = computed(() => {
     return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
 });
 
+const recalculateDeliveryFee = async () => {
+    if (selectedDeliveryType.value !== 'Delivery') {
+        DELIVERY_FEE.value = 0.50;
+        return;
+    }
+
+    if (!selectedDistrict.value || !selectedWard.value) return;
+
+    const totalWeight = cart.value.reduce((sum, item) => sum + (item.quantity * 200), 0) || 500;
+    const fee = await fetchFee(selectedDistrict.value, selectedWard.value, totalWeight);
+    DELIVERY_FEE.value = fee;
+};
+
 // Actions
 const handleCheckout = async () => {
     if (!user.value) {
@@ -472,16 +485,36 @@ watch(selectedDeliveryType, (newVal) => {
         if (provinces.value.length === 0) {
             fetchProvinces();
         }
+        recalculateDeliveryFee();
+    } else {
+        DELIVERY_FEE.value = 0.50;
     }
 });
 
-watch(selectedWard, async (newVal) => {
-    if (newVal && selectedDistrict.value) {
-        // Approximate weight: 200g per item
-        const totalWeight = cart.value.reduce((sum, item) => sum + (item.quantity * 200), 0) || 500;
-        const fee = await (fetchFee as any)(selectedDistrict.value, newVal, totalWeight);
-        DELIVERY_FEE.value = fee;
+watch(selectedProvince, async (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+        selectedDistrict.value = null;
+        selectedWard.value = null;
+        DELIVERY_FEE.value = 0.50;
     }
+});
+
+watch(selectedDistrict, async (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+        selectedWard.value = null;
+        DELIVERY_FEE.value = 0.50;
+    }
+});
+
+watch([selectedDistrict, selectedWard, cart], () => {
+    recalculateDeliveryFee();
+}, { deep: true });
+
+watch(streetAddress, () => {
+    // Street address itself does not affect GHN zone lookup, but the user may
+    // be editing the delivery destination. Keep the fee in sync in case other
+    // address fields changed around the same time.
+    recalculateDeliveryFee();
 });
 const selectedCancelReason = ref('');
 const customReason = ref('');
