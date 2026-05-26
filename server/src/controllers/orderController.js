@@ -221,7 +221,7 @@ const createOrder = async (req, res) => {
 
         await client.query('COMMIT');
 
-        // Pro Way: Initialize delivery record immediately so tracking works during "Baking"
+        // Pro Way: Initialize delivery record immediately so tracking works during "Ready"
         if (delivery_type === 'Delivery') {
             try {
                 await DeliveryService.initializeDelivery(orderId, DELIVERY_FEE);
@@ -410,21 +410,18 @@ const updateOrderStatus = async (req, res) => {
             updateFields.push(`status = $${paramCount++}`);
             params.push(status);
             
-            if (status === 'Baking') {
+            if (status === 'Ready') {
                 updateFields.push(`start_time = CURRENT_TIMESTAMP`);
-            } else if (status === 'Completed') {
-                updateFields.push(`completed_time = CURRENT_TIMESTAMP`);
-            } else if (status === 'Ready') {
                 // Trigger delivery if it's a delivery order
                 if (currentOrder.delivery_type === 'Delivery') {
-                    // Dispatch the delivery (assign driver, start simulation)
                     try {
                         await DeliveryService.dispatchDelivery(id);
-                        
                     } catch (deliveryErr) {
                         console.error('[OrderController] Failed to dispatch delivery:', deliveryErr);
                     }
                 }
+            } else if (status === 'Completed') {
+                updateFields.push(`completed_time = CURRENT_TIMESTAMP`);
             }
         }
 

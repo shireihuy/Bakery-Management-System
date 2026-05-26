@@ -5,7 +5,7 @@ interface User {
     id: string;
     name: string;
     email: string;
-    role: 'Admin' | 'Manager' | 'Baker' | 'Cashier' | 'Customer';
+    role: 'Admin' | 'Manager' | /* 'Baker' | */ 'Cashier' | 'Customer';
     status: 'active' | 'inactive';
     phone?: string;
     address?: string;
@@ -41,7 +41,7 @@ export function useAuth() {
 
             // Return redirect path based on role
             const role = data.user.role.toLowerCase();
-            if (['admin', 'manager', 'baker', 'cashier'].includes(role)) {
+            if (['admin', 'manager', 'cashier'].includes(role)) {
                 return '/dashboard';
             }
             return '/customer';

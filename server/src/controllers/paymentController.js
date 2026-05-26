@@ -169,7 +169,7 @@ const verifyPayment = async (req, res) => {
                         WHERE id = $4
                         RETURNING *
                     `;
-                    const updatedResult = await query(updateQuery, ['Paid', 'Baking', payosInfo.id, orderId]);
+                    const updatedResult = await query(updateQuery, ['Paid', 'Ready', payosInfo.id, orderId]);
                     order = updatedResult.rows[0];
 
                     // Record payment
@@ -240,8 +240,8 @@ const simulateCallback = async (req, res) => {
         const order = orderResult.rows[0];
 
         // Update payment status
-        // If status is 'success', we also move the order to 'Baking'
-        const nextOrderStatus = status === 'success' ? 'Baking' : order.status;
+        // If status is 'success', we also move the order to 'Ready'
+        const nextOrderStatus = status === 'success' ? 'Ready' : order.status;
         const nextPaymentStatus = status === 'success' ? 'Paid' : 'Failed';
 
         const updateQuery = `
@@ -249,7 +249,7 @@ const simulateCallback = async (req, res) => {
             SET payment_status = $1, 
                 status = $2::varchar, 
                 transaction_id = $3,
-                start_time = CASE WHEN $2::varchar = 'Baking' THEN CURRENT_TIMESTAMP ELSE start_time END
+                start_time = CASE WHEN $2::varchar = 'Ready' THEN CURRENT_TIMESTAMP ELSE start_time END
             WHERE id = $4 
             RETURNING *
         `;
@@ -268,7 +268,7 @@ const simulateCallback = async (req, res) => {
                 await NotificationController.createNotification(
                     order.customer_id,
                     'Payment Successful',
-                    `Payment for order #${orderId} was successful. We've started baking!`,
+                    `Payment for order #${orderId} was successful. Your order is ready!`,
                     'success'
                 );
             } catch (notifErr) {
@@ -304,7 +304,7 @@ const handlePayOSWebhook = async (req, res) => {
                 WHERE id = $4 AND payment_status != 'Paid'
                 RETURNING *
             `;
-            const result = await query(updateQuery, ['Paid', 'Baking', webhookData.paymentLinkId, orderId]);
+            const result = await query(updateQuery, ['Paid', 'Ready', webhookData.paymentLinkId, orderId]);
             
             if (result.rows.length > 0) {
                 const order = result.rows[0];

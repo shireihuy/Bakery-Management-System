@@ -20,7 +20,7 @@ export interface Order {
     readonly discountAmount?: number;
     readonly couponId?: number;
     readonly couponCode?: string;
-    status: 'Pending' | 'Baking' | 'Ready' | 'Completed' | 'Cancelled';
+    status: 'Pending' | 'Ready' | 'Completed' | 'Cancelled';
     readonly date: string;
     readonly startTime?: string;
     readonly completedTime?: string;

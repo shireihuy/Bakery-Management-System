@@ -9,8 +9,8 @@ router.use(authenticateToken);
 // Create a new order
 router.post('/', orderController.createOrder);
 
-// Get all orders (Admin, Manager, Baker, Cashier)
-router.get('/', authorizeRoles('Admin', 'Manager', 'Baker', 'Cashier'), orderController.getOrders);
+// Get all orders (Admin, Manager, Cashier)
+router.get('/', authorizeRoles('Admin', 'Manager', 'Cashier'), orderController.getOrders);
 
 // Get current user's orders
 router.get('/my-orders', orderController.getMyOrders);
@@ -19,6 +19,6 @@ router.get('/my-orders', orderController.getMyOrders);
 router.get('/:id', orderController.getOrderById);
 
 // Update order status (Staff to update process, Customers can only cancel)
-router.put('/:id/status', authorizeRoles('Admin', 'Manager', 'Baker', 'Cashier', 'Customer'), orderController.updateOrderStatus);
+router.put('/:id/status', authorizeRoles('Admin', 'Manager', 'Cashier', 'Customer'), orderController.updateOrderStatus);
 
 module.exports = router;

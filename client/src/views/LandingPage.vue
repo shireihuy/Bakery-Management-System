@@ -39,7 +39,7 @@ const onGetStarted = () => {
     if (user.value) {
         // Redirect based on role
         const role = user.value.role.toLowerCase();
-        const staffRoles = ['admin', 'manager', 'baker', 'cashier'];
+        const staffRoles = ['admin', 'manager', 'cashier'];
         if (staffRoles.includes(role)) {
             router.push('/dashboard');
         } else {
@@ -53,7 +53,7 @@ const onGetStarted = () => {
 const onViewMenu = () => {
     if (user.value) {
         const role = user.value.role.toLowerCase();
-        const staffRoles = ['admin', 'manager', 'baker', 'cashier'];
+        const staffRoles = ['admin', 'manager', 'cashier'];
         if (staffRoles.includes(role)) {
             router.push('/products');
         } else {

@@ -41,7 +41,7 @@ const stats = computed(() => [
   },
   {
     title: t('dashboard.activeOrders'),
-    value: orders.value.filter(o => ['Pending', 'Baking', 'Ready'].includes(o.status)).length.toString(),
+    value: orders.value.filter(o => ['Pending', 'Ready'].includes(o.status)).length.toString(),
     change: t('dashboard.waitingAction'),
     icon: ShoppingCart,
     color: "text-blue-600",

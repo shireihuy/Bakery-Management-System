@@ -29,11 +29,11 @@ router.put('/:id', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cashie
 router.delete('/:id', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cashier'), productController.deleteProduct);
 
 // Inventory stock (legacy — kept for compatibility, still works via batch sync)
-router.patch('/:id/stock', authenticateToken, authorizeRoles('Admin', 'Manager', 'Baker', 'Cashier'), productController.updateStock);
+router.patch('/:id/stock', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cashier'), productController.updateStock);
 
 // Batch routes (Admin, Manager, Baker, Cashier)
-router.get('/:id/batches', authenticateToken, authorizeRoles('Admin', 'Manager', 'Baker', 'Cashier'), batchController.getBatches);
-router.post('/:id/batches', authenticateToken, authorizeRoles('Admin', 'Manager', 'Baker', 'Cashier'), batchController.addBatch);
+router.get('/:id/batches', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cashier'), batchController.getBatches);
+router.post('/:id/batches', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cashier'), batchController.addBatch);
 router.delete('/:id/batches/:batchId', authenticateToken, authorizeRoles('Admin', 'Manager'), batchController.deleteBatch);
 
 // Rating routes

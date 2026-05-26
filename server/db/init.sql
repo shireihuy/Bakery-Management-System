@@ -2,7 +2,7 @@
 DO $$ 
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-        CREATE TYPE user_role AS ENUM ('Admin', 'Manager', 'Baker', 'Cashier', 'Customer');
+        CREATE TYPE user_role AS ENUM ('Admin', 'Manager', /* 'Baker', */ 'Cashier', 'Customer');
     END IF;
 END $$;
 
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS orders (
     total_price DECIMAL(10, 2) NOT NULL,
     coupon_id INTEGER REFERENCES coupons(id) DEFAULT NULL,
     discount_amount DECIMAL(10, 2) DEFAULT 0.00,
-    status VARCHAR(50) DEFAULT 'Pending', -- Pending, Baking, Ready, Completed, Cancelled
+    status VARCHAR(50) DEFAULT 'Pending', -- Pending, Ready, Completed, Cancelled
     payment_method VARCHAR(50),
     payment_status VARCHAR(50) DEFAULT 'Pending',
     transaction_id VARCHAR(255),
@@ -265,4 +265,3 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-

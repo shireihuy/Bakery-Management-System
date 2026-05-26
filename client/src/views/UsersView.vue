@@ -164,7 +164,7 @@ const getRoleBadgeColor = (role: string) => {
     switch (r) {
         case 'admin': return 'bg-purple-100 text-purple-700 border-purple-200';
         case 'manager': return 'bg-blue-100 text-blue-700 border-blue-200';
-        case 'baker': return 'bg-orange-100 text-orange-700 border-orange-200';
+        // case 'baker': return 'bg-orange-100 text-orange-700 border-orange-200';
         case 'cashier': return 'bg-green-100 text-green-700 border-green-200';
         default: return 'bg-gray-100 text-gray-700 border-gray-200';
     }
@@ -208,7 +208,7 @@ const getRoleBadgeColor = (role: string) => {
                     <option value="all">{{ t('users.allRoles') }}</option>
                     <option value="Admin">Admin</option>
                     <option value="Manager">Manager</option>
-                    <option value="Baker">Baker</option>
+                    <!-- <option value="Baker">Baker</option> -->
                     <option value="Cashier">Cashier</option>
                     <option value="Customer">Customer</option>
                 </select>
@@ -339,7 +339,7 @@ const getRoleBadgeColor = (role: string) => {
                             >
                                 <option value="Admin">Admin</option>
                                 <option value="Manager">Manager</option>
-                                <option value="Baker">Baker</option>
+                                <!-- <option value="Baker">Baker</option> -->
                                 <option value="Cashier">Cashier</option>
                                 <option value="Customer">Customer</option>
                             </select>

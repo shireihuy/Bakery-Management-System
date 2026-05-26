@@ -21,7 +21,7 @@ const { t } = useI18n();
 const { formatPrice } = useCurrency();
 
 const searchQuery = ref('');
-const statusFilter = ref<'all' | 'Pending' | 'Baking' | 'Ready' | 'Completed' | 'Cancelled'>('all');
+const statusFilter = ref<'all' | 'Pending' | 'Ready' | 'Completed' | 'Cancelled'>('all');
 const viewingOrder = ref<any | null>(null); // Use any to avoid DeepReadonly mismatch with the composable's readonly() wrapper
 const isDetailOpen = ref(false);
 
@@ -90,7 +90,7 @@ watch([searchQuery, statusFilter, itemsPerPage], () => {
 const stats = computed(() => {
     const total = orders.value.length;
     const pending = orders.value.filter(o => o.status === 'Pending').length;
-    const processing = orders.value.filter(o => ['Baking', 'Ready'].includes(o.status)).length;
+    const processing = orders.value.filter(o => ['Ready'].includes(o.status)).length;
     const completed = orders.value.filter(o => o.status === 'Completed').length;
     const revenue = orders.value.reduce((acc, curr) => acc + (curr.status !== 'Cancelled' ? curr.total : 0), 0);
     
@@ -100,7 +100,6 @@ const stats = computed(() => {
 const getStatusColor = (status: Order['status']) => {
     switch (status) {
         case 'Completed': return 'bg-green-100 text-green-800 border-green-200';
-        case 'Baking': 
         case 'Ready': return 'bg-blue-100 text-blue-800 border-blue-200';
         case 'Cancelled': return 'bg-red-100 text-red-800 border-red-200';
         case 'Pending':
@@ -213,7 +212,6 @@ const confirmCancel = async () => {
                     >
                         <option value="all">{{ t('orders.allStatus') }}</option>
                         <option value="Pending">{{ t('orders.pending') }}</option>
-                        <option value="Baking">Baking</option>
                         <option value="Ready">Ready</option>
                         <option value="Completed">{{ t('nav.logout').replace('Logout', 'Completed') === 'Completed' ? 'Completed' : 'Completed' /* Using logical fallback if needed */ }}</option>
                         <option value="Cancelled">Cancelled</option>
@@ -362,13 +360,13 @@ const confirmCancel = async () => {
                             </button>
                             <button 
                                 v-if="viewingOrder.status === 'Pending'"
-                                @click="changeStatus(viewingOrder, 'Baking')"
+                                @click="changeStatus(viewingOrder, 'Ready')"
                                 class="px-3 py-1.5 bg-blue-100 text-blue-700 text-sm font-medium rounded hover:bg-blue-200 border border-blue-200 transition-colors"
                             >
-                                {{ t('orders.startBaking') }}
+                                Mark Ready
                             </button>
                              <button 
-                                v-if="viewingOrder.status === 'Baking'"
+                                v-if="viewingOrder.status === 'Ready'"
                                 @click="changeStatus(viewingOrder, 'Ready')"
                                 class="px-3 py-1.5 bg-green-100 text-green-700 text-sm font-medium rounded hover:bg-green-200 border border-green-200 transition-colors"
                             >
@@ -382,7 +380,7 @@ const confirmCancel = async () => {
                                 {{ t('orders.markCompleted') }}
                             </button>
                             <button 
-                                v-if="['Pending', 'Baking', 'Ready'].includes(viewingOrder.status) && viewingOrder.paymentStatus !== 'Paid'"
+                                v-if="['Pending', 'Ready'].includes(viewingOrder.status) && viewingOrder.paymentStatus !== 'Paid'"
                                 @click="openCancelModal"
                                 class="px-3 py-1.5 bg-red-100 text-red-700 text-sm font-medium rounded hover:bg-red-200 border border-red-200 transition-colors"
                             >

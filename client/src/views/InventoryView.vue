@@ -14,11 +14,9 @@ import {
 } from 'lucide-vue-next';
 import { useInventory, type InventoryItem } from '../composables/useInventory';
 import { useI18n } from '../composables/useI18n';
-import { useAuth } from '../composables/useAuth';
 
 const { inventory, lowStockItems, fetchInventory, addItem, updateItem, deleteItem, addBatch, deleteBatch } = useInventory();
 const { t } = useI18n();
-const { user } = useAuth();
 
 const searchQuery = ref('');
 const categoryFilter = ref('all');
@@ -29,8 +27,6 @@ const batchForm = ref({
     expirationDate: '',
     notes: ''
 });
-
-const isBaker = computed(() => user.value?.role === 'Baker');
 
 const selectedItem = computed(() => {
     if (!editingItem.value) return null;
@@ -92,7 +88,6 @@ const getBatchStatus = (item: InventoryItem) => {
 };
 
 const openAddModal = () => {
-    if (isBaker.value) return; 
     editingItem.value = null;
     form.value = { name: '', category: '', quantity: 0, minQuantity: 0, unit: '' };
     batchForm.value = { quantity: '', expirationDate: '', notes: '' };
@@ -146,7 +141,6 @@ const handleDeleteBatch = async (itemId: string, batchId: number) => {
 };
 
 const handleDelete = (id: string) => {
-    if (isBaker.value) return;
     if (confirm(t('users.confirmDeletion'))) {
         deleteItem(id);
     }
@@ -210,7 +204,7 @@ const handleDelete = (id: string) => {
                 <p class="text-sm text-green-600">{{ t('inventory.monitorAndManage') }}</p>
             </div>
             <button 
-                v-if="!isBaker"
+                v-if="true"
                 @click="openAddModal"
                 class="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 shadow-md transition-all active:scale-95"
             >
@@ -312,7 +306,7 @@ const handleDelete = (id: string) => {
                                         <Edit class="w-4 h-4" />
                                     </button>
                                     <button 
-                                        v-if="!isBaker" 
+                                        v-if="true" 
                                         @click="handleDelete(item.id)" 
                                         class="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                         :title="t('common.delete')"
@@ -342,7 +336,7 @@ const handleDelete = (id: string) => {
                 <form @submit.prevent="handleSubmit" class="p-6 space-y-4">
                     <div class="space-y-1">
                         <label class="text-sm font-medium text-gray-700">{{ t('inventory.itemName') }}</label>
-                        <input v-model="form.name" type="text" :disabled="isBaker || !!(editingItem && editingItem.isProduct)" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
+                        <input v-model="form.name" type="text" :disabled="!!(editingItem && editingItem.isProduct)" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
                     </div>
 
                     <div v-if="selectedItem && selectedItem.isProduct" class="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-start gap-3">
@@ -357,7 +351,7 @@ const handleDelete = (id: string) => {
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">{{ t('inventory.category') }}</label>
-                            <input v-if="isBaker || !!(editingItem && editingItem.isProduct)" v-model="form.category" disabled class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-gray-50 text-gray-500 font-medium">
+                            <input v-if="!!(editingItem && editingItem.isProduct)" v-model="form.category" disabled class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-gray-50 text-gray-500 font-medium">
                             <select v-else v-model="form.category" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none bg-white font-medium">
                                 <option value="Pastries">Pastries</option>
                                 <option value="Bread">Bread</option>
@@ -371,7 +365,7 @@ const handleDelete = (id: string) => {
                         </div>
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">{{ t('inventory.unit') }}</label>
-                            <input v-model="form.unit" type="text" :disabled="isBaker || !!(editingItem && editingItem.isProduct)" required placeholder="e.g. kg" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
+                            <input v-model="form.unit" type="text" :disabled="!!(editingItem && editingItem.isProduct)" required placeholder="e.g. kg" class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
                         </div>
                     </div>
 
@@ -398,7 +392,7 @@ const handleDelete = (id: string) => {
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">{{ t('inventory.minStockAlert') }}</label>
                             <div class="relative">
-                                <input v-model.number="form.minQuantity" type="number" :disabled="isBaker" step="0.1" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
+                                <input v-model.number="form.minQuantity" type="number" step="0.1" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
                                 <AlertTriangle class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-400 opacity-50" />
                             </div>
                         </div>

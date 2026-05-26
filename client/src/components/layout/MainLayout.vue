@@ -39,7 +39,7 @@ const navigation = computed(() => {
   // Fallback to empty role if user is null
   const role = user.value?.role?.toLowerCase() || '';
   
-  if (['admin', 'manager', 'cashier', 'baker'].includes(role)) {
+  if (['admin', 'manager', 'cashier'].includes(role)) {
     tabs.push({ name: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard });
   }
   if (['admin', 'manager', 'cashier'].includes(role)) {
@@ -49,10 +49,10 @@ const navigation = computed(() => {
     tabs.push({ name: 'Flash Sales', href: '/flash-sales', icon: Zap });
   }
 
-  if (['admin', 'manager', 'cashier', 'baker'].includes(role)) {
+  if (['admin', 'manager', 'cashier'].includes(role)) {
     tabs.push({ name: t('nav.orders'), href: '/orders', icon: ShoppingCart });
   }
-  if (['admin', 'manager', 'baker'].includes(role)) {
+  if (['admin', 'manager'].includes(role)) {
     tabs.push({ name: t('nav.inventory'), href: '/inventory', icon: Warehouse });
   }
   if (['admin', 'manager'].includes(role)) {

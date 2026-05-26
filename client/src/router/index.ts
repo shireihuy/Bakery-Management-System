@@ -38,7 +38,7 @@ const router = createRouter({
         {
             path: '/dashboard',
             component: MainLayout,
-            meta: { requiresAuth: true, roles: ['admin', 'manager', 'cashier', 'baker'] },
+            meta: { requiresAuth: true, roles: ['admin', 'manager', 'cashier'] },
             children: [
                 {
                     path: '',
@@ -50,7 +50,7 @@ const router = createRouter({
         {
             path: '/orders',
             component: MainLayout,
-            meta: { requiresAuth: true, roles: ['admin', 'manager', 'cashier', 'baker'] },
+            meta: { requiresAuth: true, roles: ['admin', 'manager', 'cashier'] },
             children: [
                 {
                     path: '',
@@ -62,7 +62,7 @@ const router = createRouter({
         {
             path: '/inventory',
             component: MainLayout,
-            meta: { requiresAuth: true, roles: ['admin', 'manager', 'baker'] },
+            meta: { requiresAuth: true, roles: ['admin', 'manager'] },
             children: [
                 {
                     path: '',

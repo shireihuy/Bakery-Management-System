@@ -13,7 +13,7 @@ const register = async (req, res) => {
         const finalAddress = (address === '' || address === undefined) ? null : address;
 
         // For development, we allow setting roles. In production, this should be guarded.
-        const userRole = (role && ['Admin', 'Manager', 'Baker', 'Cashier', 'Customer'].includes(role)) ? role : 'Customer';
+        const userRole = (role && ['Admin', 'Manager', /* 'Baker', */ 'Cashier', 'Customer'].includes(role)) ? role : 'Customer';
         const userStatus = (status && ['active', 'inactive'].includes(status)) ? status : 'active';
 
         const normalizedEmail = email ? email.toLowerCase() : '';
