@@ -1,0 +1,23 @@
+@startuml
+title Sequence Diagram - Register
+
+actor Customer
+participant "Frontend/UI" as UI
+participant "Auth API" as Auth
+database DB
+
+Customer -> UI : fill registration form
+UI -> Auth : POST /api/auth/register
+Auth -> DB : check email uniqueness
+DB --> Auth : existing user or empty result
+alt email already exists
+  Auth --> UI : duplicate email error
+  UI --> Customer : show registration failed
+else new account
+  Auth -> Auth : hash password
+  Auth -> DB : insert new user
+  DB --> Auth : created user
+  Auth --> UI : token + user profile
+  UI --> Customer : show registration success
+end
+@enduml

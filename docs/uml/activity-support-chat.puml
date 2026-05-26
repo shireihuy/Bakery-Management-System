@@ -1,0 +1,29 @@
+@startuml
+title Activity Diagram - Support Chat
+
+|Customer|
+start
+:Open chat support;
+:Type message;
+:Store chat message;
+if (Message for AI support?) then (AI)
+  :Forward message to AI handler;
+  :Generate AI response;
+else (Staff)
+  :Route message to staff inbox;
+endif
+
+if (Response available?) then (Yes)
+  :Broadcast response to recipient;
+  :Display chat reply;
+else (No)
+  :Return chat error;
+  :Show retry notice;
+endif
+
+if (Socket disconnected?) then (Yes)
+  :Queue or fail gracefully;
+  :Show connection status;
+endif
+stop
+@enduml

@@ -1,0 +1,23 @@
+@startuml
+title Sequence Diagram - Flash Sale and Coupon Management
+
+actor Manager
+participant "Admin UI" as UI
+participant "Flash Sale API" as FlashSale
+participant "Coupon API" as Coupon
+database DB
+
+Manager -> UI : manage promotion
+alt flash sale
+  UI -> FlashSale : create/update flash sale
+  FlashSale -> DB : persist flash sale data
+  DB --> FlashSale : saved
+  FlashSale --> UI : success
+else coupon
+  UI -> Coupon : create/update coupon
+  Coupon -> DB : persist coupon data
+  DB --> Coupon : saved
+  Coupon --> UI : success
+end
+UI --> Manager : show confirmation
+@enduml

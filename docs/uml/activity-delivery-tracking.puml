@@ -1,0 +1,26 @@
+@startuml
+title Activity Diagram - Delivery Tracking
+
+|Customer|
+start
+:Open order tracking page;
+:Request delivery status;
+:Get delivery record by order ID;
+if (Delivery exists?) then (Yes)
+  :Read current delivery status;
+  if (Need fee or address data?) then (Yes)
+    :Query GHN service data;
+  endif
+  :Return tracking info;
+  :Render tracking timeline;
+else (No)
+  :Return no delivery found;
+  :Show tracking unavailable message;
+endif
+
+if (GHN service error?) then (Yes)
+  :Return fallback error;
+  :Show delivery error notice;
+endif
+stop
+@enduml

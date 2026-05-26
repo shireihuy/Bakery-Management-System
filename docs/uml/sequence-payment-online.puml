@@ -1,0 +1,23 @@
+@startuml
+title Sequence Diagram - Online Payment
+
+actor Customer
+participant "Frontend/UI" as UI
+participant "Payment API" as Payment
+participant "PayOS" as PayOS
+database DB
+
+Customer -> UI : choose online payment
+UI -> Payment : POST /api/payment/initiate
+Payment -> DB : load order and update payment method
+alt QR payment
+  Payment -> PayOS : create payment link
+  PayOS --> Payment : checkout URL + QR code
+  Payment -> DB : save transaction and QR info
+  Payment --> UI : payment data
+  UI --> Customer : display QR code
+else fallback mock payment
+  Payment --> UI : mock payment url
+  UI --> Customer : open mock gateway
+end
+@enduml

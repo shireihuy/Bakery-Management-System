@@ -1,0 +1,25 @@
+@startuml
+title Sequence Diagram - Support Chat
+
+actor Customer
+participant "Frontend/UI" as UI
+participant "Socket.io" as Socket
+participant "Chat API" as Chat
+participant "AI Handler" as AI
+database DB
+actor Staff
+
+Customer -> UI : send chat message
+UI -> Socket : emit message:send
+Socket -> DB : insert chat message
+DB --> Socket : stored message
+alt AI support
+  Socket -> AI : generate response
+  AI --> Socket : AI reply
+else staff support
+  Socket -> Staff : broadcast to support room
+  Staff --> Socket : reply message
+end
+Socket --> UI : message:receive
+UI --> Customer : display reply
+@enduml

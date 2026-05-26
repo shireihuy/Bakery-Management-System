@@ -1,0 +1,38 @@
+@startuml
+title Activity Diagram - Online Payment
+
+|Customer|
+start
+:Open payment page;
+:Choose payment method;
+:Find order and update payment method;
+if (QR payment selected?) then (Yes)
+  :Create PayOS payment link;
+  if (PayOS available?) then (Yes)
+    :Save payment URL and QR code;
+    :Return QR payment data;
+    :Display QR code to customer;
+    :Complete payment on gateway;
+    :Send callback or webhook;
+    :Verify payment result;
+    if (Payment success?) then (Yes)
+      :Mark order as Paid and Ready;
+      :Create payment record;
+      :Notify customer;
+    else (No)
+      :Mark payment as Failed or Cancelled;
+    endif
+  else (No)
+    :Fallback to mock payment link;
+    :Open mock payment page;
+  endif
+else (Cash or manual method)
+  :Return confirmation for manual processing;
+endif
+
+if (Unexpected payment error?) then (Yes)
+  :Return error response;
+  :Show payment failure message;
+endif
+stop
+@enduml

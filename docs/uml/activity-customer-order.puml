@@ -1,0 +1,47 @@
+@startuml
+title Activity Diagram - Customer Place Order
+
+|Customer|
+start
+:Browse menu and select items;
+:Add items to cart;
+:Open checkout page;
+if (Delivery type?) then (Delivery)
+  :Enter address, district, ward;
+  :Request shipping fee;
+else (Pick-up)
+  :Select pick-up at counter;
+endif
+
+if (Apply coupon?) then (Yes)
+  :Enter coupon code;
+  :Validate coupon;
+  if (Coupon valid?) then (Yes)
+    :Apply discount;
+  else (No)
+    :Show coupon error;
+  endif
+endif
+
+:Confirm order;
+:Validate products and stock;
+if (Stock enough?) then (Yes)
+  :Calculate subtotal, shipping, discount;
+  :Create order and order details;
+  :Update product stock;
+  if (Delivery selected?) then (Yes)
+    :Initialize delivery record;
+  endif
+  :Return order confirmation;
+  :Show success page;
+else (No)
+  :Return out-of-stock error;
+  :Show order failure message;
+endif
+
+if (System exception occurs?) then (Yes)
+  :Rollback transaction;
+  :Show server error notice;
+endif
+stop
+@enduml

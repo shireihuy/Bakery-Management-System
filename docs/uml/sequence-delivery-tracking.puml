@@ -1,0 +1,23 @@
+@startuml
+title Sequence Diagram - Delivery Tracking
+
+actor Customer
+participant "Frontend/UI" as UI
+participant "Delivery API" as DeliveryAPI
+participant "Delivery Service" as DeliveryService
+participant "GHN" as GHN
+database DB
+
+Customer -> UI : open tracking page
+UI -> DeliveryAPI : GET /api/deliveries/:orderId
+DeliveryAPI -> DeliveryService : get delivery by order ID
+DeliveryService -> DB : query delivery record
+DB --> DeliveryService : delivery data
+DeliveryService --> DeliveryAPI : delivery status
+alt need GHN lookup
+  DeliveryAPI -> GHN : fetch provinces/districts/fee/status
+  GHN --> DeliveryAPI : shipping data
+end
+DeliveryAPI --> UI : tracking result
+UI --> Customer : render timeline
+@enduml

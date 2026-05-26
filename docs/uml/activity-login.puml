@@ -1,0 +1,36 @@
+@startuml
+title Activity Diagram - Login
+
+|Customer|
+start
+:Open login page;
+:Enter email and password;
+:Submit login request;
+:Find user by email;
+if (User exists?) then (Yes)
+  :Compare password;
+  if (Password valid?) then (Yes)
+    :Check account status;
+    if (Account active?) then (Yes)
+      :Generate token;
+      :Return user profile and token;
+      :Store session and redirect;
+    else (No)
+      :Return inactive account error;
+      :Show account inactive message;
+    endif
+  else (No)
+    :Return invalid credential error;
+    :Show login failed message;
+  endif
+else (No)
+  :Return invalid credential error;
+  :Show login failed message;
+endif
+
+if (Unexpected server error?) then (Yes)
+  :Return exception response;
+  :Show fallback error notice;
+endif
+stop
+@enduml

@@ -1,0 +1,27 @@
+@startuml
+title Activity Diagram - Admin System Management
+
+|Admin|
+start
+:Open admin console;
+if (Manage system settings?) then (Yes)
+  :Edit configuration;
+  :Persist system settings;
+  :Return success;
+else (Manage accounts)
+  :Open account management;
+  :Validate role and permissions;
+  if (Permission valid?) then (Yes)
+    :Update account in DB;
+    :Return success;
+  else (No)
+    :Return permission error;
+  endif
+endif
+
+if (Unexpected error?) then (Yes)
+  :Return exception response;
+  :Show admin error message;
+endif
+stop
+@enduml

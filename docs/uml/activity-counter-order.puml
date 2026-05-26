@@ -1,0 +1,34 @@
+@startuml
+title Activity Diagram - Counter Order
+
+|Cashier|
+start
+:Open POS order screen;
+:Select customer or walk-in mode;
+:Add products and quantities;
+:Choose delivery type;
+if (Apply coupon?) then (Yes)
+  :Enter coupon code;
+  :Validate coupon;
+endif
+
+:Validate items and stock;
+if (Valid order?) then (Yes)
+  :Create order at counter;
+  if (Payment now?) then (Yes)
+    :Send payment request;
+    :Process payment;
+    :Return payment result;
+  endif
+  :Return order summary;
+  :Show created order;
+else (No)
+  :Return error message;
+  :Show validation error;
+endif
+
+if (Order update exception?) then (Yes)
+  :Rollback and return error;
+endif
+stop
+@enduml

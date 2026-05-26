@@ -1,0 +1,21 @@
+@startuml
+title Sequence Diagram - Login
+
+actor Customer
+participant "Frontend/UI" as UI
+participant "Auth API" as Auth
+database DB
+
+Customer -> UI : enter credentials
+UI -> Auth : POST /api/auth/login
+Auth -> DB : find user by email
+DB --> Auth : user record
+Auth -> Auth : verify password and role
+alt valid credentials
+  Auth --> UI : token + user profile
+  UI --> Customer : redirect and store session
+else invalid credentials
+  Auth --> UI : authentication error
+  UI --> Customer : show error message
+end
+@enduml

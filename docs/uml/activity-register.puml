@@ -1,0 +1,31 @@
+@startuml
+title Activity Diagram - Register
+
+|Customer|
+start
+:Open register page;
+:Fill registration form;
+:Submit registration request;
+:Validate input data;
+if (Email already exists?) then (Yes)
+  :Return duplicate email error;
+  :Show registration failed message;
+else (No)
+  :Hash password;
+  :Create user in DB;
+  if (Insert successful?) then (Yes)
+    :Generate token;
+    :Return created user and token;
+    :Show registration success;
+  else (No)
+    :Return creation error;
+    :Show server error message;
+  endif
+endif
+
+if (Unexpected server error?) then (Yes)
+  :Return exception response;
+  :Show fallback error notice;
+endif
+stop
+@enduml

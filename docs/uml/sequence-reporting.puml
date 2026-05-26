@@ -1,0 +1,19 @@
+@startuml
+title Sequence Diagram - Reporting
+
+actor Manager
+participant "Dashboard UI" as UI
+participant "Report API" as Report
+database DB
+
+Manager -> UI : select report range
+UI -> Report : GET /api/reports?range=...
+Report -> DB : query order revenue and product stats
+DB --> Report : report rows
+Report --> UI : analytics dataset
+UI --> Manager : render charts and tables
+opt print report
+  UI -> Report : request printable output
+  Report --> UI : printable report data
+end
+@enduml

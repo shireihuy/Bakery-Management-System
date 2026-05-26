@@ -1,0 +1,23 @@
+@startuml
+title Sequence Diagram - System Configuration and Accounts
+
+actor Admin
+participant "Admin UI" as UI
+participant "System API" as System
+participant "User API" as UserAPI
+database DB
+
+Admin -> UI : open admin settings
+alt system config
+  UI -> System : POST /api/system/settings
+  System -> DB : save system setting
+  DB --> System : stored
+  System --> UI : success response
+else account management
+  UI -> UserAPI : update role or account
+  UserAPI -> DB : validate and save account
+  DB --> UserAPI : updated
+  UserAPI --> UI : success response
+end
+UI --> Admin : show result
+@enduml

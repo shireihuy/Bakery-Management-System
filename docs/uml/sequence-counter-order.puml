@@ -1,0 +1,22 @@
+@startuml
+title Sequence Diagram - Counter Order
+
+actor Cashier
+participant "POS UI" as UI
+participant "Order API" as Order
+participant "Payment API" as Payment
+database DB
+
+Cashier -> UI : create counter order
+UI -> Order : POST /api/orders
+Order -> DB : validate items and stock
+DB --> Order : data
+Order -> DB : insert order and details
+alt payment now
+  UI -> Payment : initiate payment
+  Payment -> DB : update payment status
+  Payment --> UI : payment result
+end
+Order --> UI : order summary
+UI --> Cashier : show created order
+@enduml

@@ -1,0 +1,27 @@
+@startuml
+title Activity Diagram - Revenue Reporting
+
+|Manager|
+start
+:Open analytics dashboard;
+:Select report range;
+:Query revenue, product performance, and category data;
+if (Data available?) then (Yes)
+  :Build report dataset;
+  :Return analytics data;
+  :Render charts and tables;
+  if (Print report?) then (Yes)
+    :Send print/export request;
+    :Generate printable report;
+  endif
+else (No)
+  :Return empty report dataset;
+  :Show no-data message;
+endif
+
+if (Query failure?) then (Yes)
+  :Return error response;
+  :Show report error notice;
+endif
+stop
+@enduml

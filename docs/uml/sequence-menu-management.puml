@@ -1,0 +1,18 @@
+@startuml
+title Sequence Diagram - Menu Management
+
+actor Manager
+participant "Admin UI" as UI
+participant "Product API" as Product
+database DB
+
+Manager -> UI : create or edit product
+UI -> Product : POST/PUT /api/products
+Product -> DB : validate and save product
+alt upload image
+  Product -> Product : store uploaded image
+end
+DB --> Product : saved record
+Product --> UI : success response
+UI --> Manager : show updated menu
+@enduml

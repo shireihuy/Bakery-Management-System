@@ -1,0 +1,22 @@
+@startuml
+title Sequence Diagram - Customer Order
+
+actor Customer
+participant "Frontend/UI" as UI
+participant "Order API" as Order
+database DB
+participant "Delivery Service" as Delivery
+
+Customer -> UI : confirm cart
+UI -> Order : POST /api/orders
+Order -> DB : validate products and stock
+DB --> Order : product rows
+Order -> DB : create order and order details
+Order -> DB : update stock and coupon usage
+alt delivery selected
+  Order -> Delivery : initialize delivery
+  Delivery --> Order : delivery record
+end
+Order --> UI : order confirmation
+UI --> Customer : show success page
+@enduml
