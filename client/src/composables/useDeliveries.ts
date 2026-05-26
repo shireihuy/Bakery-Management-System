@@ -3,7 +3,7 @@ import { ref } from 'vue';
 export interface Delivery {
     id: string;
     order_id: number;
-    status: 'Pending' | 'Assigned' | 'Dispatched' | 'In Transit' | 'Delivered' | 'Failed';
+    status: 'Pending' | 'Searching' | 'Assigned' | 'Picked Up' | 'In Transit' | 'Delivered' | 'Failed';
     tracking_number: string;
     driver_name?: string;
     driver_phone?: string;

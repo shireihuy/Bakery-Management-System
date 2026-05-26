@@ -2,6 +2,16 @@ const { query } = require('../config/db');
 const NotificationController = require('../controllers/notificationController');
 const GHNClient = require('../utils/ghnClient');
 
+const DELIVERY_STAGES = {
+    PENDING: 'Pending',
+    SEARCHING: 'Searching',
+    ASSIGNED: 'Assigned',
+    PICKED_UP: 'Picked Up',
+    IN_TRANSIT: 'In Transit',
+    DELIVERED: 'Delivered',
+    FAILED: 'Failed'
+};
+
 /**
  * Mock Delivery Service
  * This service mimics an external delivery provider like Grab or Lalamove.
@@ -21,13 +31,37 @@ class DeliveryService {
                  VALUES ($1, $2, $3) 
                  ON CONFLICT (order_id) DO UPDATE SET updated_at = CURRENT_TIMESTAMP, delivery_fee = $3
                  RETURNING *`,
-                [orderId, 'Pending', fee]
+                [orderId, DELIVERY_STAGES.PENDING, fee]
             );
             return result.rows[0];
         } catch (error) {
             console.error('[MockDelivery] Error initializing delivery:', error);
             throw error;
         }
+    }
+
+    getSimulationEnabled() {
+        return process.env.DELIVERY_SIMULATION_MODE !== 'false';
+    }
+
+    getStagePlan() {
+        const base = process.env.DELIVERY_SIMULATION_SPEED === 'fast'
+            ? [
+                { status: DELIVERY_STAGES.SEARCHING, delay: 2000 },
+                { status: DELIVERY_STAGES.ASSIGNED, delay: 4000 },
+                { status: DELIVERY_STAGES.PICKED_UP, delay: 7000 },
+                { status: DELIVERY_STAGES.IN_TRANSIT, delay: 11000 },
+                { status: DELIVERY_STAGES.DELIVERED, delay: 15000 }
+            ]
+            : [
+                { status: DELIVERY_STAGES.SEARCHING, delay: 10000 },
+                { status: DELIVERY_STAGES.ASSIGNED, delay: 20000 },
+                { status: DELIVERY_STAGES.PICKED_UP, delay: 35000 },
+                { status: DELIVERY_STAGES.IN_TRANSIT, delay: 60000 },
+                { status: DELIVERY_STAGES.DELIVERED, delay: 90000 }
+            ];
+
+        return base;
     }
 
     /**
@@ -60,8 +94,6 @@ class DeliveryService {
                 items: itemsRes.rows
             });
 
-            
-
             // 4. Update local delivery record with GHN info
             const result = await query(
                 `UPDATE deliveries 
@@ -72,7 +104,7 @@ class DeliveryService {
                  WHERE order_id = $4
                  RETURNING *`,
                 [
-                    'Assigned',
+                    this.getSimulationEnabled() ? DELIVERY_STAGES.SEARCHING : DELIVERY_STAGES.ASSIGNED,
                     ghnResponse.order_code,
                     ghnResponse.expected_delivery_time,
                     orderId
@@ -85,11 +117,15 @@ class DeliveryService {
             }
 
             const delivery = result.rows[0];
-            // No more simulateWorkflow - waiting for webhook or actual delivery!
+
+            if (this.getSimulationEnabled()) {
+                this.simulateWorkflow(delivery.id);
+            }
             return delivery;
         } catch (error) {
             console.error('[GHN] Error dispatching delivery:', error.message);
-            throw error;
+            const legacyDelivery = await this.createLegacyDelivery(orderId);
+            return legacyDelivery;
         }
     }
 
@@ -106,7 +142,7 @@ class DeliveryService {
              VALUES ($1, $2, $3, $4, $5, $6, $7) 
              ON CONFLICT (order_id) DO UPDATE SET status = 'Assigned'
              RETURNING *`,
-            [orderId, 'Assigned', trackingNumber, 'John Doe', '0912345678', 0.50, estimatedDeliveryTime]
+            [orderId, DELIVERY_STAGES.ASSIGNED, trackingNumber, 'John Doe', '0912345678', 0.50, estimatedDeliveryTime]
         );
         const delivery = result.rows[0];
         this.simulateWorkflow(delivery.id);
@@ -117,11 +153,7 @@ class DeliveryService {
      * Automatically moves the delivery through various stages to simulate progress.
      */
     simulateWorkflow(deliveryId) {
-        const stages = [
-            { status: 'Dispatched', delay: 10000 },  // 10 sec
-            { status: 'In Transit', delay: 20000 },  // 20 sec
-            { status: 'Delivered', delay: 40000 }    // 40 sec
-        ];
+        const stages = this.getStagePlan();
 
         stages.forEach(stage => {
             setTimeout(async () => {
@@ -133,8 +165,23 @@ class DeliveryService {
     async updateDeliveryStatus(deliveryId, status) {
         
         const result = await query(
-            'UPDATE deliveries SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *',
-            [status, deliveryId]
+            `UPDATE deliveries 
+             SET status = $1, 
+                 updated_at = CURRENT_TIMESTAMP,
+                 driver_name = CASE 
+                    WHEN $1 = $2 THEN COALESCE(driver_name, 'GHN Courier')
+                    WHEN $1 = $3 THEN COALESCE(driver_name, 'GHN Courier')
+                    ELSE driver_name
+                 END,
+                 driver_phone = CASE 
+                    WHEN $1 = $2 THEN COALESCE(driver_phone, '0900000000')
+                    WHEN $1 = $3 THEN COALESCE(driver_phone, '0900000000')
+                    ELSE driver_phone
+                 END,
+                 actual_time = CASE WHEN $1 = $4 THEN CURRENT_TIMESTAMP ELSE actual_time END
+             WHERE id = $5 
+             RETURNING *`,
+            [status, DELIVERY_STAGES.ASSIGNED, DELIVERY_STAGES.PICKED_UP, DELIVERY_STAGES.DELIVERED, deliveryId]
         );
 
         if (result.rows.length === 0) return null;

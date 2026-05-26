@@ -22,13 +22,17 @@ const getDeliveryByOrderId = async (req, res) => {
 const requestDelivery = async (req, res) => {
     const { orderId } = req.params;
     try {
-        // Find existing delivery for this order
         const existingDelivery = await DeliveryService.getDeliveryByOrderId(orderId);
         if (existingDelivery) {
+            if (['Pending', 'Searching'].includes(existingDelivery.status)) {
+                const delivery = await DeliveryService.dispatchDelivery(orderId);
+                return res.status(200).json({ message: 'Delivery simulation started successfully', delivery });
+            }
             return res.status(400).json({ message: 'Delivery already requested for this order', delivery: existingDelivery });
         }
 
-        const delivery = await DeliveryService.createDelivery(orderId, req.body);
+        await DeliveryService.initializeDelivery(orderId, req.body?.delivery_fee || 0.50);
+        const delivery = await DeliveryService.dispatchDelivery(orderId);
         res.status(201).json({ message: 'Delivery dispatch request sent successfully', delivery });
     } catch (error) {
         console.error('Error requesting delivery:', error);

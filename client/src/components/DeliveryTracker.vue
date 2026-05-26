@@ -60,8 +60,9 @@ watch(() => props.orderId, () => {
 
 const stages = [
     { key: 'Pending', label: 'Preparing', icon: Clock },
+    { key: 'Searching', label: 'Finding Courier', icon: User },
     { key: 'Assigned', label: 'Driver Assigned', icon: User },
-    { key: 'Dispatched', label: 'Picked Up', icon: Package }, // Wait, Package isn't imported, I'll use Truck
+    { key: 'Picked Up', label: 'Picked Up', icon: Package },
     { key: 'In Transit', label: 'In Transit', icon: Truck },
     { key: 'Delivered', label: 'Delivered', icon: CheckCircle2 }
 ];
@@ -70,7 +71,9 @@ const stages = [
 const currentStageIndex = computed(() => {
     if (!delivery.value) return -1;
     const index = stages.findIndex(s => s.key === delivery.value!.status);
-    return index === -1 ? 0 : index;
+    if (index !== -1) return index;
+    if (delivery.value.status === 'Failed') return 0;
+    return 0;
 });
 
 const getStageStatus = (index: number) => {
@@ -193,7 +196,7 @@ const mapUrl = computed(() => {
                              <p class="text-xs sm:text-sm font-bold text-bakery-900 truncate max-w-[150px] sm:max-w-[200px]">{{ props.destination || 'Destination' }}</p>
                          </div>
                      </div>
-                     <div v-if="delivery.status !== 'Delivered'" class="text-right sm:text-left pl-3 sm:border-l sm:border-bakery-100">
+                     <div v-if="delivery.status !== 'Delivered' && delivery.status !== 'Failed'" class="text-right sm:text-left pl-3 sm:border-l sm:border-bakery-100">
                          <p class="text-[10px] sm:text-xs font-black text-bakery-400 uppercase tracking-widest">Est. Time</p>
                          <p class="text-xs sm:text-sm font-bold text-bakery-900 truncate">25-40 mins</p>
                      </div>
@@ -222,7 +225,7 @@ const mapUrl = computed(() => {
         <div v-else class="text-center py-10 opacity-50">
             <Truck class="w-12 h-12 text-bakery-200 mx-auto mb-3" />
             <p class="text-sm font-bold text-bakery-900">Delivery Status Pending</p>
-            <p class="text-xs text-bakery-500 mt-1">We'll show tracking once the baker is ready!</p>
+            <p class="text-xs text-bakery-500 mt-1">We'll show tracking once the order is ready for dispatch.</p>
         </div>
     </div>
 </template>
