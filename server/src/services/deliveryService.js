@@ -169,16 +169,16 @@ class DeliveryService {
              SET status = $1, 
                  updated_at = CURRENT_TIMESTAMP,
                  driver_name = CASE 
-                    WHEN $1 = $2 THEN COALESCE(driver_name, 'GHN Courier')
-                    WHEN $1 = $3 THEN COALESCE(driver_name, 'GHN Courier')
+                    WHEN $1::varchar = $2 THEN COALESCE(driver_name, 'GHN Courier')
+                    WHEN $1::varchar = $3 THEN COALESCE(driver_name, 'GHN Courier')
                     ELSE driver_name
                  END,
                  driver_phone = CASE 
-                    WHEN $1 = $2 THEN COALESCE(driver_phone, '0900000000')
-                    WHEN $1 = $3 THEN COALESCE(driver_phone, '0900000000')
+                    WHEN $1::varchar = $2 THEN COALESCE(driver_phone, '0900000000')
+                    WHEN $1::varchar = $3 THEN COALESCE(driver_phone, '0900000000')
                     ELSE driver_phone
                  END,
-                 actual_time = CASE WHEN $1 = $4 THEN CURRENT_TIMESTAMP ELSE actual_time END
+                 actual_time = CASE WHEN $1::varchar = $4 THEN CURRENT_TIMESTAMP ELSE actual_time END
              WHERE id = $5 
              RETURNING *`,
             [status, DELIVERY_STAGES.ASSIGNED, DELIVERY_STAGES.PICKED_UP, DELIVERY_STAGES.DELIVERED, deliveryId]
@@ -189,10 +189,10 @@ class DeliveryService {
 
         // Fetch user_id for notification
         const orderResult = await query(
-            'SELECT user_id FROM orders WHERE id = $1',
+            'SELECT customer_id FROM orders WHERE id = $1',
             [delivery.order_id]
         );
-        const userId = orderResult.rows[0]?.user_id;
+        const userId = orderResult.rows[0]?.customer_id;
 
         if (status === 'Delivered') {
             await query(
