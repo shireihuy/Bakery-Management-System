@@ -6,6 +6,7 @@ const { Server } = require('socket.io');
 
 const path = require('path');
 const pool = require('./config/db');
+const NotificationController = require('./controllers/notificationController');
 
 dotenv.config();
 
@@ -51,6 +52,18 @@ io.on('connection', (socket) => {
       // Emit to receiver's private room
       if (receiver_id) {
         io.to(`user_${receiver_id}`).emit('message:receive', newMessage);
+      } else {
+        const senderResult = await pool.query('SELECT name, role FROM users WHERE id = $1', [sender_id]);
+        if (senderResult.rows.length > 0) {
+            const sender = senderResult.rows[0];
+            if (!['Admin', 'Manager', 'Cashier'].includes(sender.role)) {
+                await NotificationController.notifySupportStaff(
+                    'New Support Message',
+                    `${sender.name}: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`,
+                    'info'
+                );
+            }
+        }
       }
       
       // Emit back to sender's private room (sync across tabs)

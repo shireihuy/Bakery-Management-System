@@ -90,6 +90,16 @@ class NotificationController {
             console.error('Error notifying admins:', error);
         }
     }
+    static async notifySupportStaff(title, message, type = 'info') {
+        try {
+            const staff = await query('SELECT id FROM users WHERE role IN ($1, $2, $3)', ['Admin', 'Manager', 'Cashier']);
+            for (const person of staff.rows) {
+                await this.createNotification(person.id, title, message, type);
+            }
+        } catch (error) {
+            console.error('Error notifying support staff:', error);
+        }
+    }
 }
 
 module.exports = NotificationController;
