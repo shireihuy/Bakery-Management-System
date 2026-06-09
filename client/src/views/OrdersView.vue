@@ -8,8 +8,7 @@ import {
     Clock, 
     XCircle, 
     Package,
-    ArrowUpRight,
-    Utensils
+    ArrowUpRight
 } from 'lucide-vue-next';
 import { useOrders, type Order } from '../composables/useOrders';
 import DeliveryTracker from '../components/DeliveryTracker.vue';
@@ -90,10 +89,10 @@ watch([searchQuery, statusFilter, itemsPerPage], () => {
 const stats = computed(() => {
     const total = orders.value.length;
     const pending = orders.value.filter(o => o.status === 'Pending').length;
-    const processing = orders.value.filter(o => ['Ready'].includes(o.status)).length;
+    const cancelled = orders.value.filter(o => o.status === 'Cancelled').length;
     const completed = orders.value.filter(o => o.status === 'Completed').length;
 
-    return { total, pending, processing, completed };
+    return { total, pending, cancelled, completed };
 });
 
 const getStatusColor = (status: Order['status']) => {
@@ -178,11 +177,11 @@ const confirmCancel = async () => {
 
             <div class="bg-white p-6 rounded-xl border border-green-100 shadow-sm flex items-center justify-between">
                  <div>
-                    <p class="text-sm font-medium text-blue-600">{{ t('orders.processing') }}</p>
-                    <p class="text-2xl font-bold text-blue-700 mt-1">{{ stats.processing }}</p>
+                    <p class="text-sm font-medium text-red-600">Cancelled Orders</p>
+                    <p class="text-2xl font-bold text-red-700 mt-1">{{ stats.cancelled }}</p>
                 </div>
-                 <div class="p-3 bg-blue-50 rounded-lg">
-                    <Utensils class="w-6 h-6 text-blue-600" />
+                 <div class="p-3 bg-red-50 rounded-lg">
+                    <XCircle class="w-6 h-6 text-red-600" />
                 </div>
             </div>
         </div>
