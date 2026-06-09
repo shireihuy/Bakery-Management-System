@@ -2,7 +2,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { 
     Search, 
-    Plus, 
     Warehouse, 
     AlertTriangle, 
     History, 
@@ -100,12 +99,7 @@ const getTotalQuantity = (item: InventoryItem) => {
     return item.batches.reduce((sum, batch) => sum + batch.quantity, 0);
 };
 
-const openAddModal = () => {
-    editingItem.value = null;
-    form.value = { name: '', category: '', quantity: 0, minQuantity: 0, unit: '' };
-    batchForm.value = { quantity: '', expirationDate: '', notes: '' };
-    isModalOpen.value = true;
-};
+
 
 const openEditModal = (item: InventoryItem) => {
     editingItem.value = item;
@@ -216,14 +210,7 @@ const handleDelete = (id: string) => {
                 <h2 class="text-2xl font-bold text-green-900">{{ t('inventory.inventoryManagement') }}</h2>
                 <p class="text-sm text-green-600">{{ t('inventory.monitorAndManage') }}</p>
             </div>
-            <button 
-                v-if="true"
-                @click="openAddModal"
-                class="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:from-green-700 hover:to-emerald-700 shadow-md transition-all active:scale-95"
-            >
-                <Plus class="w-4 h-4" />
-                {{ t('inventory.addNewItem') }}
-            </button>
+
         </div>
 
         <!-- Filters & Search -->
