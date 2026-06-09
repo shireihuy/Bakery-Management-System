@@ -114,19 +114,19 @@ const recentOrders = computed(() => {
     <!-- Quick Actions -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
       <button @click="goToOrders" class="glass-card rounded-[1.75rem] border border-bakery-100 p-5 text-left hover:border-bakery-300 transition-all">
-        <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400">Quick Action</p>
-        <p class="mt-2 text-lg font-black text-bakery-900">Open Orders</p>
-        <p class="mt-1 text-sm text-bakery-500">Review pending and active orders.</p>
+        <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400">{{ t('dashboard.quickAction') }}</p>
+        <p class="mt-2 text-lg font-black text-bakery-900">{{ t('dashboard.activeOrders') }}</p>
+        <p class="mt-1 text-sm text-bakery-500">{{ t('dashboard.openOrdersDesc') }}</p>
       </button>
       <button @click="goToInventory" class="glass-card rounded-[1.75rem] border border-bakery-100 p-5 text-left hover:border-bakery-300 transition-all">
-        <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400">Quick Action</p>
-        <p class="mt-2 text-lg font-black text-bakery-900">Check Inventory</p>
-        <p class="mt-1 text-sm text-bakery-500">See items that need refilling.</p>
+        <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400">{{ t('dashboard.quickAction') }}</p>
+        <p class="mt-2 text-lg font-black text-bakery-900">{{ t('dashboard.checkInventory') }}</p>
+        <p class="mt-1 text-sm text-bakery-500">{{ t('dashboard.checkInventoryDesc') }}</p>
       </button>
       <button @click="goToReports" class="glass-card rounded-[1.75rem] border border-bakery-100 p-5 text-left hover:border-bakery-300 transition-all">
-        <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400">Quick Action</p>
-        <p class="mt-2 text-lg font-black text-bakery-900">View Reports</p>
-        <p class="mt-1 text-sm text-bakery-500">Open sales and performance analytics.</p>
+        <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400">{{ t('dashboard.quickAction') }}</p>
+        <p class="mt-2 text-lg font-black text-bakery-900">{{ t('dashboard.viewReports') }}</p>
+        <p class="mt-1 text-sm text-bakery-500">{{ t('dashboard.viewReportsDesc') }}</p>
       </button>
     </div>
 
@@ -193,7 +193,7 @@ const recentOrders = computed(() => {
         <div class="p-8 border-b border-bakery-50">
           <h3 class="font-black text-bakery-900 text-xl tracking-tight flex items-center gap-3">
             <Package class="w-6 h-6 text-bakery-500" />
-            Current Stock Snapshot
+            {{ t('dashboard.currentStockSnapshot') }}
           </h3>
         </div>
         <div class="p-8 space-y-6">
@@ -201,13 +201,13 @@ const recentOrders = computed(() => {
               <div class="flex justify-between items-start mb-4">
                 <div>
                     <p class="text-bakery-900 font-black">{{ item.name }}</p>
-                    <p class="text-xs text-bakery-500 font-bold uppercase tracking-widest mt-1">Current stock</p>
+                    <p class="text-xs text-bakery-500 font-bold uppercase tracking-widest mt-1">{{ t('dashboard.currentStock') }}</p>
                 </div>
-                <div class="px-3 py-1 rounded-full bg-bakery-900 text-white text-[10px] font-black uppercase tracking-widest">Snapshot</div>
+                <div class="px-3 py-1 rounded-full bg-bakery-900 text-white text-[10px] font-black uppercase tracking-widest">{{ t('dashboard.snapshot') }}</div>
               </div>
               <div class="space-y-3">
                   <div class="flex justify-between text-xs font-bold text-bakery-500">
-                    <span>{{ item.activeQuantity ?? 0 }} active / {{ item.totalQuantity ?? 0 }} total {{ item.unit }}</span>
+                    <span>{{ item.activeQuantity ?? 0 }} {{ (t('dashboard.activeTotal').split('/')[0] || '').trim() }} / {{ item.totalQuantity ?? 0 }} {{ (t('dashboard.activeTotal').split('/')[1] || '').trim() }} {{ item.unit }}</span>
                     <span>{{ (item.totalQuantity ?? 0) > 0 ? Math.round(((item.activeQuantity ?? 0) / (item.totalQuantity ?? 0)) * 100) : 0 }}%</span>
                   </div>
                   <div class="w-full bg-gray-100 rounded-full h-3 p-0.5">
@@ -217,7 +217,7 @@ const recentOrders = computed(() => {
                     ></div>
                   </div>
                   <p class="text-[11px] text-bakery-400 font-medium">
-                    {{ item.hasExpiredBatch ? 'Expired stock exists in this product' : 'No expired stock in this product' }}
+                    {{ item.hasExpiredBatch ? t('dashboard.expiredStockExists') : t('dashboard.noExpiredStock') }}
                   </p>
               </div>
             </div>

@@ -177,7 +177,7 @@ const confirmCancel = async () => {
 
             <div class="bg-white p-6 rounded-xl border border-green-100 shadow-sm flex items-center justify-between">
                  <div>
-                    <p class="text-sm font-medium text-red-600">Cancelled Orders</p>
+                    <p class="text-sm font-medium text-red-600">{{ t('orders.cancelledOrders') }}</p>
                     <p class="text-2xl font-bold text-red-700 mt-1">{{ stats.cancelled }}</p>
                 </div>
                  <div class="p-3 bg-red-50 rounded-lg">

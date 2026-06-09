@@ -113,11 +113,24 @@ export interface TranslationSchema {
         critical: string;
         inventoryOptimal: string;
         signatureCatalog: string;
+        quickAction: string;
+        openOrdersDesc: string;
+        checkInventory: string;
+        checkInventoryDesc: string;
+        viewReports: string;
+        viewReportsDesc: string;
+        currentStockSnapshot: string;
+        currentStock: string;
+        snapshot: string;
+        activeTotal: string;
+        expiredStockExists: string;
+        noExpiredStock: string;
     };
     orders: {
         totalOrders: string;
         pending: string;
         processing: string;
+        cancelledOrders: string;
         searchPlaceholder: string;
         allStatus: string;
         orderId: string;
@@ -437,13 +450,26 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             inventoryAlerts: 'Inventory Alerts',
             refillRecommended: 'Refill Recommended',
             critical: 'Critical',
-            inventoryOptimal: 'All inventory levels are optimal.',
-            signatureCatalog: 'Signature Catalog'
+            inventoryOptimal: 'Inventory is currently at optimal levels.',
+            signatureCatalog: 'Signature Catalog',
+            quickAction: 'Quick Action',
+            openOrdersDesc: 'Review pending and active orders.',
+            checkInventory: 'Check Inventory',
+            checkInventoryDesc: 'Monitor stock levels and restock items.',
+            viewReports: 'View Reports',
+            viewReportsDesc: 'Analyze sales and performance metrics.',
+            currentStockSnapshot: 'Current Stock Snapshot',
+            currentStock: 'Current stock',
+            snapshot: 'Snapshot',
+            activeTotal: 'active / total',
+            expiredStockExists: 'Expired stock exists in this product',
+            noExpiredStock: 'No expired stock in this product',
         },
         orders: {
             totalOrders: 'Total Orders',
-            pending: 'Pending',
-            processing: 'Processing',
+            pending: 'Pending Orders',
+            processing: 'Orders in Process',
+            cancelledOrders: 'Cancelled Orders',
             searchPlaceholder: 'Search #ID or customer...',
             allStatus: 'All Status',
             orderId: 'Order ID',
@@ -761,13 +787,26 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             inventoryAlerts: '在庫アラート',
             refillRecommended: '補充推奨',
             critical: '重要',
-            inventoryOptimal: 'すべての在庫レベルは最適です。',
-            signatureCatalog: 'シグネチャーカタログ'
+            inventoryOptimal: '現在、在庫は最適なレベルにあります。',
+            signatureCatalog: 'シグネチャーカタログ',
+            quickAction: 'クイックアクション',
+            openOrdersDesc: '保留中および進行中の注文を確認します。',
+            checkInventory: '在庫を確認',
+            checkInventoryDesc: '在庫レベルを監視し、商品を補充します。',
+            viewReports: 'レポートを表示',
+            viewReportsDesc: '売上とパフォーマンスの指標を分析します。',
+            currentStockSnapshot: '現在の在庫スナップショット',
+            currentStock: '現在の在庫',
+            snapshot: 'スナップショット',
+            activeTotal: 'アクティブ / 合計',
+            expiredStockExists: 'この商品には期限切れの在庫があります',
+            noExpiredStock: 'この商品には期限切れの在庫はありません',
         },
         orders: {
-            totalOrders: '注文総数',
-            pending: '保留中',
-            processing: '処理中',
+            totalOrders: '総注文数',
+            pending: '保留中の注文',
+            processing: '処理中の注文',
+            cancelledOrders: 'キャンセルされた注文',
             searchPlaceholder: '注文番号または顧客名で検索...',
             allStatus: 'すべてのステータス',
             orderId: '注文番号',
@@ -1085,13 +1124,26 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             inventoryAlerts: 'Cảnh Báo Kho Hàng',
             refillRecommended: 'Khuyên dùng bổ sung',
             critical: 'Nguy cấp',
-            inventoryOptimal: 'Tất cả mức tồn kho đều tối ưu.',
-            signatureCatalog: 'Danh Mục Đặc Trưng'
+            inventoryOptimal: 'Hàng tồn kho hiện tại ở mức tối ưu.',
+            signatureCatalog: 'Danh Mục Sản Phẩm Tiêu Biểu',
+            quickAction: 'Hành động nhanh',
+            openOrdersDesc: 'Xem lại các đơn hàng đang chờ và đang hoạt động.',
+            checkInventory: 'Kiểm tra kho',
+            checkInventoryDesc: 'Theo dõi lượng tồn kho và nhập thêm hàng.',
+            viewReports: 'Xem Báo Cáo',
+            viewReportsDesc: 'Phân tích doanh số và chỉ số hiệu suất.',
+            currentStockSnapshot: 'Ảnh Chụp Tồn Kho Hiện Tại',
+            currentStock: 'Tồn kho hiện tại',
+            snapshot: 'Ảnh chụp',
+            activeTotal: 'đang dùng / tổng',
+            expiredStockExists: 'Có hàng hết hạn trong sản phẩm này',
+            noExpiredStock: 'Không có hàng hết hạn trong sản phẩm này',
         },
         orders: {
             totalOrders: 'Tổng Đơn Hàng',
-            pending: 'Chờ xử lý',
-            processing: 'Đang nấu',
+            pending: 'Đơn Hàng Chờ Xử Lý',
+            processing: 'Đơn Hàng Đang Xử Lý',
+            cancelledOrders: 'Đơn Hàng Đã Hủy',
             searchPlaceholder: 'Tìm mã đơn hoặc khách hàng...',
             allStatus: 'Tất cả trạng thái',
             orderId: 'Mã đơn hàng',
