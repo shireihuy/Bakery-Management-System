@@ -92,9 +92,8 @@ const stats = computed(() => {
     const pending = orders.value.filter(o => o.status === 'Pending').length;
     const processing = orders.value.filter(o => ['Ready'].includes(o.status)).length;
     const completed = orders.value.filter(o => o.status === 'Completed').length;
-    const revenue = orders.value.reduce((acc, curr) => acc + (curr.status !== 'Cancelled' ? curr.total : 0), 0);
-    
-    return { total, pending, processing, completed, revenue };
+
+    return { total, pending, processing, completed };
 });
 
 const getStatusColor = (status: Order['status']) => {
@@ -159,8 +158,8 @@ const confirmCancel = async () => {
             
             <div class="bg-white p-6 rounded-xl border border-green-100 shadow-sm flex items-center justify-between">
                 <div>
-                    <p class="text-sm font-medium text-green-600">{{ t('reports.totalRevenue') }}</p>
-                    <p class="text-2xl font-bold text-green-900 mt-1">{{ formatPrice(stats.revenue) }}</p>
+                    <p class="text-sm font-medium text-green-600">Completed Orders</p>
+                    <p class="text-2xl font-bold text-green-900 mt-1">{{ stats.completed }}</p>
                 </div>
                 <div class="p-3 bg-green-50 rounded-lg">
                     <ArrowUpRight class="w-6 h-6 text-green-600" />
