@@ -87,6 +87,19 @@ const getBatchStatus = (item: InventoryItem) => {
     return { label: `${activeBatches.length} active`, color: 'bg-green-100 text-green-700 border-green-200' };
 };
 
+const getActiveQuantity = (item: InventoryItem) => {
+    if (!item.batches || item.batches.length === 0) return item.quantity;
+    const todayStart = new Date(new Date().toDateString());
+    return item.batches
+        .filter(batch => !batch.expirationDate || new Date(batch.expirationDate) >= todayStart)
+        .reduce((sum, batch) => sum + batch.quantity, 0);
+};
+
+const getTotalQuantity = (item: InventoryItem) => {
+    if (!item.batches || item.batches.length === 0) return item.quantity;
+    return item.batches.reduce((sum, batch) => sum + batch.quantity, 0);
+};
+
 const openAddModal = () => {
     editingItem.value = null;
     form.value = { name: '', category: '', quantity: 0, minQuantity: 0, unit: '' };
@@ -268,14 +281,19 @@ const handleDelete = (id: string) => {
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-32 bg-gray-100 h-2 rounded-full overflow-hidden">
+                                    <div class="w-32 bg-gray-100 h-2 rounded-full overflow-hidden" :title="`Total: ${getTotalQuantity(item)}, Active: ${getActiveQuantity(item)}`">
                                         <div 
                                             class="h-full transition-all duration-500"
-                                            :class="item.quantity <= item.minQuantity ? 'bg-orange-500' : 'bg-green-500'"
-                                            :style="{ width: `${Math.min(100, (item.quantity / (item.minQuantity * 2)) * 100)}%` }"
+                                            :class="getActiveQuantity(item) <= item.minQuantity ? 'bg-orange-500' : 'bg-green-500'"
+                                            :style="{ width: `${getTotalQuantity(item) > 0 ? Math.min(100, (getActiveQuantity(item) / getTotalQuantity(item)) * 100) : 0}%` }"
                                         ></div>
                                     </div>
-                                    <span class="font-bold text-gray-900">{{ item.quantity }} {{ item.unit }}</span>
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-gray-900">{{ getActiveQuantity(item) }} {{ item.unit }}</span>
+                                        <span v-if="getTotalQuantity(item) !== getActiveQuantity(item)" class="text-[10px] text-red-500 font-medium leading-none mt-1">
+                                            {{ (getTotalQuantity(item) - getActiveQuantity(item)).toFixed(1) }} expired
+                                        </span>
+                                    </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
