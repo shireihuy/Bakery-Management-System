@@ -175,6 +175,8 @@ export interface TranslationSchema {
         exportCsv: string;
         totalRevenueWeekly: string;
         totalWeeklyOrders: string;
+        totalRevenueMonthly: string;
+        totalMonthlyOrders: string;
         averageOrderValue: string;
         fromLastWeek: string;
         salesVolume: string;
@@ -188,9 +190,18 @@ export interface TranslationSchema {
         currentTrend: string;
         performanceScore: string;
         viewRankings: string;
+        viewAllProducts: string;
         last7Days: string;
         lastMonth: string;
         allTime: string;
+        topSeller: string;
+        steadySeller: string;
+        goodRevenue: string;
+        needsAttention: string;
+        topSellerDesc: string;
+        steadySellerDesc: string;
+        goodRevenueDesc: string;
+        needsAttentionDesc: string;
     };
     users: {
         userManagement: string;
@@ -490,6 +501,8 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             exportCsv: 'Export CSV',
             totalRevenueWeekly: 'Total Revenue (Weekly)',
             totalWeeklyOrders: 'Total Weekly Orders',
+            totalRevenueMonthly: 'Total Revenue (Monthly)',
+            totalMonthlyOrders: 'Total Monthly Orders',
             averageOrderValue: 'Average Order Value',
             fromLastWeek: 'from last week',
             salesVolume: 'sales volume',
@@ -503,9 +516,18 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             currentTrend: 'Current Trend',
             performanceScore: 'Performance Score',
             viewRankings: 'View Detailed Rankings',
+            viewAllProducts: 'View All Products',
             last7Days: 'Last 7 Days',
             lastMonth: 'Last Month',
-            allTime: 'All Time'
+            allTime: 'All Time',
+            topSeller: 'Top seller',
+            steadySeller: 'Steady seller',
+            goodRevenue: 'Good revenue',
+            needsAttention: 'Needs attention',
+            topSellerDesc: 'Highest sales volume',
+            steadySellerDesc: 'Consistent performance',
+            goodRevenueDesc: 'Strong financial return',
+            needsAttentionDesc: 'Lower than expected sales'
         },
         users: {
             userManagement: 'User Management',
@@ -803,6 +825,8 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             exportCsv: 'CSVをエクスポート',
             totalRevenueWeekly: '週次総収益',
             totalWeeklyOrders: '週次注文総数',
+            totalRevenueMonthly: '月次総収益',
+            totalMonthlyOrders: '月次注文総数',
             averageOrderValue: '平均注文金額',
             fromLastWeek: '先週比',
             salesVolume: '販売量',
@@ -816,9 +840,18 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             currentTrend: '現在のトレンド',
             performanceScore: 'パフォーマンススコア',
             viewRankings: '詳細ランキングを表示',
+            viewAllProducts: 'すべての商品を表示',
             last7Days: '過去7日間',
             lastMonth: '先月',
-            allTime: '全期間'
+            allTime: '全期間',
+            topSeller: 'トップセラー',
+            steadySeller: '安定セラー',
+            goodRevenue: '好収益',
+            needsAttention: '要注意',
+            topSellerDesc: '最高の販売量',
+            steadySellerDesc: '安定したパフォーマンス',
+            goodRevenueDesc: '強力な財務リターン',
+            needsAttentionDesc: '予想を下回る売上'
         },
         users: {
             userManagement: 'ユーザー管理',
@@ -1116,6 +1149,8 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             exportCsv: 'Xuất file CSV',
             totalRevenueWeekly: 'Doanh Thu Hàng Tuần',
             totalWeeklyOrders: 'Tổng Đơn Hàng Tuần',
+            totalRevenueMonthly: 'Doanh Thu Hàng Tháng',
+            totalMonthlyOrders: 'Tổng Đơn Hàng Tháng',
             averageOrderValue: 'Giá Trị Đơn Trung Bình',
             fromLastWeek: 'so với tuần trước',
             salesVolume: 'lượng đơn hàng',
@@ -1129,9 +1164,18 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             currentTrend: 'Xu hướng',
             performanceScore: 'Điểm Hiệu Suất',
             viewRankings: 'Xem bảng xếp hạng chi tiết',
+            viewAllProducts: 'Xem tất cả sản phẩm',
             last7Days: '7 ngày qua',
             lastMonth: 'Tháng trước',
-            allTime: 'Tất cả thời gian'
+            allTime: 'Tất cả thời gian',
+            topSeller: 'Bán chạy nhất',
+            steadySeller: 'Bán ổn định',
+            goodRevenue: 'Doanh thu tốt',
+            needsAttention: 'Cần chú ý',
+            topSellerDesc: 'Doanh số cao nhất',
+            steadySellerDesc: 'Hiệu suất ổn định',
+            goodRevenueDesc: 'Lợi nhuận tài chính mạnh',
+            needsAttentionDesc: 'Doanh số thấp hơn dự kiến'
         },
         users: {
             userManagement: 'Quản Lý Người Dùng',
