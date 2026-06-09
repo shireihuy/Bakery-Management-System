@@ -192,7 +192,7 @@ const recentOrders = computed(() => {
       <div class="glass-card rounded-[2.5rem] border border-bakery-100 overflow-hidden">
         <div class="p-8 border-b border-bakery-50">
           <h3 class="font-black text-bakery-900 text-xl tracking-tight flex items-center gap-3">
-            <AlertTriangle class="w-6 h-6 text-red-500" />
+            <Package class="w-6 h-6 text-bakery-500" />
             Current Stock Snapshot
           </h3>
         </div>
