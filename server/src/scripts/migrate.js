@@ -10,6 +10,12 @@ async function migrate() {
         `);
 
         await query(`
+            UPDATE orders
+            SET status = 'Ready'
+            WHERE status = 'Baking'
+        `);
+
+        await query(`
             CREATE TABLE IF NOT EXISTS notifications (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 user_id UUID REFERENCES users(id) ON DELETE CASCADE,
