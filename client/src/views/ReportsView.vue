@@ -61,7 +61,7 @@ const formatCurrency = (value: number) => {
     return formatPrice(value);
 };
 const handleExport = () => {
-    const rangeLabel = selectedRange.value === 'all' ? t('reports.allTime') : t('reports.last7Days');
+    const rangeLabel = selectedRange.value === 'all' ? t('reports.allTime') : selectedRange.value === 'lastMonth' ? t('reports.lastMonth') : t('reports.last7Days');
     const revenueLabel = selectedRange.value === 'all' ? t('dashboard.totalRevenue') : t('reports.totalRevenueWeekly');
     const ordersLabel = selectedRange.value === 'all' ? t('orders.totalOrders') : t('reports.totalWeeklyOrders');
     const lang = localStorage.getItem('lang') || 'en';
@@ -158,7 +158,7 @@ const handleExport = () => {
                         class="bg-white border border-green-100 rounded-lg px-3 py-2 flex items-center gap-2 text-sm shadow-sm group hover:border-green-400 cursor-pointer transition-all font-medium text-gray-700"
                     >
                         <Calendar class="w-4 h-4 text-green-600" />
-                        <span>{{ selectedRange === 'all' ? t('reports.allTime') : t('reports.last7Days') }}</span>
+                        <span>{{ selectedRange === 'all' ? t('reports.allTime') : selectedRange === 'lastMonth' ? t('reports.lastMonth') : t('reports.last7Days') }}</span>
                         <ChevronRight class="w-4 h-4 text-gray-400 transition-transform" :class="{ 'rotate-90': isOpen }" />
                     </button>
                     <!-- Dropdown menu -->
@@ -170,6 +170,14 @@ const handleExport = () => {
                         >
                             <span>{{ t('reports.last7Days') }}</span>
                             <span v-if="selectedRange === '7days'" class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
+                        </button>
+                        <button 
+                            @click="selectRange('lastMonth')"
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 transition-colors flex items-center justify-between"
+                            :class="{ 'bg-green-50/50 text-green-700 font-bold': selectedRange === 'lastMonth' }"
+                        >
+                            <span>{{ t('reports.lastMonth') }}</span>
+                            <span v-if="selectedRange === 'lastMonth'" class="w-1.5 h-1.5 bg-green-600 rounded-full"></span>
                         </button>
                         <button 
                             @click="selectRange('all')"
@@ -243,7 +251,7 @@ const handleExport = () => {
                         {{ t('reports.revenueOverTime') }}
                     </h3>
                     <span class="text-xs font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-full uppercase tracking-wider">
-                        {{ selectedRange === 'all' ? t('reports.allTime') : t('reports.sevenDayAnalytics') }}
+                        {{ selectedRange === 'all' ? t('reports.allTime') : selectedRange === 'lastMonth' ? t('reports.lastMonth') : t('reports.sevenDayAnalytics') }}
                     </span>
                 </div>
                 <div class="h-64 mb-8">

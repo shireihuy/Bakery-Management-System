@@ -20,6 +20,8 @@ export interface InventoryItem {
     }[];
     nearestExpiry?: string | null;
     hasExpiredBatch?: boolean;
+    activeQuantity?: number;
+    totalQuantity?: number;
 }
 
 const inventory = ref<InventoryItem[]>([]);
@@ -49,7 +51,9 @@ export function useInventory() {
                 isProduct: true,
                 batches: p.batches || [],
                 nearestExpiry: p.nearestExpiry || null,
-                hasExpiredBatch: p.hasExpiredBatch || false
+                hasExpiredBatch: p.hasExpiredBatch || false,
+                activeQuantity: p.activeQuantity || p.stock || 0,
+                totalQuantity: p.totalQuantity || p.stock || 0
             }));
 
             // TODO: In the future, fetch from /api/inventory for supplies

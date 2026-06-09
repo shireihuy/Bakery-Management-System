@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { 
   DollarSign, 
   ShoppingCart, 
@@ -15,26 +16,34 @@ import { useCurrency } from '../composables/useCurrency';
 
 const { orders, fetchOrders } = useOrders();
 const { products, fetchProducts } = useProducts();
-const { lowStockItems: inventoryLowStock } = useInventory();
+const { inventory: inventoryItems, lowStockItems: inventoryLowStock, fetchInventory } = useInventory();
 const { t } = useI18n();
 const { formatPrice } = useCurrency();
+const router = useRouter();
 
 onMounted(async () => {
     try {
         await Promise.all([
             fetchOrders(),
-            fetchProducts()
+            fetchProducts(),
+            fetchInventory()
         ]);
     } catch (err) {
         console.error('Error loading dashboard data:', err);
     }
 });
 
+const goToOrders = () => router.push({ name: 'orders' });
+const goToInventory = () => router.push({ name: 'inventory' });
+const goToReports = () => router.push({ name: 'reports' });
+
+const stockSnapshotItems = computed(() => inventoryItems.value.slice(0, 4));
+
 const stats = computed(() => [
   {
     title: t('dashboard.totalRevenue'),
     value: formatPrice(orders.value.reduce((sum, o) => sum + (o.status !== 'Cancelled' ? o.total : 0), 0)),
-    change: t('dashboard.fromOrders').replace('{n}', orders.value.length.toString()),
+    change: `${orders.value.length} orders total`,
     icon: DollarSign,
     color: "text-green-600",
     bgColor: "bg-green-100"
@@ -42,7 +51,7 @@ const stats = computed(() => [
   {
     title: t('dashboard.activeOrders'),
     value: orders.value.filter(o => ['Pending', 'Ready'].includes(o.status)).length.toString(),
-    change: t('dashboard.waitingAction'),
+    change: 'Waiting for processing',
     icon: ShoppingCart,
     color: "text-blue-600",
     bgColor: "bg-blue-100"
@@ -50,7 +59,7 @@ const stats = computed(() => [
   {
     title: t('dashboard.totalProducts'),
     value: products.value.length.toString(),
-    change: t('dashboard.activeCatalog'),
+    change: 'Products currently listed',
     icon: Package,
     color: "text-purple-600",
     bgColor: "bg-purple-100"
@@ -58,7 +67,7 @@ const stats = computed(() => [
   {
     title: t('dashboard.lowStockItems'),
     value: inventoryLowStock.value.length.toString(),
-    change: t('dashboard.requiringAttention'),
+    change: 'Need a refill soon',
     icon: AlertTriangle,
     color: "text-red-600",
     bgColor: "bg-red-100"
@@ -69,9 +78,6 @@ const recentOrders = computed(() => {
     return [...orders.value].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 4);
 });
 
-const lowStockDisplay = computed(() => {
-    return inventoryLowStock.value.slice(0, 3);
-});
 </script>
 
 <template>
@@ -103,6 +109,25 @@ const lowStockDisplay = computed(() => {
               </div>
           </div>
       </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <button @click="goToOrders" class="glass-card rounded-[1.75rem] border border-bakery-100 p-5 text-left hover:border-bakery-300 transition-all">
+        <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400">Quick Action</p>
+        <p class="mt-2 text-lg font-black text-bakery-900">Open Orders</p>
+        <p class="mt-1 text-sm text-bakery-500">Review pending and active orders.</p>
+      </button>
+      <button @click="goToInventory" class="glass-card rounded-[1.75rem] border border-bakery-100 p-5 text-left hover:border-bakery-300 transition-all">
+        <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400">Quick Action</p>
+        <p class="mt-2 text-lg font-black text-bakery-900">Check Inventory</p>
+        <p class="mt-1 text-sm text-bakery-500">See items that need refilling.</p>
+      </button>
+      <button @click="goToReports" class="glass-card rounded-[1.75rem] border border-bakery-100 p-5 text-left hover:border-bakery-300 transition-all">
+        <p class="text-[10px] font-black uppercase tracking-widest text-bakery-400">Quick Action</p>
+        <p class="mt-2 text-lg font-black text-bakery-900">View Reports</p>
+        <p class="mt-1 text-sm text-bakery-500">Open sales and performance analytics.</p>
+      </button>
     </div>
 
     <!-- Executive Stats Grid -->
@@ -163,37 +188,40 @@ const lowStockDisplay = computed(() => {
         </div>
       </div>
 
-      <!-- Low Stock Alerts with Progress Visualization -->
+      <!-- Current Stock Snapshot -->
       <div class="glass-card rounded-[2.5rem] border border-bakery-100 overflow-hidden">
         <div class="p-8 border-b border-bakery-50">
           <h3 class="font-black text-bakery-900 text-xl tracking-tight flex items-center gap-3">
             <AlertTriangle class="w-6 h-6 text-red-500" />
-            {{ t('dashboard.inventoryAlerts') }}
+            Current Stock Snapshot
           </h3>
         </div>
         <div class="p-8 space-y-6">
-            <div v-for="(item, index) in lowStockDisplay" :key="index" class="p-6 bg-red-50 rounded-3xl border border-red-100 group">
+            <div v-for="(item, index) in stockSnapshotItems" :key="index" class="p-6 bg-white rounded-3xl border border-bakery-100 group shadow-sm">
               <div class="flex justify-between items-start mb-4">
                 <div>
                     <p class="text-bakery-900 font-black">{{ item.name }}</p>
-                    <p class="text-xs text-red-600 font-bold uppercase tracking-widest mt-1">{{ t('dashboard.refillRecommended') }}</p>
+                    <p class="text-xs text-bakery-500 font-bold uppercase tracking-widest mt-1">Current stock</p>
                 </div>
-                <div class="px-3 py-1 rounded-full bg-red-600 text-white text-[10px] font-black uppercase tracking-widest">{{ t('dashboard.critical') }}</div>
+                <div class="px-3 py-1 rounded-full bg-bakery-900 text-white text-[10px] font-black uppercase tracking-widest">Snapshot</div>
               </div>
               <div class="space-y-3">
                   <div class="flex justify-between text-xs font-bold text-bakery-500">
-                    <span>{{ item.quantity }} / {{ item.minQuantity }} {{ item.unit }}</span>
-                    <span>{{ Math.round((item.quantity / item.minQuantity) * 100) }}%</span>
+                    <span>{{ item.activeQuantity ?? 0 }} active / {{ item.totalQuantity ?? 0 }} total {{ item.unit }}</span>
+                    <span>{{ (item.totalQuantity ?? 0) > 0 ? Math.round(((item.activeQuantity ?? 0) / (item.totalQuantity ?? 0)) * 100) : 0 }}%</span>
                   </div>
-                  <div class="w-full bg-red-200 rounded-full h-3 p-0.5">
+                  <div class="w-full bg-gray-100 rounded-full h-3 p-0.5">
                     <div 
-                      class="bg-red-600 h-2 rounded-full shadow-sm shadow-red-200 transition-all duration-1000" 
-                      :style="{ width: `${(item.quantity / item.minQuantity) * 100}%` }"
+                      class="bg-emerald-600 h-2 rounded-full shadow-sm shadow-emerald-200 transition-all duration-1000" 
+                      :style="{ width: `${(item.totalQuantity ?? 0) > 0 ? Math.min(100, ((item.activeQuantity ?? 0) / (item.totalQuantity ?? 0)) * 100) : 0}%` }"
                     ></div>
                   </div>
+                  <p class="text-[11px] text-bakery-400 font-medium">
+                    {{ item.hasExpiredBatch ? 'Expired stock exists in this product' : 'No expired stock in this product' }}
+                  </p>
               </div>
             </div>
-            <div v-if="lowStockDisplay.length === 0" class="flex flex-col items-center justify-center py-12 text-center space-y-4">
+            <div v-if="stockSnapshotItems.length === 0" class="flex flex-col items-center justify-center py-12 text-center space-y-4">
                 <div class="w-16 h-16 rounded-full bg-bakery-50 flex items-center justify-center">
                     <sparkles class="w-8 h-8 text-bakery-300" />
                 </div>

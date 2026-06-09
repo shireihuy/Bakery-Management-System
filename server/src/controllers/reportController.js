@@ -4,13 +4,26 @@ const getReportData = async (req, res) => {
     try {
         const range = req.query.range || '7days';
         const isAllTime = range === 'all';
+        const isLastMonth = range === 'lastMonth';
 
-        const dateColumn = isAllTime ? "TO_CHAR(order_date, 'MM/YYYY')" : "TO_CHAR(order_date, 'Dy')";
-        const dateGroup = isAllTime ? "TO_CHAR(order_date, 'MM/YYYY')" : "TO_CHAR(order_date, 'Dy')";
+        const dateColumn = isAllTime
+            ? "TO_CHAR(order_date, 'MM/YYYY')"
+            : isLastMonth
+                ? "TO_CHAR(order_date, 'DD Mon')"
+                : "TO_CHAR(order_date, 'Dy')";
+        const dateGroup = dateColumn;
         const dateTruncUnit = isAllTime ? 'month' : 'day';
         
-        const dateFilter = isAllTime ? "" : "AND order_date >= CURRENT_DATE - INTERVAL '6 days'";
-        const oDateFilter = isAllTime ? "" : "AND o.order_date >= CURRENT_DATE - INTERVAL '6 days'";
+        const dateFilter = isAllTime
+            ? ""
+            : isLastMonth
+                ? "AND order_date >= CURRENT_DATE - INTERVAL '30 days'"
+                : "AND order_date >= CURRENT_DATE - INTERVAL '6 days'";
+        const oDateFilter = isAllTime
+            ? ""
+            : isLastMonth
+                ? "AND o.order_date >= CURRENT_DATE - INTERVAL '30 days'"
+                : "AND o.order_date >= CURRENT_DATE - INTERVAL '6 days'";
 
         // 1. Daily Revenue & Orders
         const dailyResult = await query(`

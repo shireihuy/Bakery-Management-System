@@ -189,6 +189,7 @@ export interface TranslationSchema {
         performanceScore: string;
         viewRankings: string;
         last7Days: string;
+        lastMonth: string;
         allTime: string;
     };
     users: {
@@ -503,6 +504,7 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             performanceScore: 'Performance Score',
             viewRankings: 'View Detailed Rankings',
             last7Days: 'Last 7 Days',
+            lastMonth: 'Last Month',
             allTime: 'All Time'
         },
         users: {
@@ -815,6 +817,7 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             performanceScore: 'パフォーマンススコア',
             viewRankings: '詳細ランキングを表示',
             last7Days: '過去7日間',
+            lastMonth: '先月',
             allTime: '全期間'
         },
         users: {
@@ -1127,6 +1130,7 @@ export const defaultTranslations: Record<Language, TranslationSchema> = {
             performanceScore: 'Điểm Hiệu Suất',
             viewRankings: 'Xem bảng xếp hạng chi tiết',
             last7Days: '7 ngày qua',
+            lastMonth: 'Tháng trước',
             allTime: 'Tất cả thời gian'
         },
         users: {
