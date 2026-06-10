@@ -1,6 +1,25 @@
 const { query } = require('../config/db');
 const NotificationController = require('./notificationController');
 const payos = require('../config/payos');
+const DeliveryService = require('../services/deliveryService');
+
+const DELIVERY_DISPATCH_DELAY_MS = 30000;
+
+const scheduleDeliveryDispatchAfterPayment = (order) => {
+    if (!order || order.delivery_type !== 'Delivery') return;
+
+    const timer = setTimeout(async () => {
+        try {
+            await DeliveryService.dispatchDelivery(order.id);
+        } catch (deliveryErr) {
+            console.error('[PaymentController] Failed to dispatch paid delivery order:', deliveryErr);
+        }
+    }, DELIVERY_DISPATCH_DELAY_MS);
+
+    if (typeof timer.unref === 'function') {
+        timer.unref();
+    }
+};
 
 /**
  * Fetch and cache exchange rate from USD to VND
@@ -140,7 +159,7 @@ const verifyPayment = async (req, res) => {
 
     try {
         const result = await query(
-            'SELECT id, status, payment_status, payment_method, transaction_id, payment_url, qr_code, total_price, customer_id FROM orders WHERE id = $1',
+            'SELECT id, status, payment_status, payment_method, transaction_id, payment_url, qr_code, total_price, customer_id, delivery_type FROM orders WHERE id = $1',
             [orderId]
         );
 
@@ -171,6 +190,7 @@ const verifyPayment = async (req, res) => {
                     `;
                     const updatedResult = await query(updateQuery, ['Paid', 'Ready', payosInfo.id, orderId]);
                     order = updatedResult.rows[0];
+                    scheduleDeliveryDispatchAfterPayment(order);
 
                     // Record payment
                     await query(
@@ -256,6 +276,10 @@ const simulateCallback = async (req, res) => {
 
         await query(updateQuery, [nextPaymentStatus, nextOrderStatus, transactionId || `TX_${Date.now()}`, orderId]);
 
+        if (status === 'success') {
+            scheduleDeliveryDispatchAfterPayment(order);
+        }
+
         // Also record in payments table
         await query(
             'INSERT INTO payments (order_id, method, amount, status, transaction_id) VALUES ($1, $2, $3, $4, $5)',
@@ -308,6 +332,8 @@ const handlePayOSWebhook = async (req, res) => {
             
             if (result.rows.length > 0) {
                 const order = result.rows[0];
+                scheduleDeliveryDispatchAfterPayment(order);
+
                 // Record payment
                 await query(
                     'INSERT INTO payments (order_id, method, amount, status, transaction_id) VALUES ($1, $2, $3, $4, $5)',

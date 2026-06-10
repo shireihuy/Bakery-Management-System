@@ -2,10 +2,12 @@ describe('paymentController', () => {
     let db;
     let notifications;
     let payos;
+    let DeliveryService;
     let controller;
 
     beforeEach(() => {
         vi.resetModules();
+        vi.useRealTimers();
         global.io = { emit: vi.fn() };
         global.fetch = vi.fn().mockResolvedValue({
             json: async () => ({ rates: { VND: 25000, JPY: 150 } })
@@ -22,10 +24,14 @@ describe('paymentController', () => {
                 verify: vi.fn()
             }
         };
+        DeliveryService = {
+            dispatchDelivery: vi.fn()
+        };
 
         require.cache[require.resolve('../config/db')] = { exports: db };
         require.cache[require.resolve('./notificationController')] = { exports: notifications };
         require.cache[require.resolve('../config/payos')] = { exports: payos };
+        require.cache[require.resolve('../services/deliveryService')] = { exports: DeliveryService };
 
         delete require.cache[require.resolve('./paymentController')];
         controller = require('./paymentController');
@@ -93,6 +99,7 @@ describe('paymentController', () => {
     });
 
     it('verifies payment and updates paid order', async () => {
+        vi.useFakeTimers();
         db.query
             .mockResolvedValueOnce({
                 rows: [{
@@ -104,7 +111,8 @@ describe('paymentController', () => {
                     payment_url: null,
                     qr_code: null,
                     total_price: 200,
-                    customer_id: 'u1'
+                    customer_id: 'u1',
+                    delivery_type: 'Delivery'
                 }]
             })
             .mockResolvedValueOnce({
@@ -117,7 +125,8 @@ describe('paymentController', () => {
                     payment_url: null,
                     qr_code: null,
                     total_price: 200,
-                    customer_id: 'u1'
+                    customer_id: 'u1',
+                    delivery_type: 'Delivery'
                 }]
             })
             .mockResolvedValueOnce({ rows: [] });
@@ -130,9 +139,13 @@ describe('paymentController', () => {
         expect(global.io.emit).toHaveBeenCalledWith('order_paid', { orderId: '4' });
         expect(notifications.createNotification).toHaveBeenCalled();
         expect(res.body.status).toBe('Ready');
+
+        await vi.advanceTimersByTimeAsync(30000);
+        expect(DeliveryService.dispatchDelivery).toHaveBeenCalledWith(4);
     });
 
     it('processes success callback and webhook success path', async () => {
+        vi.useFakeTimers();
         db.query
             .mockResolvedValueOnce({
                 rows: [{
@@ -140,7 +153,8 @@ describe('paymentController', () => {
                     status: 'Pending',
                     payment_method: 'qr',
                     total_price: 300,
-                    customer_id: 'u2'
+                    customer_id: 'u2',
+                    delivery_type: 'Delivery'
                 }]
             })
             .mockResolvedValueOnce({ rows: [] })
@@ -150,7 +164,8 @@ describe('paymentController', () => {
                     id: 6,
                     status: 'Ready',
                     payment_status: 'Paid',
-                    total_price: 400
+                    total_price: 400,
+                    delivery_type: 'Delivery'
                 }]
             })
             .mockResolvedValueOnce({ rows: [] });
@@ -168,6 +183,10 @@ describe('paymentController', () => {
         const webhookRes = mockRes();
         await controller.handlePayOSWebhook({ body: { any: 'payload' } }, webhookRes);
         expect(webhookRes.body.success).toBe(true);
+
+        await vi.advanceTimersByTimeAsync(30000);
+        expect(DeliveryService.dispatchDelivery).toHaveBeenCalledWith(5);
+        expect(DeliveryService.dispatchDelivery).toHaveBeenCalledWith(6);
     });
 
     it('returns and updates payment settings', async () => {
