@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { Loader2, ArrowLeft } from 'lucide-vue-next';
+import { Loader2, ArrowLeft, Eye, EyeOff, Sparkles } from 'lucide-vue-next';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
 import SimpleCaptcha from '../components/SimpleCaptcha.vue';
@@ -15,6 +15,7 @@ const password = ref('');
 const error = ref('');
 const isLoading = ref(false);
 const isCaptchaVerified = ref(false);
+const showPassword = ref(false);
 
 const onCaptchaVerify = (status: boolean) => {
     isCaptchaVerified.value = status;
@@ -104,15 +105,28 @@ const handleSubmit = async () => {
 
             <div class="space-y-2">
               <label for="password" class="text-xs font-black text-bakery-400 uppercase tracking-widest ml-1">{{ t('auth.password') }}</label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                v-model="password"
-                required
-                :disabled="isLoading"
-                 class="flex h-14 w-full rounded-2xl border border-bakery-100 bg-white/50 px-5 py-2 text-base font-medium shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-bakery-500/10 focus:border-bakery-500 disabled:opacity-50"
-              />
+              <div class="relative">
+                <input
+                  id="password"
+                  :type="showPassword ? 'text' : 'password'"
+                  placeholder="Password"
+                  v-model="password"
+                  required
+                  :disabled="isLoading"
+                  class="flex h-14 w-full rounded-2xl border border-bakery-100 bg-white/50 pl-5 pr-14 py-2 text-base font-medium shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-bakery-500/10 focus:border-bakery-500 disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 h-9 w-9 rounded-xl text-bakery-500 hover:text-bakery-900 hover:bg-bakery-100 transition-all flex items-center justify-center disabled:opacity-50"
+                  :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                  :title="showPassword ? 'Hide password' : 'Show password'"
+                  :disabled="isLoading"
+                  @click="showPassword = !showPassword"
+                >
+                  <EyeOff v-if="showPassword" class="w-5 h-5" />
+                  <Eye v-else class="w-5 h-5" />
+                </button>
+              </div>
             </div>
             
             <SimpleCaptcha @verify="onCaptchaVerify" />

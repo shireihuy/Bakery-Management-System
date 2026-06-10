@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 
 const register = async (req, res) => {
     const { name, email, password, phone_number, address, province_id, district_id, ward_code, role, status } = req.body;
@@ -27,9 +28,10 @@ const register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         
+        const sessionId = crypto.randomUUID();
         const newUser = await pool.query(
-            'INSERT INTO users (name, email, password, phone_number, address, province_id, district_id, ward_code, role, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, name, email, role, status, phone_number as phone, address, province_id, district_id, ward_code',
-            [name, normalizedEmail, hashedPassword, finalPhone, finalAddress, province_id || null, district_id || null, ward_code || null, userRole, userStatus]
+            'INSERT INTO users (name, email, password, phone_number, address, province_id, district_id, ward_code, role, status, current_session_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, name, email, role, status, phone_number as phone, address, province_id, district_id, ward_code',
+            [name, normalizedEmail, hashedPassword, finalPhone, finalAddress, province_id || null, district_id || null, ward_code || null, userRole, userStatus, sessionId]
         );
 
         if (newUser.rows.length === 0) {
@@ -40,7 +42,7 @@ const register = async (req, res) => {
         
         const user = newUser.rows[0];
         const token = jwt.sign(
-            { id: user.id, role: user.role },
+            { id: user.id, role: user.role, sessionId },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );
@@ -77,8 +79,11 @@ const login = async (req, res) => {
             return res.status(403).json({ message: 'Your account is inactive. Please contact the administrator.' });
         }
 
+        const sessionId = crypto.randomUUID();
+        await pool.query('UPDATE users SET current_session_id = $1 WHERE id = $2', [sessionId, user.id]);
+
         const token = jwt.sign(
-            { id: user.id, role: user.role },
+            { id: user.id, role: user.role, sessionId },
             process.env.JWT_SECRET,
             { expiresIn: '24h' }
         );

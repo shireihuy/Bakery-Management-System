@@ -83,6 +83,12 @@ describe('authController', () => {
 
             await authController.login(req, res);
 
+            expect(dbQuery).toHaveBeenCalledWith('UPDATE users SET current_session_id = $1 WHERE id = $2', [expect.any(String), '1']);
+            expect(jwtSign).toHaveBeenCalledWith(
+                expect.objectContaining({ id: '1', role: 'Admin', sessionId: expect.any(String) }),
+                process.env.JWT_SECRET,
+                { expiresIn: '24h' }
+            );
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ token: 'fake-token' }));
         });
 

@@ -13,7 +13,8 @@ async function migrate() {
             ALTER TABLE users
             ADD COLUMN IF NOT EXISTS province_id INTEGER,
             ADD COLUMN IF NOT EXISTS district_id INTEGER,
-            ADD COLUMN IF NOT EXISTS ward_code VARCHAR(50)
+            ADD COLUMN IF NOT EXISTS ward_code VARCHAR(50),
+            ADD COLUMN IF NOT EXISTS current_session_id UUID
         `);
 
         await query(`
