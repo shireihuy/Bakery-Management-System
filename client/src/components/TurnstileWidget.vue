@@ -16,6 +16,25 @@ const widgetId = ref<string | null>(null);
 
 const isEnabled = computed(() => Boolean(props.siteKey));
 
+const waitForTurnstile = () => new Promise<void>((resolve, reject) => {
+  const startedAt = Date.now();
+  const poll = () => {
+    if (window.turnstile) {
+      resolve();
+      return;
+    }
+
+    if (Date.now() - startedAt > 10000) {
+      reject(new Error('Turnstile failed to initialize'));
+      return;
+    }
+
+    window.setTimeout(poll, 50);
+  };
+
+  poll();
+});
+
 const loadTurnstile = () => new Promise<void>((resolve, reject) => {
   if (window.turnstile) {
     resolve();
@@ -24,8 +43,9 @@ const loadTurnstile = () => new Promise<void>((resolve, reject) => {
 
   const existingScript = document.querySelector<HTMLScriptElement>('script[data-turnstile-script]');
   if (existingScript) {
-    existingScript.addEventListener('load', () => resolve(), { once: true });
+    existingScript.addEventListener('load', () => waitForTurnstile().then(resolve, reject), { once: true });
     existingScript.addEventListener('error', () => reject(new Error('Turnstile failed to load')), { once: true });
+    waitForTurnstile().then(resolve, reject);
     return;
   }
 
@@ -34,7 +54,7 @@ const loadTurnstile = () => new Promise<void>((resolve, reject) => {
   script.async = true;
   script.defer = true;
   script.dataset.turnstileScript = 'true';
-  script.onload = () => resolve();
+  script.onload = () => waitForTurnstile().then(resolve, reject);
   script.onerror = () => reject(new Error('Turnstile failed to load'));
   document.head.appendChild(script);
 });
@@ -56,17 +76,22 @@ const renderWidget = async () => {
   await nextTick();
   if (!container.value || widgetId.value || !props.siteKey) return;
 
-  await loadTurnstile();
-  const turnstile = window.turnstile;
-  if (!turnstile) return;
+  try {
+    await loadTurnstile();
+    const turnstile = window.turnstile;
+    if (!turnstile) return;
 
-  widgetId.value = turnstile.render(container.value, {
-    sitekey: props.siteKey,
-    theme: 'light',
-    callback: (token: string) => emit('verify', token),
-    'expired-callback': () => emit('expire'),
-    'error-callback': () => emit('expire')
-  });
+    widgetId.value = turnstile.render(container.value, {
+      sitekey: props.siteKey,
+      theme: 'light',
+      callback: (token: string) => emit('verify', token),
+      'expired-callback': () => emit('expire'),
+      'error-callback': () => emit('expire')
+    });
+  } catch (err) {
+    console.error(err);
+    emit('expire');
+  }
 };
 
 defineExpose({
