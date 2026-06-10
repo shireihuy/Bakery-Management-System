@@ -1,13 +1,5 @@
-const { Pool } = require('pg');
+const pool = require('../config/db');
 const { resolveImageUrl } = require('../utils/imageUrl');
-
-const pool = new Pool({
-    user: process.env.DB_USER || 'postgres',
-    host: process.env.DB_HOST || 'localhost',
-    database: process.env.DB_NAME || 'bakery_db',
-    password: process.env.DB_PASSWORD || 'postgres',
-    port: process.env.DB_PORT || 5432,
-});
 
 const getCart = async (req, res) => {
     try {

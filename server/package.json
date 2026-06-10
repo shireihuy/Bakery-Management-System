@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "prestart": "node src/scripts/migrate.js",
     "start": "node src/index.js",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"

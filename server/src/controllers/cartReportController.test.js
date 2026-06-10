@@ -1,24 +1,12 @@
 describe('cartController / reportController', () => {
     let cartController;
     let reportController;
-    let poolQuery;
     let dbQuery;
 
     beforeEach(() => {
         vi.resetModules();
 
-        poolQuery = vi.fn();
         dbQuery = vi.fn();
-
-        const pgPath = require.resolve('pg');
-        function MockPool() {
-            this.query = poolQuery;
-        }
-        require.cache[pgPath] = {
-            exports: {
-                Pool: MockPool
-            }
-        };
 
         const dbPath = require.resolve('../config/db');
         require.cache[dbPath] = {
@@ -34,7 +22,7 @@ describe('cartController / reportController', () => {
     });
 
     it('maps cart items and handles update/remove/clear flows', async () => {
-        poolQuery.mockResolvedValueOnce({
+        dbQuery.mockResolvedValue({
             rows: [{
                 cart_item_id: 9,
                 product_id: 1,
