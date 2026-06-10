@@ -26,14 +26,24 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
+const handleUpload = (req, res, next) => {
+    upload.single('image')(req, res, (err) => {
+        if (err) {
+            console.error('Product image upload failed:', err);
+            return res.status(400).json({ message: err.message || 'Image upload failed' });
+        }
+        next();
+    });
+};
+
 // Public route to get all products
 router.get('/', productController.getProducts);
 router.get('/tags', productController.getTags);
 router.get('/:id', productController.getProductById);
 
 // Protected routes for management (Admin, Manager, Cashier)
-router.post('/', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cashier'), upload.single('image'), productController.createProduct);
-router.put('/:id', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cashier'), upload.single('image'), productController.updateProduct);
+router.post('/', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cashier'), handleUpload, productController.createProduct);
+router.put('/:id', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cashier'), handleUpload, productController.updateProduct);
 router.delete('/:id', authenticateToken, authorizeRoles('Admin', 'Manager', 'Cashier'), productController.deleteProduct);
 
 // Inventory stock (legacy — kept for compatibility, still works via batch sync)

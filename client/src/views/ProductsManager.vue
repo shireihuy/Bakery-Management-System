@@ -135,7 +135,8 @@ const handleSubmit = async () => {
         isDialogOpen.value = false;
         resetForm();
     } catch (err) {
-        alert('Error saving product');
+        const message = err instanceof Error ? err.message : 'Error saving product';
+        alert(message);
     }
 };
 

@@ -69,8 +69,12 @@ export function useProducts() {
             const formData = new FormData();
             Object.keys(productData).forEach(key => {
                 const value = productData[key];
-                if (key === 'image' && value instanceof File) {
-                    formData.append('image', value);
+                if (key === 'image') {
+                    if (value instanceof File) {
+                        formData.append('image', value);
+                    } else if (typeof value === 'string' && value.trim()) {
+                        formData.append('image_url', value);
+                    }
                 } else if (value !== undefined && value !== null) {
                     // Send arrays as JSON strings
                     if (Array.isArray(value)) {
@@ -87,7 +91,10 @@ export function useProducts() {
                 body: formData
             });
 
-            if (!response.ok) throw new Error('Failed to add product');
+            if (!response.ok) {
+                const errorBody = await response.json().catch(() => ({}));
+                throw new Error(errorBody.message || 'Failed to add product');
+            }
             const created = await response.json();
             await fetchProducts();
             return created;
@@ -102,8 +109,12 @@ export function useProducts() {
             const formData = new FormData();
             Object.keys(productData).forEach(key => {
                 const value = productData[key];
-                if (key === 'image' && value instanceof File) {
-                    formData.append('image', value);
+                if (key === 'image') {
+                    if (value instanceof File) {
+                        formData.append('image', value);
+                    } else if (typeof value === 'string' && value.trim()) {
+                        formData.append('image_url', value);
+                    }
                 } else if (value !== undefined && value !== null) {
                     // Send arrays as JSON strings
                     if (Array.isArray(value)) {
@@ -120,7 +131,10 @@ export function useProducts() {
                 body: formData
             });
 
-            if (!response.ok) throw new Error('Failed to update product');
+            if (!response.ok) {
+                const errorBody = await response.json().catch(() => ({}));
+                throw new Error(errorBody.message || 'Failed to update product');
+            }
             const updated = await response.json();
             await fetchProducts();
             return updated;
