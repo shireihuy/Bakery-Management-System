@@ -138,19 +138,7 @@ const handleSubmit = async () => {
             </div>
           </form>
 
-          <div class="pt-8 border-t border-bakery-50">
-            <div class="flex items-center gap-2 mb-4">
-                <div class="h-px flex-1 bg-bakery-50"></div>
-                <p class="text-[10px] font-black text-bakery-300 uppercase tracking-widest">Demo Credentials</p>
-                <div class="h-px flex-1 bg-bakery-50"></div>
-            </div>
-            <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-[10px] text-bakery-400 font-bold">
-              <p>Admin: admin@bakery.com</p>
-              <p>Pass: adminpassword</p>
-              <p>User: john@example.com</p>
-              <p>Pass: password123</p>
-            </div>
-          </div>
+
         </div>
       </div>
     </div>
