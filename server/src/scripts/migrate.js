@@ -1,7 +1,14 @@
 const { query } = require('../config/db');
+const fs = require('fs');
+const path = require('path');
 
 async function migrate() {
     try {
+        // Step 1: Run init.sql to create all base tables (safe on existing DBs due to IF NOT EXISTS)
+        const initSql = fs.readFileSync(path.join(__dirname, '../../db/init.sql'), 'utf8');
+        await query(initSql);
+        console.log('Base schema initialized.');
+        // Step 2: Apply incremental migrations (safe on existing DBs due to IF NOT EXISTS / ADD COLUMN IF NOT EXISTS)
         await query(`
             ALTER TABLE orders 
             ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50),
