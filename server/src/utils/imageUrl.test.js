@@ -24,6 +24,14 @@ describe('imageUrl', () => {
         );
     });
 
+    it('converts localhost upload URLs to Cloudinary URLs', () => {
+        process.env.CLOUDINARY_CLOUD_NAME = 'demo-cloud';
+        const { resolveImageUrl } = require('./imageUrl');
+        expect(resolveImageUrl('http://localhost:3000/uploads/bakery-products/abc123')).toBe(
+            'https://res.cloudinary.com/demo-cloud/image/upload/bakery-products/abc123'
+        );
+    });
+
     it('uses req.file.path for uploaded images', () => {
         const { getUploadedImageUrl } = require('./imageUrl');
         const url = 'https://res.cloudinary.com/demo/image/upload/bakery-products/new.jpg';
