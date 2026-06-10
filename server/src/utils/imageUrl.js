@@ -1,16 +1,9 @@
 function resolveImageUrl(imageUrl) {
     if (!imageUrl) return imageUrl;
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
-
-    const toCloudinaryUrl = (publicPath) => {
-        if (!cloudName) return null;
-        return `https://res.cloudinary.com/${cloudName}/image/upload/${publicPath}`;
-    };
-
     const uploadPrefix = '/uploads/';
 
     if (imageUrl.startsWith(uploadPrefix)) {
-        return toCloudinaryUrl(imageUrl.slice(uploadPrefix.length)) || imageUrl;
+        return imageUrl;
     }
 
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
@@ -19,7 +12,7 @@ function resolveImageUrl(imageUrl) {
             const isLocalHost = ['localhost', '127.0.0.1', '::1'].includes(parsed.hostname);
 
             if (isLocalHost && parsed.pathname.startsWith(uploadPrefix)) {
-                return toCloudinaryUrl(parsed.pathname.slice(uploadPrefix.length)) || imageUrl;
+                return parsed.pathname;
             }
         } catch (_) {
             // Ignore invalid URLs and return them unchanged below.

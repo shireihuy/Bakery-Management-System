@@ -16,20 +16,28 @@ describe('imageUrl', () => {
         expect(resolveImageUrl(url)).toBe(url);
     });
 
-    it('converts legacy /uploads paths to Cloudinary URLs', () => {
+    it('returns legacy /uploads paths unchanged', () => {
         process.env.CLOUDINARY_CLOUD_NAME = 'demo-cloud';
         const { resolveImageUrl } = require('./imageUrl');
-        expect(resolveImageUrl('/uploads/bakery-products/abc123')).toBe(
-            'https://res.cloudinary.com/demo-cloud/image/upload/bakery-products/abc123'
-        );
+        expect(resolveImageUrl('/uploads/bakery-products/abc123')).toBe('/uploads/bakery-products/abc123');
     });
 
-    it('converts localhost upload URLs to Cloudinary URLs', () => {
+    it('returns bare legacy upload filenames unchanged', () => {
         process.env.CLOUDINARY_CLOUD_NAME = 'demo-cloud';
         const { resolveImageUrl } = require('./imageUrl');
-        expect(resolveImageUrl('http://localhost:3000/uploads/bakery-products/abc123')).toBe(
-            'https://res.cloudinary.com/demo-cloud/image/upload/bakery-products/abc123'
-        );
+        expect(resolveImageUrl('/uploads/1779168024705.png')).toBe('/uploads/1779168024705.png');
+    });
+
+    it('converts localhost upload URLs to relative upload paths', () => {
+        process.env.CLOUDINARY_CLOUD_NAME = 'demo-cloud';
+        const { resolveImageUrl } = require('./imageUrl');
+        expect(resolveImageUrl('http://localhost:3000/uploads/bakery-products/abc123')).toBe('/uploads/bakery-products/abc123');
+    });
+
+    it('converts bare localhost filenames to relative upload paths', () => {
+        process.env.CLOUDINARY_CLOUD_NAME = 'demo-cloud';
+        const { resolveImageUrl } = require('./imageUrl');
+        expect(resolveImageUrl('http://localhost:3000/uploads/1779168024705.png')).toBe('/uploads/1779168024705.png');
     });
 
     it('uses req.file.path for uploaded images', () => {
