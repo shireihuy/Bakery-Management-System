@@ -13,9 +13,7 @@ RUN npm install --only=production
 COPY --from=build-stage /app/src ./src
 COPY --from=build-stage /app/db ./db
 
-# Create uploads directory and set permissions
-RUN mkdir -p /app/uploads && \
-    addgroup -S appgroup && \
+RUN addgroup -S appgroup && \
     adduser -S appuser -G appgroup && \
     chown -R appuser:appgroup /app
 

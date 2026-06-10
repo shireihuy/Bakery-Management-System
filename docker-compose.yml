@@ -36,6 +36,9 @@ services:
       - DB_PORT=5432
       - DB_NAME=${DB_NAME:-bakery_db}
       - JWT_SECRET=${JWT_SECRET:-your_super_secret_key_change_me}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
     ports:
       - "3000:3000"
     depends_on:

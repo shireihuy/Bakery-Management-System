@@ -1,5 +1,11 @@
 const { pool, query } = require('../config/db');
 const NotificationController = require('./notificationController');
+const { resolveImageUrl } = require('../utils/imageUrl');
+
+const mapOrderItems = (items) => items.map(item => ({
+    ...item,
+    image_url: resolveImageUrl(item.image_url)
+}));
 const DeliveryService = require('../services/deliveryService');
 const payos = require('../config/payos');
 
@@ -313,7 +319,7 @@ const getOrders = async (req, res) => {
 
             orders.push({
                 ...row,
-                items: itemsResult.rows
+                items: mapOrderItems(itemsResult.rows)
             });
         }
 
@@ -354,7 +360,7 @@ const getMyOrders = async (req, res) => {
 
             orders.push({
                 ...row,
-                items: itemsResult.rows
+                items: mapOrderItems(itemsResult.rows)
             });
         }
 
@@ -627,7 +633,7 @@ const getOrderById = async (req, res) => {
 
         res.json({
             ...order,
-            items: itemsResult.rows
+            items: mapOrderItems(itemsResult.rows)
         });
     } catch (err) {
         console.error('Error fetching order by ID:', err);

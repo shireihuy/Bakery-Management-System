@@ -85,7 +85,7 @@ describe('productController', () => {
                 initialExpirationDate: '2026-06-01',
                 initialBatchNotes: 'First batch'
             },
-            file: { filename: 'cake.png' }
+            file: { path: 'https://res.cloudinary.com/demo/image/upload/bakery-products/cake.png' }
         };
         const res = mockRes();
 

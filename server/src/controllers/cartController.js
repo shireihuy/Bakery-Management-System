@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const { resolveImageUrl } = require('../utils/imageUrl');
 
 const pool = new Pool({
     user: process.env.DB_USER || 'postgres',
@@ -46,7 +47,7 @@ const getCart = async (req, res) => {
             name: row.name,
             price: Number(row.price),
             stock: Number(row.stock),
-            image: row.image,
+            image: resolveImageUrl(row.image),
             category: row.category,
             quantity: row.quantity,
             flashSale: row.flash_sale_price ? {

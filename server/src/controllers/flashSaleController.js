@@ -1,4 +1,18 @@
 const { query, pool } = require('../config/db');
+const { resolveImageUrl } = require('../utils/imageUrl');
+
+const mapFlashSaleItems = (items) => {
+    if (!Array.isArray(items)) return items;
+    return items.map(item => ({
+        ...item,
+        image: resolveImageUrl(item.image)
+    }));
+};
+
+const mapFlashSaleRow = (row) => ({
+    ...row,
+    items: mapFlashSaleItems(row.items)
+});
 
 const getFlashSales = async (req, res) => {
     try {
@@ -20,7 +34,7 @@ const getFlashSales = async (req, res) => {
             GROUP BY fs.id
             ORDER BY fs.start_time DESC
         `);
-        res.json(result.rows);
+        res.json(result.rows.map(mapFlashSaleRow));
     } catch (err) {
         console.error('Error fetching flash sales:', err);
         res.status(500).json({ message: 'Server error fetching flash sales' });
@@ -50,7 +64,7 @@ const getActiveFlashSales = async (req, res) => {
             GROUP BY fs.id
             ORDER BY fs.start_time ASC
         `);
-        res.json(result.rows);
+        res.json(result.rows.map(mapFlashSaleRow));
     } catch (err) {
         console.error('Error fetching active flash sales:', err);
         res.status(500).json({ message: 'Server error fetching active flash sales' });

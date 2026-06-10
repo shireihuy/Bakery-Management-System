@@ -1,5 +1,6 @@
 const { query } = require('../config/db');
 const NotificationController = require('./notificationController');
+const { resolveImageUrl, getUploadedImageUrl } = require('../utils/imageUrl');
 
 const getProducts = async (req, res) => {
     try {
@@ -62,7 +63,7 @@ const getProducts = async (req, res) => {
                 category: p.category,
                 price: parseFloat(p.price),
                 description: p.description,
-                image: p.image_url,
+                image: resolveImageUrl(p.image_url),
                 is_active: p.is_active,
                 stock: parseFloat(p.stock_quantity || 0),
                 min_stock: parseFloat(p.min_stock_level || 5),
@@ -142,6 +143,7 @@ const getProductById = async (req, res) => {
         const nearestExpiry = batches.find(b => b.expirationDate)?.expirationDate || null;
         const product = {
             ...p,
+            image_url: resolveImageUrl(p.image_url),
             expirationDate: p.expiration_date,
             batches,
             nearestExpiry,
@@ -177,7 +179,7 @@ const createProduct = async (req, res) => {
     const parsedAllergens = typeof allergens === 'string' ? JSON.parse(allergens || '[]') : (allergens || []);
 
     if (req.file) {
-        image_url = `/uploads/${req.file.filename}`;
+        image_url = getUploadedImageUrl(req.file);
     }
 
     const initialQty = parseFloat(initialBatchQty) || 0;
@@ -215,7 +217,7 @@ const updateProduct = async (req, res) => {
     const parsedAllergens = typeof allergens === 'string' ? JSON.parse(allergens || '[]') : (allergens || []);
 
     if (req.file) {
-        image_url = `/uploads/${req.file.filename}`;
+        image_url = getUploadedImageUrl(req.file);
     }
 
     try {
