@@ -1,4 +1,4 @@
-import { ref, onMounted } from "vue";
+import { ref } from "vue";
 
 export interface User {
   id: string;
@@ -108,12 +108,6 @@ export function useUsers() {
       console.error("Failed to delete user:", err);
     }
   };
-
-  onMounted(() => {
-    if (users.value.length === 0) {
-      fetchUsers();
-    }
-  });
 
   return {
     users,

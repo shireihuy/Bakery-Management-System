@@ -17,7 +17,7 @@ import { useI18n } from '../composables/useI18n';
 import { useGHN } from '../composables/useGHN';
 import { useAuth } from '../composables/useAuth';
 
-const { users, addUser, updateUser, deleteUser } = useUsers();
+const { users, addUser, updateUser, deleteUser, fetchUsers } = useUsers();
 const { t } = useI18n();
 const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useGHN();
 const { user: currentUser } = useAuth();
@@ -57,6 +57,7 @@ const form = ref<{
 });
 
 onMounted(() => {
+    fetchUsers();
     fetchProvinces();
 });
 

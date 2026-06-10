@@ -44,7 +44,7 @@ const { t } = useI18n();
 const { formatPrice } = useCurrency();
 const { cart, fetchCart, addToCart, updateQuantity, removeFromCart, clearCart } = useCart();
 const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards, fetchFee } = useGHN();
-const { users } = useUsers();
+const { users, fetchUsers } = useUsers();
 const router = useRouter();
 
 
@@ -454,6 +454,7 @@ onMounted(async () => {
 
     if (user.value) {
         if (isStaff.value) {
+            await fetchUsers();
             await fetchOrders();
         } else {
             await fetchMyOrders();
