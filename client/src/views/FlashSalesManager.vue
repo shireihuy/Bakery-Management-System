@@ -5,7 +5,7 @@
         <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Flash Sale Manager</h1>
         <p class="text-gray-500 mt-1">Schedule and monitor limited-time bakery events</p>
       </div>
-      <button 
+      <button
         @click="openCreateModal"
         class="bg-bakery-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-bakery-700 transition-all shadow-lg shadow-bakery-100"
       >
@@ -35,7 +35,7 @@
               <span class="w-4 text-xs">🏁</span> {{ formatDate(sale.end_time) }}
             </div>
           </div>
-          
+
           <div class="p-5 space-y-4">
             <div v-for="item in sale.items" :key="item.id || item.product_id" class="flex items-center gap-3">
               <img :src="item.image || getProductImage(item.product_id)" class="w-10 h-10 rounded-lg object-cover" />
@@ -57,30 +57,30 @@
 
           <div class="p-5 bg-gray-50 flex justify-between gap-3">
             <div v-if="getStatusLabel(sale) === 'Active'" class="flex-1 flex gap-2">
-              <button 
-                @click="toggleSale(sale)" 
+              <button
+                @click="toggleSale(sale)"
                 class="flex-1 py-2 rounded-lg text-xs font-bold border border-yellow-200 text-yellow-600 hover:bg-yellow-50 transition-all bg-white"
               >
                 Deactivate
               </button>
-              <button 
-                @click="extendSale(sale)" 
+              <button
+                @click="extendSale(sale)"
                 class="flex-1 py-2 rounded-lg text-xs font-bold border border-bakery-200 text-bakery-600 hover:bg-bakery-50 transition-all bg-white"
               >
                 +1 Hour
               </button>
             </div>
             <div v-else class="flex-1">
-              <button 
-                @click="toggleSale(sale)" 
+              <button
+                @click="toggleSale(sale)"
                 class="w-full py-2 rounded-lg text-xs font-bold transition-all border bg-white"
                 :class="sale.is_active ? 'border-yellow-200 text-yellow-600 hover:bg-yellow-50' : 'border-green-200 text-green-600 hover:bg-green-50'"
               >
                 {{ sale.is_active ? 'Deactivate' : 'Activate' }}
               </button>
             </div>
-            <button 
-              @click="openEditModal(sale)" 
+            <button
+              @click="openEditModal(sale)"
               class="px-3 py-2 rounded-lg border border-bakery-100 text-bakery-600 hover:bg-bakery-50 transition-all bg-white"
               title="Edit Sale Info"
             >
@@ -108,7 +108,7 @@
             </div>
             <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Ended on {{ formatDate(sale.end_time) }}</p>
           </div>
-          
+
           <div class="p-5 space-y-3">
              <div v-for="item in sale.items" :key="item.id || item.product_id" class="flex items-center gap-3 opacity-60">
                 <p class="text-xs font-bold text-gray-600 truncate">{{ item.name }}</p>
@@ -118,14 +118,14 @@
           </div>
 
           <div class="p-4 bg-gray-50/50 flex justify-between gap-3">
-            <button 
-              @click="duplicateSale(sale)" 
+            <button
+              @click="duplicateSale(sale)"
               class="flex-1 py-2.5 rounded-xl text-xs font-black bg-bakery-900 text-white hover:bg-black transition-all shadow-lg shadow-bakery-100/50"
             >
               Rerun This Sale
             </button>
-            <button 
-              @click="openEditModal(sale)" 
+            <button
+              @click="openEditModal(sale)"
               class="px-3 py-2 rounded-xl border border-gray-100 text-bakery-600 hover:bg-white transition-all shadow-sm"
               title="Edit Sale Info"
             >
@@ -149,7 +149,7 @@
             🗑️ Delete Sale
           </button>
         </div>
-        
+
         <div class="p-8 space-y-6 max-h-[60vh] overflow-y-auto">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
@@ -161,21 +161,21 @@
               <div class="relative">
                 <div class="flex items-center bg-white rounded-xl border border-gray-100 px-4 focus-within:ring-2 focus-within:ring-bakery-300 transition-all">
                   <span class="text-gray-400">🔍</span>
-                  <input 
-                    type="text" 
-                    v-model="productSearch" 
+                  <input
+                    type="text"
+                    v-model="productSearch"
                     @focus="isDropdownOpen = true"
-                    class="w-full h-12 bg-transparent border-none focus:ring-0 text-sm outline-none" 
-                    placeholder="Search available products..." 
+                    class="w-full h-12 bg-transparent border-none focus:ring-0 text-sm outline-none"
+                    placeholder="Search available products..."
                   />
                 </div>
-                
+
                 <!-- Custom Dropdown -->
-                <div v-if="isDropdownOpen && filteredAvailableProducts.length > 0" 
+                <div v-if="isDropdownOpen && filteredAvailableProducts.length > 0"
                      class="absolute z-50 left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div 
-                    v-for="p in filteredAvailableProducts" 
-                    :key="p.id" 
+                  <div
+                    v-for="p in filteredAvailableProducts"
+                    :key="p.id"
                     @click="selectProduct(p)"
                     class="p-3 hover:bg-bakery-50 cursor-pointer flex items-center gap-3 transition-colors border-b border-gray-50 last:border-0"
                   >
@@ -187,7 +187,7 @@
                     <div class="text-bakery-600 font-bold text-lg">+</div>
                   </div>
                 </div>
-                
+
                 <!-- Backdrop to close dropdown -->
                 <div v-if="isDropdownOpen" @click="isDropdownOpen = false" class="fixed inset-0 z-10"></div>
               </div>
@@ -232,8 +232,8 @@
 
         <div class="p-8 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
           <button @click="isModalOpen = false" class="px-6 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-white transition-all">Cancel</button>
-          <button 
-            @click="saveSale" 
+          <button
+            @click="saveSale"
             :disabled="!isFormValid"
             class="px-8 py-3 rounded-xl bg-bakery-900 text-white font-bold hover:bg-black transition-all disabled:opacity-30 shadow-xl shadow-bakery-200"
           >
@@ -264,7 +264,7 @@ const newSale = ref({
   items: []
 });
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+import { API_URL } from '../config/api';
 
 const fetchFlashSales = async () => {
     try {
@@ -303,7 +303,7 @@ const openCreateModal = () => {
 const openEditModal = (sale) => {
     isEditMode.value = true;
     editingSaleId.value = sale.id;
-    
+
     // Format to YYYY-MM-DDThh:mm for datetime-local
     const formatDateForInput = (dStr) => {
         const d = new Date(dStr);
@@ -328,7 +328,7 @@ const openEditModal = (sale) => {
 const selectProduct = (product) => {
     const productId = parseInt(product.id);
     if (newSale.value.items.some(i => i.product_id === productId)) return;
-    
+
     newSale.value.items.push({
         product_id: productId,
         sale_price: (product.price * 0.5).toFixed(2),
@@ -361,19 +361,19 @@ const pastSales = computed(() => {
 const filteredAvailableProducts = computed(() => {
     if (!productSearch.value) return availableProducts.value;
     const query = productSearch.value.toLowerCase();
-    return availableProducts.value.filter(p => 
-        p.name.toLowerCase().includes(query) || 
+    return availableProducts.value.filter(p =>
+        p.name.toLowerCase().includes(query) ||
         p.category.toLowerCase().includes(query)
     );
 });
 
 const isFormValid = computed(() => {
-    const hasRequiredFields = newSale.value.name && 
-           newSale.value.start_time && 
-           newSale.value.end_time && 
+    const hasRequiredFields = newSale.value.name &&
+           newSale.value.start_time &&
+           newSale.value.end_time &&
            newSale.value.items.length > 0;
     if (!hasRequiredFields) return false;
-    
+
     return new Date(newSale.value.end_time) > new Date(newSale.value.start_time);
 });
 
@@ -391,13 +391,13 @@ const saveSale = async () => {
 
         const response = await fetch(url, {
             method,
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(saleData)
         });
-        
+
         if (response.ok) {
             await fetchFlashSales();
             isModalOpen.value = false;
@@ -415,9 +415,9 @@ const toggleSale = async (sale) => {
         const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/flash-sales/${sale.id}/toggle`, {
             method: 'PATCH',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({ is_active: !sale.is_active })
         });
@@ -431,7 +431,7 @@ const duplicateSale = (sale) => {
     const now = new Date();
     const start = new Date(now.getTime() + 5 * 60 * 1000); // 5 mins from now
     const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hour duration
-    
+
     // Format to YYYY-MM-DDThh:mm
     const formatDateForInput = (d) => {
         const pad = (n) => n.toString().padStart(2, '0');
@@ -461,18 +461,18 @@ const extendSale = async (sale) => {
         const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/flash-sales/${sale.id}`, {
             method: 'PUT',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
+                'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 end_time: newEnd.toISOString(),
                 // Refresh items: reset sold_quantity to 0 but keep same prices/stock
                 items: sale.items.map(item => ({
                     product_id: item.product_id,
                     sale_price: item.sale_price,
                     flash_sale_stock: item.flash_sale_stock,
-                    sold_quantity: 0 
+                    sold_quantity: 0
                 }))
             })
         });
@@ -500,7 +500,7 @@ const getStatusLabel = (sale) => {
     const now = new Date();
     const start = new Date(sale.start_time);
     const end = new Date(sale.end_time);
-    
+
     if (!sale.is_active) return 'Inactive';
     if (now < start) return 'Scheduled';
     if (now > end) return 'Ended';

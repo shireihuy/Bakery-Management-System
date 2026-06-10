@@ -1,19 +1,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  ShoppingCart, 
-  Plus, 
-  Minus, 
-  Trash2, 
-  Info, 
-  Star, 
-  Search, 
-  Filter, 
-  SlidersHorizontal, 
-  History, 
-  Clock, 
-  XCircle, 
+import { API_URL } from '../config/api';
+import {
+  ShoppingCart,
+  Plus,
+  Minus,
+  Trash2,
+  Info,
+  Star,
+  Search,
+  Filter,
+  SlidersHorizontal,
+  History,
+  Clock,
+  XCircle,
   Eye,
   CreditCard,
   Coffee,
@@ -92,7 +93,7 @@ const isStaff = computed(() => {
 const filteredSystemUsers = computed(() => {
     if (!staffSearchQuery.value) return [];
     const q = staffSearchQuery.value.toLowerCase();
-    return users.value.filter(u => 
+    return users.value.filter(u =>
         (u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) &&
         u.role === 'Customer'
     ).slice(0, 5);
@@ -194,7 +195,7 @@ const mapUrl = computed(() => {
     if (streetAddress.value) {
         addressParts.unshift(streetAddress.value);
     }
-    
+
     // If no specific address parts, use user's address or a generic location
     const address = addressParts.length > 0 ? addressParts.join(', ') : (user.value?.address || 'Vietnam');
     return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
@@ -280,7 +281,7 @@ const handleRateProduct = async (rating: number) => {
         if (!user.value) showLoginPrompt.value = true;
         return;
     }
-    
+
     isSubmittingRating.value = true;
     try {
         await submitRating(selectedProduct.value.id, rating);
@@ -295,17 +296,17 @@ const handleRateProduct = async (rating: number) => {
 
 const applyCoupon = async () => {
     if (!couponCodeInput.value.trim()) return;
-    
+
     isApplyingCoupon.value = true;
     couponError.value = '';
-    
+
     try {
-        const response = await fetch('http://localhost:3000/api/coupons/validate', {
+        const response = await fetch(`${API_URL}/coupons/validate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: couponCodeInput.value.trim(), cartSubtotal: subTotalPrice.value })
         });
-        
+
         const data = await response.json();
         if (response.ok && data.valid) {
             appliedCoupon.value = {
@@ -358,10 +359,10 @@ const handleAddToCart = (product: Product, event: MouseEvent | null) => {
     if (activeProduct.flashSale && activeProduct.flashSale.sold >= activeProduct.flashSale.stock) {
         activeProduct.flashSale = null;
     }
-    
+
     addToCart(activeProduct);
 
-    
+
     // Bounce effect
     isCartBouncing.value = true;
     setTimeout(() => {
@@ -372,7 +373,7 @@ const handleAddToCart = (product: Product, event: MouseEvent | null) => {
     if (cartButtonRef.value && event) {
         const cartRect = cartButtonRef.value.getBoundingClientRect();
         const id = flyIdCounter++;
-        
+
         const newItem = {
             id,
             x: event.clientX - 20,
@@ -382,9 +383,9 @@ const handleAddToCart = (product: Product, event: MouseEvent | null) => {
             image: product.image,
             flying: false
         };
-        
+
         flyingItems.value.push(newItem);
-        
+
         setTimeout(() => {
             const item = flyingItems.value.find(i => i.id === id);
             if (item) item.flying = true;
@@ -407,7 +408,7 @@ const handleFlashSaleAddToCart = (item: any, event: MouseEvent | null) => {
             salePrice: parseFloat(item.sale_price),
             stock: item.flash_sale_stock,
             sold: item.sold_quantity,
-            endTime: '' 
+            endTime: ''
         }
     };
     handleAddToCart(product, event);
@@ -424,11 +425,9 @@ const addToCartFromDialogExtended = (event: MouseEvent) => {
 const isCancelModalOpen = ref(false);
 
 const fetchActiveFlashSales = async () => {
-
     isLoadingFlashSales.value = true;
     try {
-        const url = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-        const response = await fetch(`${url}/flash-sales/active`);
+        const response = await fetch(`${API_URL}/flash-sales/active`);
         if (response.ok) {
             const data = await response.json();
             // Map image paths to full URLs if they are relative paths from the server
@@ -436,7 +435,7 @@ const fetchActiveFlashSales = async () => {
                 ...sale,
                 items: sale.items.map((item: any) => ({
                     ...item,
-                    image: item.image?.startsWith('/') ? `${url.replace('/api', '')}${item.image}` : item.image
+                    image: item.image?.startsWith('/') ? `${API_URL.replace('/api', '')}${item.image}` : item.image
                 }))
             }));
         }
@@ -459,11 +458,11 @@ onMounted(async () => {
         } else {
             await fetchMyOrders();
         }
-        
+
         if (user.value.address) {
             streetAddress.value = user.value.address;
         }
-        
+
         // Auto-populate delivery location if saved in profile
         if (user.value.province_id) {
             selectedProvince.value = user.value.province_id;
@@ -538,7 +537,7 @@ const confirmCancelOrder = async () => {
     if (!orderToCancel.value) return;
     const reason = selectedCancelReason.value === 'Other' ? customReason.value : selectedCancelReason.value;
     if (!reason) return;
-    
+
     try {
         await updateOrderStatus(orderToCancel.value, 'Cancelled', undefined, reason);
         if (isStaff.value) {
@@ -615,7 +614,7 @@ const confirmCancelOrder = async () => {
     </div>
 
     <!-- Flash Sale Section -->
-    <FlashSaleSection 
+    <FlashSaleSection
         v-if="activeFlashSales.length > 0 && activeTab === 'menu'"
         :activeSales="activeFlashSales"
         @add-to-cart="handleFlashSaleAddToCart"
@@ -770,7 +769,7 @@ const confirmCancelOrder = async () => {
                  <div class="flex justify-center mb-4">
                      <span :class="`px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(order.status)} flex items-center gap-1`">
                         <!-- Icon would depend on status, simplifying for now -->
-                        <Clock class="w-3 h-3" /> 
+                        <Clock class="w-3 h-3" />
                         <span class="capitalize">{{ order.status }}</span>
                      </span>
                  </div>
@@ -778,8 +777,8 @@ const confirmCancelOrder = async () => {
                      <p class="text-xs font-medium text-green-600 mb-2">{{ t('shop.items') }}</p>
                     <div v-for="(item, idx) in order.items" :key="idx" class="flex justify-between items-center text-xs">
                         <div class="flex items-center gap-2">
-                             <img 
-                                :src="item.productImage || 'https://placehold.co/100x100?text=No+Image'" 
+                             <img
+                                :src="item.productImage || 'https://placehold.co/100x100?text=No+Image'"
                                 :alt="item.productName"
                                 class="w-6 h-6 rounded-md object-cover border border-green-50"
                              />
@@ -801,21 +800,21 @@ const confirmCancelOrder = async () => {
                     <span class="text-lg font-bold text-green-700">{{ formatPrice(order.total) }}</span>
                  </div>
                  <div class="grid grid-cols-1 gap-2 mt-auto">
-                    <button 
+                    <button
                         @click="viewOrderDetails(order)"
                         class="w-full h-9 rounded-xl border border-bakery-100 text-bakery-600 text-xs font-bold hover:bg-bakery-50 flex items-center justify-center transition-all"
                     >
                         <Eye class="w-3.5 h-3.5 mr-1.5" /> {{ t('shop.viewDetails') }}
                     </button>
-                    
+
                     <div v-if="order.status === 'Pending' && order.paymentStatus !== 'Paid'" class="grid grid-cols-2 gap-2">
-                        <button 
+                        <button
                             @click="router.push(`/payment/${order.id}`)"
                             class="h-9 rounded-xl bg-bakery-900 text-white text-xs font-bold hover:bg-black flex items-center justify-center transition-all shadow-lg shadow-bakery-100"
                         >
                             <CreditCard class="w-3.5 h-3.5 mr-1.5" /> Pay Now
                         </button>
-                        <button 
+                        <button
                             @click="openCancelModal(order.id)"
                             class="h-9 rounded-xl bg-red-50 text-red-600 border border-red-100 text-xs font-bold hover:bg-red-100 flex items-center justify-center transition-all"
                         >
@@ -828,18 +827,18 @@ const confirmCancelOrder = async () => {
     </div>
 
     <!-- Global Cart Side Drawer -->
-    <div 
-        v-if="isCartOpen" 
+    <div
+        v-if="isCartOpen"
         class="fixed inset-0 z-110 overflow-hidden"
     >
         <!-- Overlay -->
-        <div 
-            class="absolute inset-0 bg-bakery-950/40 backdrop-blur-sm transition-opacity duration-500 animate-in fade-in" 
+        <div
+            class="absolute inset-0 bg-bakery-950/40 backdrop-blur-sm transition-opacity duration-500 animate-in fade-in"
             @click="isCartOpen = false"
         ></div>
-        
+
         <div class="fixed inset-y-0 right-0 max-w-full flex">
-            <div 
+            <div
                 class="relative w-screen max-w-md transform transition-transform duration-500 ease-in-out animate-in slide-in-from-right h-full"
             >
                 <div class="h-full flex flex-col bg-white shadow-2xl border-l border-bakery-100">
@@ -848,14 +847,14 @@ const confirmCancelOrder = async () => {
                             <h3 class="font-black text-2xl text-bakery-900">{{ t('shop.yourBasket') }}</h3>
                             <p class="text-bakery-500 text-sm font-medium">{{ totalItems }} {{ t('shop.items').toLowerCase() }} selected</p>
                         </div>
-                        <button 
-                            @click="isCartOpen = false" 
+                        <button
+                            @click="isCartOpen = false"
                             class="w-12 h-12 rounded-2xl bg-white border border-bakery-100 text-bakery-400 hover:text-bakery-900 hover:rotate-90 transition-all flex items-center justify-center shadow-sm"
                         >
                             <XCircle class="w-6 h-6" />
                         </button>
                     </div>
-                    
+
                     <div class="flex-1 overflow-y-auto p-8 scrollbar-hide">
                         <div v-if="cart.length === 0" class="h-full flex flex-col items-center justify-center text-center space-y-6">
                             <div class="w-24 h-24 bg-bakery-50 rounded-full flex items-center justify-center">
@@ -888,7 +887,7 @@ const confirmCancelOrder = async () => {
                                                 <span v-if="item.flashSale" class="text-[10px] text-bakery-300 line-through font-bold mb-0.5">{{ formatPrice(item.price * item.quantity) }}</span>
                                                 <p :class="item.flashSale ? 'text-red-500' : 'text-bakery-600'" class="font-bold leading-none">
                                                     {{ formatPrice(
-                                                        item.flashSale 
+                                                        item.flashSale
                                                         ? (Math.min(item.quantity, Math.max(0, item.flashSale.stock - item.flashSale.sold)) * item.flashSale.salePrice) + (Math.max(0, item.quantity - Math.max(0, item.flashSale.stock - item.flashSale.sold)) * item.price)
                                                         : (item.price * item.quantity)
                                                     ) }}
@@ -911,20 +910,20 @@ const confirmCancelOrder = async () => {
                                       <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">{{ t('shop.customerInfo') }}</label>
                                       <div class="relative group">
                                           <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-bakery-400" />
-                                          <input 
-                                            v-model="staffSearchQuery" 
+                                          <input
+                                            v-model="staffSearchQuery"
                                             @input="handleStaffNameInput"
                                             @focus="isSearchingUser = true"
                                             @blur="handleStaffBlur"
-                                            type="text" 
-                                            placeholder="Search user or enter name..." 
+                                            type="text"
+                                            placeholder="Search user or enter name..."
                                             class="w-full h-12 rounded-2xl border border-bakery-100 pl-11 pr-4 focus:outline-none focus:ring-2 focus:ring-bakery-300 text-sm bg-bakery-50/50 transition-all font-medium"
                                           >
                                           <!-- User search results -->
                                           <div v-if="isSearchingUser && filteredSystemUsers.length > 0" class="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-bakery-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
                                               <div class="p-2">
-                                                  <button 
-                                                    v-for="sysUser in filteredSystemUsers" 
+                                                  <button
+                                                    v-for="sysUser in filteredSystemUsers"
                                                     :key="sysUser.id"
                                                     @click="selectStaffCustomer(sysUser)"
                                                     class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-bakery-50 transition-colors text-left"
@@ -948,19 +947,19 @@ const confirmCancelOrder = async () => {
                                           Linking to Registered User Account
                                       </div>
                                  </div>
-                                 
+
                                  <!-- Delivery Option Toggle -->
                                  <div class="space-y-3">
                                       <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">Delivery Choice</label>
                                       <div class="grid grid-cols-2 gap-2 bg-bakery-50 p-1.5 rounded-2xl border border-bakery-100">
-                                           <button 
+                                           <button
                                                 @click="selectedDeliveryType = 'Pick-up'"
                                                 :class="[selectedDeliveryType === 'Pick-up' ? 'bg-white text-bakery-900 shadow-sm' : 'text-bakery-400 hover:text-bakery-600']"
                                                 class="h-10 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
                                            >
                                                 <MapPin class="w-3.5 h-3.5" /> Pick-up
                                            </button>
-                                           <button 
+                                           <button
                                                 @click="selectedDeliveryType = 'Delivery'"
                                                 :class="[selectedDeliveryType === 'Delivery' ? 'bg-white text-bakery-900 shadow-sm' : 'text-bakery-400 hover:text-bakery-600']"
                                                 class="h-10 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2"
@@ -970,7 +969,7 @@ const confirmCancelOrder = async () => {
                                       </div>
                                       <div v-if="selectedDeliveryType === 'Delivery'" class="bg-bakery-50 rounded-2xl border border-bakery-100 overflow-hidden transition-all duration-300">
                                            <!-- Collapsible Header -->
-                                           <div 
+                                           <div
                                                 @click="isAddressExpanded = !isAddressExpanded"
                                                 class="p-4 flex items-center justify-between cursor-pointer hover:bg-bakery-100/30 transition-colors select-none"
                                            >
@@ -993,10 +992,10 @@ const confirmCancelOrder = async () => {
 
                                            <!-- Expandable Body Content -->
                                            <div v-show="isAddressExpanded" class="p-4 pt-0 border-t border-bakery-100/50 space-y-4 animate-in fade-in slide-in-from-top-1 duration-200">
-                                                <input 
-                                                    v-model="streetAddress" 
-                                                    type="text" 
-                                                    placeholder="Enter street name, house number..." 
+                                                <input
+                                                    v-model="streetAddress"
+                                                    type="text"
+                                                    placeholder="Enter street name, house number..."
                                                     class="w-full mt-2 border-b border-bakery-100 bg-transparent text-xs font-bold text-bakery-900 focus:outline-none focus:border-bakery-400 pb-1 placeholder:text-bakery-300"
                                                 />
                                                 <div class='grid grid-cols-1 gap-2'>
@@ -1016,13 +1015,13 @@ const confirmCancelOrder = async () => {
 
                                                 <!-- Map block inside collapsible area -->
                                                 <div class="h-32 rounded-xl overflow-hidden shadow-xs border border-bakery-100 relative group">
-                                                     <iframe 
+                                                     <iframe
                                                          :key="mapUrl"
-                                                         width="100%" 
-                                                         height="100%" 
-                                                         style="border:0;" 
-                                                         loading="lazy" 
-                                                         allowfullscreen 
+                                                         width="100%"
+                                                         height="100%"
+                                                         style="border:0;"
+                                                         loading="lazy"
+                                                         allowfullscreen
                                                          :src="mapUrl">
                                                      </iframe>
                                                 </div>
@@ -1034,14 +1033,14 @@ const confirmCancelOrder = async () => {
                                  <div class="space-y-2">
                                      <label class="text-xs font-black text-bakery-400 uppercase tracking-widest">Promo Code</label>
                                      <div class="flex gap-2">
-                                          <input 
-                                              v-model="couponCodeInput" 
+                                          <input
+                                              v-model="couponCodeInput"
                                               :disabled="!!appliedCoupon"
-                                              type="text" 
-                                              placeholder="Enter code..." 
+                                              type="text"
+                                              placeholder="Enter code..."
                                               class="flex-1 h-10 rounded-xl border border-bakery-100 px-3 focus:outline-none focus:ring-2 focus:ring-bakery-300 text-sm bg-bakery-50/50 uppercase"
                                           >
-                                          <button 
+                                          <button
                                               v-if="!appliedCoupon"
                                               @click="applyCoupon"
                                               :disabled="isApplyingCoupon || !couponCodeInput"
@@ -1049,7 +1048,7 @@ const confirmCancelOrder = async () => {
                                           >
                                               {{ isApplyingCoupon ? '...' : 'Apply' }}
                                           </button>
-                                          <button 
+                                          <button
                                               v-else
                                               @click="removeCoupon"
                                               class="px-4 h-10 bg-red-100 text-red-700 text-sm font-bold rounded-xl hover:bg-red-200 transition-colors"
@@ -1087,7 +1086,7 @@ const confirmCancelOrder = async () => {
                              </div>
                          </div>
 
-                         <button 
+                         <button
                             @click="handleCheckout"
                             class="w-full h-12 rounded-xl bg-bakery-600 text-white font-bold text-base hover:bg-bakery-700 shadow-lg shadow-bakery-100 transition-all active:scale-95 flex items-center justify-center gap-2"
                         >
@@ -1100,7 +1099,7 @@ const confirmCancelOrder = async () => {
         </div>
     </div>
 
-    
+
     <!-- Product Details Modal -->
     <div v-if="isProductDialogOpen && selectedProduct" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
@@ -1112,13 +1111,13 @@ const confirmCancelOrder = async () => {
                      </div>
                      <button @click="isProductDialogOpen = false" class="text-gray-400 hover:text-gray-600"><XCircle class="w-6 h-6" /></button>
                  </div>
-                 
+
                  <div class="space-y-6">
                     <div class="relative h-64 sm:h-96 rounded-xl overflow-hidden bg-bakery-50/50 flex items-center justify-center">
                         <img :src="selectedProduct.image" :alt="selectedProduct.name" class="w-full h-full object-contain">
                          <span class="absolute top-4 right-4 bg-black/50 backdrop-blur-md text-white px-3 py-1 rounded-full text-sm font-medium">{{ selectedProduct.category }}</span>
                     </div>
-                    
+
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-4">
                             <span class="text-2xl font-bold text-green-900">{{ formatPrice(selectedProduct.price) }}</span>
@@ -1131,7 +1130,7 @@ const confirmCancelOrder = async () => {
                             {{ selectedProduct.stock }} in stock
                         </span>
                     </div>
-                    
+
                     <div>
                         <h3 class="font-semibold text-gray-900 mb-2">Description</h3>
                         <p class="text-gray-600 leading-relaxed">{{ selectedProduct.description }}</p>
@@ -1145,21 +1144,21 @@ const confirmCancelOrder = async () => {
                         </h3>
                         <div class="flex items-center gap-2">
                             <div class="flex gap-1">
-                                <button 
-                                    v-for="i in 5" 
+                                <button
+                                    v-for="i in 5"
                                     :key="i"
                                     @click="handleRateProduct(i)"
                                     @mouseenter="hoverRating = i"
                                     @mouseleave="hoverRating = 0"
                                     class="transition-transform active:scale-90"
                                 >
-                                    <Star 
+                                    <Star
                                         :class="[
                                             'w-8 h-8 transition-colors',
-                                            (hoverRating || userRating) >= i 
-                                                ? 'fill-bakery-600 text-bakery-600' 
+                                            (hoverRating || userRating) >= i
+                                                ? 'fill-bakery-600 text-bakery-600'
                                                 : 'text-bakery-200'
-                                        ]" 
+                                        ]"
                                     />
                                 </button>
                             </div>
@@ -1169,7 +1168,7 @@ const confirmCancelOrder = async () => {
                             <p v-else class="text-xs text-bakery-400 ml-2">Tap stars to vote</p>
                         </div>
                     </div>
-                    
+
                     <div v-if="selectedProduct.ingredients?.length">
                         <h3 class="font-semibold text-gray-900 mb-2">Ingredients</h3>
                         <div class="flex flex-wrap gap-2">
@@ -1178,7 +1177,7 @@ const confirmCancelOrder = async () => {
                             </span>
                         </div>
                     </div>
-                    
+
                      <div v-if="selectedProduct.allergens?.length">
                         <h3 class="font-semibold text-gray-900 mb-2">Allergens</h3>
                         <div class="flex flex-wrap gap-2">
@@ -1191,9 +1190,9 @@ const confirmCancelOrder = async () => {
              </div>
              <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0">
                   <button @click="isProductDialogOpen = false" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-100 transition-colors">Close</button>
-                   <button 
+                   <button
                     @click="(e) => addToCartFromDialogExtended(e)"
-                    :disabled="selectedProduct.stock === 0" 
+                    :disabled="selectedProduct.stock === 0"
                     class="px-6 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 shadow-md transition-colors disabled:opacity-50"
                 >
                     Add to Cart
@@ -1201,7 +1200,7 @@ const confirmCancelOrder = async () => {
              </div>
         </div>
     </div>
-    
+
     <!-- Order Details Modal -->
     <div v-if="isOrderDetailsOpen && viewingOrder" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-2 sm:p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[90vh]">
@@ -1216,7 +1215,7 @@ const confirmCancelOrder = async () => {
                     </button>
                 </div>
             </div>
-            
+
             <div class="p-6 overflow-y-auto flex-1 space-y-6">
                 <!-- Order Status -->
                 <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
@@ -1291,8 +1290,8 @@ const confirmCancelOrder = async () => {
                             <div v-for="(item, idx) in viewingOrder.items" :key="idx" class="px-4 py-3 hover:bg-gray-50 transition-colors">
                                 <div class="grid grid-cols-12 gap-2 items-center">
                                     <div class="col-span-6 flex items-center gap-3">
-                                        <img 
-                                            :src="item.productImage || 'https://placehold.co/100x100?text=No+Image'" 
+                                        <img
+                                            :src="item.productImage || 'https://placehold.co/100x100?text=No+Image'"
                                             :alt="item.productName"
                                             class="w-10 h-10 rounded-lg object-cover border border-gray-100 shadow-sm"
                                         />
@@ -1335,8 +1334,8 @@ const confirmCancelOrder = async () => {
                         <div v-if="viewingOrder.paymentMethod" class="flex justify-between text-sm pt-2 border-t border-green-200/50">
                             <span class="text-gray-500 font-medium">Payment Method</span>
                             <span class="font-bold text-green-900 capitalize">
-                                {{ viewingOrder.paymentMethod === 'cash' 
-                                    ? (viewingOrder.deliveryType === 'Delivery' ? 'Pay when receive' : 'Pay at Counter') 
+                                {{ viewingOrder.paymentMethod === 'cash'
+                                    ? (viewingOrder.deliveryType === 'Delivery' ? 'Pay when receive' : 'Pay at Counter')
                                     : viewingOrder.paymentMethod }}
                             </span>
                         </div>
@@ -1347,24 +1346,24 @@ const confirmCancelOrder = async () => {
                     </div>
                 </div>
             </div>
-            
+
             <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
                 <div v-if="viewingOrder.status === 'Pending' && viewingOrder.paymentStatus !== 'Paid'" class="mr-auto flex gap-2">
-                    <button 
+                    <button
                          @click="router.push(`/payment/${viewingOrder.id}`)"
                          class="px-4 py-2 rounded-lg bg-bakery-900 text-white font-bold text-sm hover:bg-black shadow-lg transition-all flex items-center gap-2"
                     >
                         <CreditCard class="w-4 h-4" /> Pay Now
                     </button>
-                    <button 
+                    <button
                         @click="openCancelModal(viewingOrder.id)"
                         class="px-4 py-2 rounded-lg bg-red-50 text-red-600 border border-red-100 font-bold text-sm hover:bg-red-100 transition-all flex items-center gap-2"
                     >
                         <Trash2 class="w-4 h-4" /> Cancel Order
                     </button>
                 </div>
-                <button 
-                    @click="isOrderDetailsOpen = false" 
+                <button
+                    @click="isOrderDetailsOpen = false"
                     class="px-6 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 shadow-md transition-colors"
                 >
                     Close
@@ -1385,13 +1384,13 @@ const confirmCancelOrder = async () => {
                     <p class="text-green-600">{{ t('shop.loginPrompt') }}</p>
                 </div>
                 <div class="flex flex-col gap-3">
-                    <button 
+                    <button
                         @click="router.push('/login')"
                         class="w-full py-3 px-4 bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95"
                     >
                         {{ t('shop.loginNow') }}
                     </button>
-                    <button 
+                    <button
                         @click="showLoginPrompt = false"
                         class="w-full py-3 px-4 bg-gray-50 hover:bg-gray-100 text-gray-600 font-medium rounded-xl transition-colors"
                     >
@@ -1403,7 +1402,7 @@ const confirmCancelOrder = async () => {
     </div>
 
     <!-- Flying animation overlay -->
-    <div v-for="fly in flyingItems" :key="fly.id" 
+    <div v-for="fly in flyingItems" :key="fly.id"
         class="fly-to-cart w-12 h-12 rounded-full overflow-hidden border-2 border-bakery-500 shadow-2xl bg-white"
         :style="{
             left: (fly.flying ? fly.targetX : fly.x) + 'px',
@@ -1424,15 +1423,15 @@ const confirmCancelOrder = async () => {
                 </h3>
                 <button @click="isCancelModalOpen = false" class="text-gray-400 hover:text-gray-600"><XCircle class="w-6 h-6" /></button>
             </div>
-            
+
             <div class="p-6 space-y-4">
                 <p class="text-sm text-gray-600 font-medium">Why are you cancelling your order?</p>
-                
+
                 <div class="space-y-2">
                     <label v-for="reason in predefinedReasons" :key="reason" class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors has-checked:bg-red-50 has-checked:border-red-200">
-                        <input 
-                            type="radio" 
-                            v-model="selectedCancelReason" 
+                        <input
+                            type="radio"
+                            v-model="selectedCancelReason"
                             :value="reason"
                             class="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300"
                         >
@@ -1441,8 +1440,8 @@ const confirmCancelOrder = async () => {
                 </div>
 
                 <div v-if="selectedCancelReason === 'Other'" class="animate-in slide-in-from-top-2 duration-200">
-                    <textarea 
-                        v-model="customReason" 
+                    <textarea
+                        v-model="customReason"
                         placeholder="Please tell us more..."
                         class="w-full p-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-gray-50"
                         rows="3"
@@ -1451,13 +1450,13 @@ const confirmCancelOrder = async () => {
             </div>
 
             <div class="p-6 bg-gray-50 flex gap-3 border-t border-gray-100">
-                <button 
+                <button
                     @click="isCancelModalOpen = false"
                     class="flex-1 px-4 py-2.5 text-sm font-bold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition-all font-premium"
                 >
                     Nevermind
                 </button>
-                <button 
+                <button
                     @click="confirmCancelOrder"
                     :disabled="selectedCancelReason === 'Other' && !customReason.trim()"
                     class="flex-1 px-4 py-2.5 text-sm font-bold text-white bg-red-600 rounded-xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 disabled:opacity-50"
@@ -1469,5 +1468,3 @@ const confirmCancelOrder = async () => {
     </div>
 </div>
 </template>
-
-

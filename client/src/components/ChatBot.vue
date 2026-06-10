@@ -3,6 +3,7 @@ import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { useI18n } from '../composables/useI18n';
 
 import { useChatUI } from '../composables/useChatUI';
+import { BASE_URL } from '../config/api';
 
 const { t, currentLocale } = useI18n();
 const { activeChat, toggleAIChat } = useChatUI();
@@ -153,8 +154,7 @@ const sendToAI = async (text: string) => {
   isBaking.value = true;
 
   try {
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-    const baseUrl = API_URL.endsWith('/api') ? API_URL.replace('/api', '') : API_URL;
+    const baseUrl = BASE_URL;
     const response = await fetch(`${baseUrl}/api/ai/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

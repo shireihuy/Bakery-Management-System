@@ -1,144 +1,145 @@
-import { ref, readonly } from 'vue';
-import { socketService } from '../services/socket';
+import { ref, readonly } from "vue";
+import { socketService } from "../services/socket";
 
 interface User {
-    id: string;
-    name: string;
-    email: string;
-    role: 'Admin' | 'Manager' | /* 'Baker' | */ 'Cashier' | 'Customer';
-    status: 'active' | 'inactive';
-    phone?: string;
-    address?: string;
-    province_id?: number;
-    district_id?: number;
-    ward_code?: string;
+  id: string;
+  name: string;
+  email: string;
+  role: "Admin" | "Manager" | /* 'Baker' | */ "Cashier" | "Customer";
+  status: "active" | "inactive";
+  phone?: string;
+  address?: string;
+  province_id?: number;
+  district_id?: number;
+  ward_code?: string;
 }
 
+import { API_URL } from "../config/api";
+
 const user = ref<User | null>(null);
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export function useAuth() {
-    const login = async (email: string, password?: string) => {
+  const login = async (email: string, password?: string) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Invalid credentials");
+      }
+
+      const data = await response.json();
+      user.value = data.user;
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
+
+      // Join socket room for real-time notifications
+      socketService.joinUserRoom();
+
+      // Return redirect path based on role
+      const role = data.user.role.toLowerCase();
+      if (["admin", "manager", "cashier"].includes(role)) {
+        return "/dashboard";
+      }
+      return "/customer";
+    } catch (err) {
+      console.error("Login error:", err);
+      throw err;
+    }
+  };
+
+  const register = async (userData: any) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(userData)
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Registration failed");
+      }
+
+      const data = await response.json();
+      // Automatically log in after registration?
+      // For now, let's just return success and let the component handle it.
+      return data;
+    } catch (err) {
+      console.error("Registration error:", err);
+      throw err;
+    }
+  };
+
+  const logout = () => {
+    user.value = null;
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+  };
+
+  const autoLogin = () => {
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      user.value = JSON.parse(stored);
+    }
+  };
+
+  const updateProfile = async (updates: Partial<User>) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/users/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(updates)
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      const updatedUser = await response.json();
+      user.value = updatedUser;
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      return updatedUser;
+    } catch (err) {
+      console.error("Update profile error:", err);
+      throw err;
+    }
+  };
+
+  const setupSessionSync = () => {
+    window.addEventListener("storage", event => {
+      if (event.key === "token") {
+        if (!event.newValue || event.newValue !== event.oldValue) {
+          // Token changed or removed: full reload to reset all states
+          window.location.reload();
+        }
+      }
+      if (event.key === "user" && event.newValue) {
         try {
-            const response = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Invalid credentials');
-            }
-
-            const data = await response.json();
-            user.value = data.user;
-            localStorage.setItem('user', JSON.stringify(data.user));
-            localStorage.setItem('token', data.token);
-
-            // Join socket room for real-time notifications
-            socketService.joinUserRoom();
-
-            // Return redirect path based on role
-            const role = data.user.role.toLowerCase();
-            if (['admin', 'manager', 'cashier'].includes(role)) {
-                return '/dashboard';
-            }
-            return '/customer';
-        } catch (err) {
-            console.error('Login error:', err);
-            throw err;
+          // User data updated: update reactive state
+          user.value = JSON.parse(event.newValue);
+        } catch (e) {
+          console.error("Failed to parse updated user from storage", e);
         }
-    };
+      }
+    });
+  };
 
-    const register = async (userData: any) => {
-        try {
-            const response = await fetch(`${API_URL}/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(userData)
-            });
-
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.message || 'Registration failed');
-            }
-
-            const data = await response.json();
-            // Automatically log in after registration? 
-            // For now, let's just return success and let the component handle it.
-            return data;
-        } catch (err) {
-            console.error('Registration error:', err);
-            throw err;
-        }
-    };
-
-    const logout = () => {
-        user.value = null;
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-    };
-
-    const autoLogin = () => {
-        const stored = localStorage.getItem('user');
-        if (stored) {
-            user.value = JSON.parse(stored);
-        }
-    };
-
-    const updateProfile = async (updates: Partial<User>) => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_URL}/users/profile`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(updates)
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to update profile');
-            }
-
-            const updatedUser = await response.json();
-            user.value = updatedUser;
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            return updatedUser;
-        } catch (err) {
-            console.error('Update profile error:', err);
-            throw err;
-        }
-    };
-
-    const setupSessionSync = () => {
-        window.addEventListener('storage', (event) => {
-            if (event.key === 'token') {
-                if (!event.newValue || event.newValue !== event.oldValue) {
-                    // Token changed or removed: full reload to reset all states
-                    window.location.reload();
-                }
-            }
-            if (event.key === 'user' && event.newValue) {
-                try {
-                    // User data updated: update reactive state
-                    user.value = JSON.parse(event.newValue);
-                } catch (e) {
-                    console.error('Failed to parse updated user from storage', e);
-                }
-            }
-        });
-    };
-
-    return {
-        user: readonly(user),
-        login,
-        register,
-        logout,
-        autoLogin,
-        updateProfile,
-        setupSessionSync
-    };
+  return {
+    user: readonly(user),
+    login,
+    register,
+    logout,
+    autoLogin,
+    updateProfile,
+    setupSessionSync
+  };
 }

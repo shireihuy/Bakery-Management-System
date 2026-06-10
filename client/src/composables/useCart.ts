@@ -11,13 +11,14 @@ export interface CartItem extends Product {
 const cart = ref<CartItem[]>([]);
 const isCartLoading = ref(false);
 
+import { API_URL } from '../config/api';
+
 export function useCart() {
     const { user } = useAuth();
-    
+
     // Base URL is either from env or default
     const getBaseUrl = () => {
-        const url = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-        return url.endsWith('/api') ? url : `${url}/api`;
+        return API_URL;
     };
 
     const fetchCart = async () => {
@@ -74,7 +75,7 @@ export function useCart() {
                     quantity: newQuantity
                 })
             });
-            
+
             if (response.ok) {
                 // Fetch the updated cart from server, or do optimistic update
                 if (existingItem) {
@@ -119,7 +120,7 @@ export function useCart() {
                     quantity: boundedQuantity
                 })
             });
-            
+
             if (response.ok) {
                 item.quantity = boundedQuantity;
             }
@@ -143,7 +144,7 @@ export function useCart() {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            
+
             if (response.ok) {
                 cart.value = cart.value.filter(item => item.id !== productId);
             }
@@ -167,7 +168,7 @@ export function useCart() {
                     'Authorization': `Bearer ${token}`
                 }
             });
-            
+
             if (response.ok) {
                 cart.value = [];
             }

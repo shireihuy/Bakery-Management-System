@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { 
-  ShoppingCart, 
+import {
+  ShoppingCart,
   Coffee,
-  Heart, 
-  Clock, 
+  Heart,
+  Clock,
   Award,
   MapPin,
   ArrowRight,
@@ -74,11 +74,12 @@ const menuProducts = computed(() => {
 const activeFlashSales = ref<any[]>([]);
 const isLoadingFlashSales = ref(false);
 
+import { API_URL } from '../config/api';
+
 const fetchActiveFlashSales = async () => {
     isLoadingFlashSales.value = true;
     try {
-        const url = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-        const response = await fetch(`${url}/flash-sales/active`);
+        const response = await fetch(`${API_URL}/flash-sales/active`);
         if (response.ok) {
             const data = await response.json();
             // Map image paths to full URLs if they are relative paths from the server
@@ -86,7 +87,7 @@ const fetchActiveFlashSales = async () => {
                 ...sale,
                 items: sale.items.map((item: any) => ({
                     ...item,
-                    image: item.image?.startsWith('/') ? `${url.replace('/api', '')}${item.image}` : item.image
+                    image: item.image?.startsWith('/') ? `${API_URL.replace('/api', '')}${item.image}` : item.image
                 }))
             }));
         }
@@ -123,7 +124,7 @@ const storeLocation = ref('');
 
 const loadStoreInfo = async () => {
     try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/system/settings`);
+        const response = await fetch(`${API_URL}/system/settings`);
         if (response.ok) {
             const settings = await response.json();
             if (settings.store_location_config && settings.store_location_config.address) {
@@ -215,7 +216,7 @@ const mapUrl = computed(() => {
 <template>
     <div class="min-h-screen bg-accent-cream overflow-x-hidden pt-20 sm:pt-24">
       <!-- Header -->
-      <header 
+      <header
         class="glass-header w-full flex-none transition-all duration-500"
         :class="{ 'py-2 shadow-2xl bg-white/95': isScrolled, 'py-4': !isScrolled }"
       >
@@ -231,7 +232,7 @@ const mapUrl = computed(() => {
               </div>
             </router-link>
             <div class="flex items-center gap-4">
-              <button 
+              <button
                 @click="onGetStarted"
                 class="inline-flex items-center justify-center rounded-xl text-sm font-semibold h-11 px-6 bg-bakery-900 hover:bg-bakery-800 text-white shadow-lg transition-all active:scale-95"
               >
@@ -285,10 +286,10 @@ const mapUrl = computed(() => {
                     class="p-4"
                 >
                     <swiper-slide v-for="product in menuProducts" :key="product.id" class="h-auto">
-                        <div 
+                        <div
                             :class="[
-                                (product.flashSale && product.flashSale.sold < product.flashSale.stock) 
-                                ? 'border-emerald-600 ring-4 ring-emerald-50/50 shadow-[0_30px_60px_rgba(6,95,70,0.1)] bg-linear-to-b from-white to-emerald-50/10' 
+                                (product.flashSale && product.flashSale.sold < product.flashSale.stock)
+                                ? 'border-emerald-600 ring-4 ring-emerald-50/50 shadow-[0_30px_60px_rgba(6,95,70,0.1)] bg-linear-to-b from-white to-emerald-50/10'
                                 : 'border-bakery-50 hover:border-bakery-200'
                             ]"
                             class="bg-white rounded-3xl lg:rounded-[2.5rem] overflow-hidden border transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.05)] h-full flex flex-col group/card m-1"
@@ -344,12 +345,12 @@ const mapUrl = computed(() => {
                 </swiper>
 
                 <!-- Navigation Controls -->
-                <button 
+                <button
                     class="swiper-button-prev-custom hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-6 w-14 h-14 rounded-full bg-white shadow-2xl border border-bakery-50 items-center justify-center text-bakery-900 hover:bg-bakery-900 hover:text-white transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-0 z-30"
                 >
                     <ChevronLeft class="w-6 h-6" />
                 </button>
-                <button 
+                <button
                     class="swiper-button-next-custom hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-6 w-14 h-14 rounded-full bg-white shadow-2xl border border-bakery-50 items-center justify-center text-bakery-900 hover:bg-bakery-900 hover:text-white transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-0 z-30"
                 >
                     <ChevronRight class="w-6 h-6" />
@@ -360,7 +361,7 @@ const mapUrl = computed(() => {
            </div>
         </div>
        </section>
-      
+
        <!-- Hero Section -->
       <section class="container mx-auto px-6 py-24 lg:py-40">
         <div class="grid lg:grid-cols-2 gap-20 items-center">
@@ -380,14 +381,14 @@ const mapUrl = computed(() => {
               {{ t('landing.heroSubtitle') }}
             </p>
             <div class="flex flex-wrap justify-center lg:justify-start gap-4 lg:gap-6 pt-6">
-              <button 
+              <button
                 @click="onGetStarted"
                 class="inline-flex items-center justify-center rounded-3xl text-lg font-black h-16 px-10 lg:px-12 bg-bakery-900 hover:bg-bakery-950 text-white shadow-2xl hover:-translate-y-1 transition-all active:scale-95"
               >
                 {{ t('landing.enterShop') }}
                 <ShoppingCart class="w-6 h-6 ml-3" />
               </button>
-              <button 
+              <button
                 @click="onViewMenu"
                 class="inline-flex items-center justify-center rounded-3xl text-lg font-black h-16 px-10 lg:px-12 border-2 border-bakery-100 text-bakery-900 hover:bg-bakery-50 transition-all"
               >
@@ -398,7 +399,7 @@ const mapUrl = computed(() => {
           <div class="relative">
             <div class="absolute -inset-4 lg:-inset-10 bg-bakery-200/30 rounded-[5rem] blur-3xl animate-pulse"></div>
             <div class="relative rounded-[2.5rem] lg:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border-8 lg:border-12 border-white group">
-              <img 
+              <img
                 src="https://images.unsplash.com/photo-1592637970552-6c27432e7913?auto=format&fit=crop&q=80&w=1080"
                 alt="Matcha Bakery"
                 class="w-full h-[400px] lg:h-[650px] object-cover transition-transform duration-1000 group-hover:scale-105"
@@ -457,7 +458,7 @@ const mapUrl = computed(() => {
                 </button>
             </div>
             <div class="lg:col-span-2 grid md:grid-cols-2 gap-10">
-                <div 
+                <div
                     v-for="(feature, index) in features"
                     :key="index"
                     class="p-8 lg:p-10 rounded-[2.5rem] lg:rounded-[3.5rem] bg-white border border-bakery-50 hover:border-bakery-100 transition-all duration-500 hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.08)] group"
@@ -483,18 +484,18 @@ const mapUrl = computed(() => {
               Come by and experience the aroma of freshly baked goods in person.
             </p>
           </div>
-          
+
           <div class="relative rounded-[2.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-bakery-50 h-[500px] group">
-            <iframe 
+            <iframe
                :key="mapUrl"
-               width="100%" 
-               height="100%" 
-               style="border:0;" 
-               loading="lazy" 
-               allowfullscreen 
+               width="100%"
+               height="100%"
+               style="border:0;"
+               loading="lazy"
+               allowfullscreen
                :src="mapUrl">
             </iframe>
-            
+
             <!-- Floating Store Card -->
             <div class="absolute bottom-6 left-6 md:bottom-10 md:left-10 bg-white/95 backdrop-blur-md p-6 rounded-3xl shadow-2xl border border-bakery-100 max-w-sm transform group-hover:-translate-y-2 transition-transform duration-500">
               <div class="flex items-start gap-4">
@@ -534,7 +535,7 @@ const mapUrl = computed(() => {
                 </p>
               </div>
               <div class="flex flex-col sm:flex-row items-center justify-center gap-8">
-                  <button 
+                  <button
                     @click="onGetStarted"
                      class="h-20 px-16 rounded-[2.5rem] bg-white text-bakery-900 font-black text-xl hover:bg-bakery-50 shadow-2xl transition-all active:scale-95 flex items-center gap-4 group/btn"
                   >

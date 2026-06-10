@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { 
-    CreditCard, 
-    Wallet, 
-    CheckCircle2, 
-    ArrowLeft, 
-    QrCode, 
+import { API_URL } from '../config/api';
+import {
+    CreditCard,
+    Wallet,
+    CheckCircle2,
+    ArrowLeft,
+    QrCode,
     Check,
     Receipt,
     Clock,
@@ -155,18 +156,18 @@ onMounted(async () => {
 
     // 1. Try to find in cache first
     let found = orders.value.find(o => String(o.id) === orderId);
-    
+
     // 2. If not found, fetch from server
     if (!found && orderId !== 'mock') {
         found = (await fetchOrderById(orderId)) || undefined;
     }
-    
+
     order.value = found || null;
-    
+
     // Fetch payment config
     try {
         const token = localStorage.getItem('token');
-        const configRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/payment/settings`, {
+        const configRes = await fetch(`${API_URL}/payment/settings`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (configRes.ok) {
@@ -175,7 +176,7 @@ onMounted(async () => {
     } catch (e) {
         console.error('Failed to load payment config', e);
     }
-    
+
     if (!order.value) {
         if (orderId === 'mock') {
             order.value = {
@@ -207,11 +208,11 @@ onMounted(async () => {
 
 const handlePayment = async () => {
     if (!selectedMethod.value || !order.value) return;
-    
+
     try {
         // Initiate in backend
         const res = await initiatePayment(order.value.id, selectedMethod.value);
-        
+
         if (selectedMethod.value === 'qr') {
             if (res.paymentUrl) payosUrl.value = res.paymentUrl;
             // Store all payos details to sync the displayed QR perfectly
@@ -225,7 +226,7 @@ const handlePayment = async () => {
                 qrCode: res.qrCode  // raw EMV string for client-side rendering
             };
         }
-        
+
         if (selectedMethod.value === 'cash') {
             showCounterWaiting.value = true;
         } else {
@@ -247,7 +248,7 @@ const handlePayment = async () => {
             <div class="absolute -top-[10%] -left-[5%] w-[40%] h-[40%] bg-bakery-200/30 blur-[120px] rounded-full animate-float" style="animation-duration: 8s"></div>
             <div class="absolute top-[20%] -right-[10%] w-[50%] h-[50%] bg-emerald-100/40 blur-[150px] rounded-full animate-float" style="animation-duration: 12s; animation-delay: -2s"></div>
             <div class="absolute -bottom-[10%] left-[20%] w-[30%] h-[30%] bg-bakery-100/50 blur-[100px] rounded-full animate-float" style="animation-duration: 10s; animation-delay: -5s"></div>
-            
+
             <!-- Floating Bakery Icons -->
             <Cake class="absolute top-[15%] left-[10%] w-16 h-16 text-bakery-200/40 rotate-12 animate-float" style="animation-duration: 9s" />
             <Cookie class="absolute bottom-[20%] right-[15%] w-12 h-12 text-bakery-300/30 -rotate-12 animate-float" style="animation-duration: 7s; animation-delay: -1s" />
@@ -263,11 +264,11 @@ const handlePayment = async () => {
             </div>
 
             <div v-else class="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-8 md:gap-12 animate-in fade-in slide-in-from-bottom-10 duration-700">
-                
+
                 <!-- Left: Order Summary -->
                 <div class="flex flex-col gap-6 lg:sticky lg:top-12 self-start">
-                    <button 
-                        @click="router.back()" 
+                    <button
+                        @click="router.back()"
                         class="group flex items-center gap-2 text-bakery-600 font-black hover:text-bakery-900 transition-all w-fit"
                     >
                         <div class="w-8 h-8 rounded-full border-2 border-bakery-200 flex items-center justify-center group-hover:bg-bakery-50 transition-all">
@@ -275,11 +276,11 @@ const handlePayment = async () => {
                         </div>
                         {{ t('common.back') }}
                     </button>
-                    
+
                     <div class="glass-card rounded-[3rem] border border-white/40 p-10 premium-shadow space-y-10 relative overflow-hidden">
                         <!-- Decorative glow -->
                         <div class="absolute -top-10 -right-10 w-32 h-32 bg-bakery-50 blur-3xl opacity-50"></div>
-                        
+
                         <div class="flex items-center gap-5 relative">
                             <div class="w-14 h-14 rounded-2xl bg-bakery-900 flex items-center justify-center shadow-lg shadow-bakery-900/20">
                                 <Receipt class="w-7 h-7 text-white" />
@@ -295,8 +296,8 @@ const handlePayment = async () => {
                                 <div v-for="(item, idx) in order.items" :key="idx" class="flex justify-between items-center group/item hover:bg-bakery-50/50 p-3 -mx-3 rounded-2xl transition-all">
                                     <div class="flex items-center gap-4">
                                         <div class="relative">
-                                            <img 
-                                                :src="item.productImage || 'https://placehold.co/100x100?text=No+Image'" 
+                                            <img
+                                                :src="item.productImage || 'https://placehold.co/100x100?text=No+Image'"
                                                 :alt="item.productName"
                                                 class="w-12 h-12 rounded-xl object-cover border border-bakery-100 shadow-sm transition-transform group-hover/item:scale-110"
                                             />
@@ -354,7 +355,7 @@ const handlePayment = async () => {
                 <!-- Right: Payment Methods Container -->
                 <div class="relative min-h-[600px] flex flex-col">
                     <div class="glass-card rounded-[3.5rem] border border-white/60 p-10 md:p-14 premium-shadow flex-1 flex flex-col items-center justify-center relative overflow-hidden">
-                        
+
                         <!-- Background Glow -->
                         <div class="absolute bottom-0 right-0 w-64 h-64 bg-bakery-50 blur-3xl opacity-30 -mr-20 -mb-20"></div>
 
@@ -370,7 +371,7 @@ const handlePayment = async () => {
 
                             <div class="grid grid-cols-1 gap-4">
                                 <!-- QR Payment -->
-                                <button 
+                                <button
                                     @click="selectedMethod = 'qr'"
                                     :class="[
                                         'group relative w-full p-6 rounded-[2.5rem] border-2 transition-all duration-500 flex items-center justify-between overflow-hidden',
@@ -378,7 +379,7 @@ const handlePayment = async () => {
                                     ]"
                                 >
                                     <div v-if="selectedMethod === 'qr'" class="absolute inset-0 bg-linear-to-r from-bakery-900/5 to-transparent"></div>
-                                    
+
                                     <div class="flex items-center gap-5 relative">
                                         <div class="w-14 h-14 rounded-3xl bg-bakery-900 flex items-center justify-center shadow-lg shadow-bakery-200 group-hover:rotate-6 transition-transform">
                                             <QrCode class="w-7 h-7 text-white" />
@@ -397,7 +398,7 @@ const handlePayment = async () => {
                                 </button>
 
                                 <!-- Cash -->
-                                <button 
+                                <button
                                     @click="selectedMethod = 'cash'"
                                     :class="[
                                         'group relative w-full p-6 rounded-[2.5rem] border-2 transition-all duration-500 flex items-center justify-between overflow-hidden',
@@ -405,7 +406,7 @@ const handlePayment = async () => {
                                     ]"
                                 >
                                      <div v-if="selectedMethod === 'cash'" class="absolute inset-0 bg-linear-to-r from-bakery-800/5 to-transparent"></div>
-                                    
+
                                     <div class="flex items-center gap-5 relative">
                                         <div class="w-14 h-14 rounded-3xl bg-amber-600 flex items-center justify-center shadow-lg shadow-amber-200 group-hover:rotate-6 transition-transform">
                                             <Wallet class="w-7 h-7 text-white" />
@@ -424,14 +425,14 @@ const handlePayment = async () => {
                                 </button>
                             </div>
 
-                            <button 
+                            <button
                                 @click="handlePayment"
                                 :disabled="!selectedMethod"
                                 class="group w-full h-18 rounded-4xl bg-bakery-900 text-white font-black text-xl hover:bg-black shadow-[0_20px_40px_-10px_rgba(42,53,33,0.3)] transition-all disabled:opacity-30 active:scale-95 flex items-center justify-center gap-4 relative overflow-hidden"
                             >
                                 <!-- Shimmer Effect -->
                                 <div class="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                                
+
                                 <span class="relative">{{ t('shop.checkout') }}</span>
                                 <CreditCard class="w-6 h-6 relative" />
                             </button>
@@ -449,11 +450,11 @@ const handlePayment = async () => {
                                     <div v-else class="w-80 h-80 flex items-center justify-center bg-bakery-50">
                                         <QrCode class="w-32 h-32 text-bakery-200" />
                                     </div>
-                                    
+
                                     <!-- Scanning Overlay Effect -->
                                     <div class="absolute inset-x-0 top-0 h-1 bg-bakery-900/50 blur-sm animate-[scan_3s_ease-in-out_infinite] pointer-events-none"></div>
                                 </div>
-                                
+
                                 <!-- Text Help for User -->
                                 <div class="mt-6 text-bakery-900 font-bold space-y-1">
                                     <p class="text-sm opacity-60 uppercase tracking-widest font-black">Transfer Details</p>
@@ -468,18 +469,18 @@ const handlePayment = async () => {
                                     <span>Transaction expires in {{ formattedTime }}</span>
                                 </div>
 
-                                <a 
+                                <a
                                     v-if="payosUrl"
-                                    :href="payosUrl" 
+                                    :href="payosUrl"
                                     target="_blank"
                                     class="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-blue-50 text-blue-600 font-black text-sm uppercase tracking-widest border border-blue-100 hover:bg-blue-100 transition-all mb-4"
                                 >
                                     <ExternalLink class="w-4 h-4" />
                                     Open Payment Page
                                 </a>
-                                
+
                                 <div class="flex gap-4">
-                                    <button 
+                                    <button
                                         @click="showQR = false"
                                         class="flex-1 h-14 rounded-2xl border-2 border-bakery-100 text-bakery-600 font-black hover:bg-bakery-50 hover:border-bakery-200 transition-all text-sm"
                                     >
@@ -503,7 +504,7 @@ const handlePayment = async () => {
                                     <p class="text-bakery-900 font-bold text-lg">{{ order?.deliveryType === 'Delivery' && !isCashier ? 'Please pay the courier upon arrival' : 'Please proceed to the counter' }}</p>
                                     <p class="text-bakery-500 text-sm mt-2">Provide your Order ID: <span class="text-bakery-900 font-black">#{{ orderId }}</span></p>
                                 </div>
-                                
+
                                 <div class="mt-8 flex flex-col items-center gap-4">
                                     <div class="flex items-center gap-3 px-6 py-3 rounded-2xl bg-amber-50 text-amber-600 font-black text-xs uppercase tracking-widest border border-amber-100">
                                         <div class="w-2 h-2 rounded-full bg-amber-600 animate-pulse"></div>
@@ -514,7 +515,7 @@ const handlePayment = async () => {
                             </div>
 
                             <div class="max-w-xs mx-auto">
-                                <button 
+                                <button
                                     @click="showCounterWaiting = false"
                                     class="w-full h-14 rounded-2xl border-2 border-bakery-100 text-bakery-600 font-black hover:bg-bakery-50 transition-all text-sm"
                                 >
@@ -545,7 +546,7 @@ const handlePayment = async () => {
                                 <!-- Success particles simulation -->
                                 <div class="absolute top-0 w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
                                 <div class="absolute bottom-4 right-0 w-3 h-3 bg-bakery-400 rounded-full animate-ping" style="animation-delay: 0.5s"></div>
-                                
+
                                 <div class="w-24 h-24 rounded-full bg-green-500 flex items-center justify-center shadow-[0_0_40px_rgba(34,197,94,0.3)] animate-pop">
                                     <Check class="w-12 h-12 text-white stroke-4" />
                                 </div>
@@ -560,7 +561,7 @@ const handlePayment = async () => {
                         </div>
 
                     </div>
-                    
+
                     <!-- View Footer -->
                     <div class="py-8 text-center text-[10px] font-black uppercase tracking-[0.3em] text-bakery-200 pointer-events-none">
                         Premium Bakery Experience • Powered by secure gateway
@@ -579,7 +580,7 @@ const handlePayment = async () => {
 }
 
 .premium-shadow {
-    box-shadow: 
+    box-shadow:
         0 4px 6px -1px rgba(0, 0, 0, 0.05),
         0 20px 40px -4px rgba(0, 0, 0, 0.05),
         inset 0 2px 4px 0 rgba(255, 255, 255, 0.5);

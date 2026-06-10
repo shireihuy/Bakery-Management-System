@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
+import { API_URL } from '../config/api';
 import { useCurrency } from '../composables/useCurrency';
 import { User, Save, Ticket, Key, CreditCard, MapPin, Store } from 'lucide-vue-next';
 import { useGHN } from '../composables/useGHN';
@@ -68,7 +69,7 @@ const loadPaymentSettings = async () => {
     isPaymentLoading.value = true;
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/payment/settings`, {
+        const response = await fetch(`${API_URL}/payment/settings`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
@@ -85,15 +86,15 @@ const savePaymentSettings = async () => {
     isSaving.value = true;
     try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/payment/settings`, {
+        const res = await fetch(`${API_URL}/payment/settings`, {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(paymentConfig.value)
         });
-        
+
         if (res.ok) {
             message.value = { text: 'Payment settings updated', type: 'success' };
         } else {
@@ -134,7 +135,7 @@ const loadStoreLocationConfig = async () => {
     isLocationLoading.value = true;
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/system/settings`, {
+        const response = await fetch(`${API_URL}/system/settings`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
@@ -160,15 +161,15 @@ const saveStoreLocationConfig = async () => {
     isSaving.value = true;
     try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api'}/system/settings`, {
+        const res = await fetch(`${API_URL}/system/settings`, {
             method: 'POST',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({ key: 'store_location_config', value: storeLocationConfig.value })
         });
-        
+
         if (res.ok) {
             message.value = { text: 'Store location updated', type: 'success' };
         } else {
@@ -184,7 +185,7 @@ const saveStoreLocationConfig = async () => {
 const loadCoupons = async () => {
     isCouponsLoading.value = true;
     try {
-        const response = await fetch('http://localhost:3000/api/coupons', {
+        const response = await fetch(`${API_URL}/coupons`, {
             headers: { 'Content-Type': 'application/json' }
         });
         if (response.ok) {
@@ -200,16 +201,16 @@ const loadCoupons = async () => {
 const saveCoupon = async () => {
     try {
         const method = currentCoupon.value.id ? 'PUT' : 'POST';
-        const url = currentCoupon.value.id 
-            ? `http://localhost:3000/api/coupons/${currentCoupon.value.id}` 
-            : 'http://localhost:3000/api/coupons';
-        
+        const url = currentCoupon.value.id
+            ? `${API_URL}/coupons/${currentCoupon.value.id}`
+            : `${API_URL}/coupons`;
+
         const res = await fetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(currentCoupon.value)
         });
-        
+
         if(res.ok) {
             await loadCoupons();
             showCouponModal.value = false;
@@ -222,7 +223,7 @@ const saveCoupon = async () => {
 const deleteCoupon = async (id: string) => {
     if(!confirm('Are you sure you want to delete this coupon?')) return;
     try {
-        const res = await fetch(`http://localhost:3000/api/coupons/${id}`, { method: 'DELETE' });
+        const res = await fetch(`${API_URL}/coupons/${id}`, { method: 'DELETE' });
         if(res.ok) await loadCoupons();
     } catch(e) {
         console.error('Failed delete', e);
@@ -232,7 +233,7 @@ const deleteCoupon = async (id: string) => {
 const toggleCouponStatus = async (coupon: any) => {
     try {
         const updated = { ...coupon, is_active: !coupon.is_active };
-        const res = await fetch(`http://localhost:3000/api/coupons/${coupon.id}`, {
+        const res = await fetch(`${API_URL}/coupons/${coupon.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(updated)
@@ -259,7 +260,7 @@ onMounted(async () => {
             district_id: user.value.district_id || null,
             ward_code: user.value.ward_code || null
         };
-        
+
         await fetchProvinces();
         if (user.value.province_id) {
             await fetchDistricts(user.value.province_id);
@@ -287,7 +288,7 @@ const handleSave = async () => {
             district_id: formData.value.district_id ?? undefined,
             ward_code: formData.value.ward_code ?? undefined
         });
-        
+
         message.value = { text: t('settings.profileUpdated'), type: 'success' };
     } catch (error) {
         message.value = { text: t('settings.profileUpdateFailed'), type: 'error' };
@@ -307,11 +308,11 @@ const handleSave = async () => {
                 </h2>
                 <p class="text-sm text-green-600 mt-1">{{ t('settings.managePersonal') }}</p>
             </div>
-            
+
             <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
                 <!-- Sidebar / Navigation for Settings (Visual only for now) -->
                 <div class="space-y-2">
-                    <button 
+                    <button
                         @click="activeTab = 'profile'"
                         class="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all font-medium border"
                         :class="activeTab === 'profile' ? 'bg-green-50 text-green-700 border-green-200 shadow-sm' : 'text-gray-600 hover:bg-gray-50 border-transparent'"
@@ -319,7 +320,7 @@ const handleSave = async () => {
                         <User class="w-4 h-4" />
                         {{ t('settings.profile') }}
                     </button>
-                    <button 
+                    <button
                         @click="activeTab = 'coupons'"
                         class="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all font-medium border"
                         :class="activeTab === 'coupons' ? 'bg-green-50 text-green-700 border-green-200 shadow-sm' : 'text-gray-600 hover:bg-gray-50 border-transparent'"
@@ -327,7 +328,7 @@ const handleSave = async () => {
                         <Ticket class="w-4 h-4" />
                         {{ t('settings.coupons') }}
                     </button>
-                    <button 
+                    <button
                         v-if="isAdminOrManager"
                         @click="activeTab = 'payment'"
                         class="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all font-medium border"
@@ -336,7 +337,7 @@ const handleSave = async () => {
                         <CreditCard class="w-4 h-4" />
                         Card & QR Payments
                     </button>
-                    <button 
+                    <button
                         v-if="isAdminOrManager"
                         @click="activeTab = 'location'"
                         class="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all font-medium border"
@@ -354,45 +355,45 @@ const handleSave = async () => {
                             <div class="space-y-1">
                                 <label class="text-sm font-medium text-gray-700">{{ t('settings.fullName') }}</label>
                                 <div class="relative">
-                                    <input 
+                                    <input
                                         v-model="formData.name"
-                                        type="text" 
+                                        type="text"
                                         class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                                         placeholder="John Doe"
                                     />
                                 </div>
                             </div>
-                            
+
                             <div class="space-y-1">
                                 <label class="text-sm font-medium text-gray-700">{{ t('settings.emailAddress') }}</label>
                                 <div class="relative">
-                                    <input 
+                                    <input
                                         v-model="formData.email"
-                                        type="email" 
+                                        type="email"
                                         class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                                         placeholder="john@example.com"
                                     />
                                 </div>
                             </div>
-                            
+
                             <div class="space-y-1">
                                 <label class="text-sm font-medium text-gray-700">{{ t('settings.phoneNumber') }}</label>
                                 <div class="relative">
-                                    <input 
+                                    <input
                                         v-model="formData.phone"
-                                        type="tel" 
+                                        type="tel"
                                         class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                                         placeholder="+1 (555) 000-0000"
                                     />
                                 </div>
                             </div>
-                            
+
                             <div class="space-y-1">
                                 <label class="text-sm font-medium text-gray-700">{{ t('settings.role') }}</label>
                                 <div class="relative">
-                                    <input 
+                                    <input
                                         :value="user?.role"
-                                        type="text" 
+                                        type="text"
                                         disabled
                                         class="w-full pl-3 pr-3 py-2 border border-gray-200 bg-gray-50 text-gray-500 rounded-lg capitalize cursor-not-allowed"
                                     />
@@ -406,12 +407,12 @@ const handleSave = async () => {
                                 <MapPin class="w-4 h-4 text-green-600" />
                                 Location Details
                             </label>
-                            
+
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Province</label>
-                                    <select 
-                                        v-model="formData.province_id" 
+                                    <select
+                                        v-model="formData.province_id"
                                         @change="onProvinceChange"
                                         class="w-full h-10 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500"
                                     >
@@ -421,9 +422,9 @@ const handleSave = async () => {
                                 </div>
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">District</label>
-                                    <select 
+                                    <select
                                         v-if="formData.province_id"
-                                        v-model="formData.district_id" 
+                                        v-model="formData.district_id"
                                         @change="onDistrictChange"
                                         class="w-full h-10 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500"
                                     >
@@ -434,7 +435,7 @@ const handleSave = async () => {
                                 </div>
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ward</label>
-                                    <select 
+                                    <select
                                         v-if="formData.district_id"
                                         v-model="formData.ward_code"
                                         class="w-full h-10 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500"
@@ -448,7 +449,7 @@ const handleSave = async () => {
 
                             <div class="space-y-1">
                                 <label class="text-sm font-medium text-gray-700">Street Address</label>
-                                <textarea 
+                                <textarea
                                     v-model="formData.address"
                                     rows="2"
                                     class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
@@ -462,8 +463,8 @@ const handleSave = async () => {
                         </div>
 
                         <div class="flex justify-end pt-4">
-                            <button 
-                                type="submit" 
+                            <button
+                                type="submit"
                                 :disabled="isSaving"
                                 class="flex items-center gap-2 px-6 py-2.5 bg-linear-to-r from-green-600 to-emerald-600 text-white font-medium rounded-lg hover:from-green-700 hover:to-emerald-700 shadow-md transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                             >
@@ -481,7 +482,7 @@ const handleSave = async () => {
                              <h3 class="text-xl font-bold text-gray-900">{{ t('settings.coupons') || 'Coupon Management' }}</h3>
                              <p class="text-sm text-gray-500">{{ isAdminOrManager ? 'Create and manage store discounts' : 'Available coupons for your orders' }}</p>
                          </div>
-                         <button 
+                         <button
                              v-if="isAdminOrManager"
                              @click="openAddCoupon"
                              class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 shadow-sm transition-colors"
@@ -499,7 +500,7 @@ const handleSave = async () => {
                     </div>
 
                     <div v-else class="grid grid-cols-1 gap-4">
-                        <div v-for="coupon in coupons" :key="coupon.id" 
+                        <div v-for="coupon in coupons" :key="coupon.id"
                              class="group relative overflow-hidden rounded-xl p-4 text-white shadow-lg transition-all"
                              :class="coupon.is_active ? 'bg-linear-to-br from-green-500 to-emerald-600' : 'bg-linear-to-br from-gray-400 to-gray-500 opacity-80'">
                             <div class="flex justify-between items-start">
@@ -581,11 +582,11 @@ const handleSave = async () => {
                                     VND Exchange Rate (1 USD =)
                                 </label>
                                 <div class="relative">
-                                    <input 
-                                        v-model.number="paymentConfig.vndRate" 
-                                        type="number" 
+                                    <input
+                                        v-model.number="paymentConfig.vndRate"
+                                        type="number"
                                         step="1"
-                                        class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500 font-bold" 
+                                        class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500 font-bold"
                                         placeholder="e.g. 25000"
                                     >
                                     <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₫</span>
@@ -597,11 +598,11 @@ const handleSave = async () => {
                                     JPY Exchange Rate (1 USD =)
                                 </label>
                                 <div class="relative">
-                                    <input 
-                                        v-model.number="paymentConfig.jpyRate" 
-                                        type="number" 
+                                    <input
+                                        v-model.number="paymentConfig.jpyRate"
+                                        type="number"
                                         step="1"
-                                        class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500 font-bold" 
+                                        class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500 font-bold"
                                         placeholder="e.g. 150"
                                     >
                                     <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">¥</span>
@@ -615,8 +616,8 @@ const handleSave = async () => {
                         </div>
 
                         <div class="flex justify-end pt-2">
-                             <button 
-                                type="submit" 
+                             <button
+                                type="submit"
                                 :disabled="isSaving"
                                 class="flex items-center gap-2 px-8 py-3 bg-bakery-900 text-white font-black rounded-2xl hover:bg-black transition-all disabled:opacity-50"
                             >
@@ -643,12 +644,12 @@ const handleSave = async () => {
                                 <MapPin class="w-4 h-4 text-blue-600" />
                                 Bakery Location Details
                             </label>
-                            
+
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Province</label>
-                                    <select 
-                                        v-model="storeLocationConfig.province_id" 
+                                    <select
+                                        v-model="storeLocationConfig.province_id"
                                         @change="onStoreProvinceChange"
                                         class="w-full h-10 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500"
                                         required
@@ -659,9 +660,9 @@ const handleSave = async () => {
                                 </div>
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">District</label>
-                                    <select 
+                                    <select
                                         v-if="storeLocationConfig.province_id"
-                                        v-model="storeLocationConfig.district_id" 
+                                        v-model="storeLocationConfig.district_id"
                                         @change="onStoreDistrictChange"
                                         class="w-full h-10 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500"
                                         required
@@ -673,7 +674,7 @@ const handleSave = async () => {
                                 </div>
                                 <div class="space-y-1">
                                     <label class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Ward</label>
-                                    <select 
+                                    <select
                                         v-if="storeLocationConfig.district_id"
                                         v-model="storeLocationConfig.ward_code"
                                         class="w-full h-10 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500"
@@ -688,7 +689,7 @@ const handleSave = async () => {
 
                             <div class="space-y-1">
                                 <label class="text-sm font-medium text-gray-700">Detailed Address (Street, Building)</label>
-                                <textarea 
+                                <textarea
                                     v-model="storeLocationConfig.address"
                                     rows="2"
                                     class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
@@ -703,8 +704,8 @@ const handleSave = async () => {
                         </div>
 
                         <div class="flex justify-end pt-4 mt-auto">
-                             <button 
-                                type="submit" 
+                             <button
+                                type="submit"
                                 :disabled="isSaving"
                                 class="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 transition-all shadow-md disabled:opacity-50"
                             >
