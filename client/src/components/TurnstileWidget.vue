@@ -44,10 +44,11 @@ const removeWidget = () => {
     window.turnstile.remove(widgetId.value);
   }
   widgetId.value = null;
+  emit('expire');
 };
 
 const renderWidget = async () => {
-  if (!isEnabled.value || props.disabled) {
+  if (!isEnabled.value) {
     removeWidget();
     return;
   }
@@ -72,6 +73,7 @@ defineExpose({
   reset: () => {
     if (widgetId.value && window.turnstile) {
       window.turnstile.reset(widgetId.value);
+      emit('expire');
     }
   }
 });
@@ -79,7 +81,7 @@ defineExpose({
 onMounted(renderWidget);
 onBeforeUnmount(removeWidget);
 
-watch(() => [props.siteKey, props.disabled], () => {
+watch(() => props.siteKey, () => {
   removeWidget();
   renderWidget();
 });

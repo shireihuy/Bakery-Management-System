@@ -23,10 +23,19 @@ const verifyTurnstile = async (token, remoteIp) => {
     });
 
     if (!response.ok) {
+        console.error('Turnstile verification request failed:', response.status, response.statusText);
         return false;
     }
 
     const data = await response.json();
+    if (!data.success) {
+        console.error('Turnstile verification failed:', {
+            errorCodes: data['error-codes'] || [],
+            hostname: data.hostname,
+            action: data.action,
+            challengeTs: data.challenge_ts
+        });
+    }
     return Boolean(data.success);
 };
 
