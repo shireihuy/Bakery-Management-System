@@ -1,3 +1,58 @@
+const mockGeminiReply = (prompt) => {
+    const lowerPrompt = prompt.toLowerCase();
+    const emoji = '･・';
+
+    const isVietnamesePrompt = /[盻蘯ﾃ]/.test(prompt);
+    const isVietnameseOffTopic = prompt.includes('Th盻拱');
+
+    if (isVietnamesePrompt) {
+        if (isVietnameseOffTopic) {
+            return `Tôi xin lỗi, tôi chỉ trả lời câu hỏi liên quan đến tiệm bánh, sản phẩm, đơn hàng, mã giảm giá hoặc hệ thống. ${emoji}`;
+        }
+        return `Tiệm bánh có nhiều bánh ngọt, bánh mì và bánh matcha cho khách chọn. ${emoji}`;
+    }
+
+    if (prompt.includes('繝')) {
+        if (prompt.includes('輔Λ')) {
+            return `申し訳ありません、ベーカリーの商品、注文、クーポン、またはシステムの質問のみお答えできます。 ${emoji}`;
+        }
+        return `パンやケーキなどの焼き菓子をご用意しています。 ${emoji}`;
+    }
+
+    const isOffTopic = [
+        'capital city',
+        'javascript',
+        'sort an array',
+        'ignore all previous',
+        'system override',
+        'system instructions'
+    ].some(term => lowerPrompt.includes(term));
+
+    if (isOffTopic) {
+        return `I'm sorry, but I can only answer questions related to our bakery, products, orders, coupons, or system usage. ${emoji}`;
+    }
+
+    if (lowerPrompt.includes('track') || lowerPrompt.includes('coupon')) {
+        return `You can track your order status in your account and apply a coupon code during checkout. ${emoji}`;
+    }
+
+    return `We offer fresh bread, pastries, cakes, croissants, bagels, and muffins from our bakery menu. ${emoji}`;
+};
+
+vi.mock('@google/generative-ai', () => ({
+    GoogleGenerativeAI: vi.fn(() => ({
+        getGenerativeModel: vi.fn(() => ({
+            startChat: vi.fn(() => ({
+                sendMessage: vi.fn(async (prompt) => ({
+                    response: {
+                        text: () => mockGeminiReply(prompt)
+                    }
+                }))
+            }))
+        }))
+    }))
+}));
+
 const request = require('supertest');
 const app = require('../index');
 
