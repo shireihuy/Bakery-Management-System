@@ -3,6 +3,33 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
+const verifyTurnstile = async (token, remoteIp) => {
+    if (!process.env.TURNSTILE_SECRET_KEY) {
+        return true;
+    }
+
+    if (!token) {
+        return false;
+    }
+
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            secret: process.env.TURNSTILE_SECRET_KEY,
+            response: token,
+            remoteip: remoteIp
+        })
+    });
+
+    if (!response.ok) {
+        return false;
+    }
+
+    const data = await response.json();
+    return Boolean(data.success);
+};
+
 const register = async (req, res) => {
     const { name, email, password, phone_number, address, province_id, district_id, ward_code, role, status } = req.body;
 
@@ -59,10 +86,15 @@ const register = async (req, res) => {
 
 
 const login = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, turnstileToken } = req.body;
     const normalizedEmail = email ? email.toLowerCase() : '';
 
     try {
+        const isHuman = await verifyTurnstile(turnstileToken, req.ip);
+        if (!isHuman) {
+            return res.status(400).json({ message: 'Robot verification failed. Please try again.' });
+        }
+
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [normalizedEmail]);
         const user = result.rows[0];
 

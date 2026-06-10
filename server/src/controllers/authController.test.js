@@ -23,6 +23,7 @@ describe('authController', () => {
         authController = require('./authController');
 
         process.env.JWT_SECRET = 'test_secret';
+        delete process.env.TURNSTILE_SECRET_KEY;
     });
 
     const mockRes = () => {
@@ -90,6 +91,33 @@ describe('authController', () => {
                 { expiresIn: '24h' }
             );
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ token: 'fake-token' }));
+        });
+
+        it('returns 400 if Turnstile verification fails', async () => {
+            const req = { body: { email: 'test@test.com', password: 'password', turnstileToken: 'bad-token' }, ip: '127.0.0.1' };
+            const res = mockRes();
+            process.env.TURNSTILE_SECRET_KEY = 'secret-key';
+            global.fetch = vi.fn().mockResolvedValueOnce({
+                ok: true,
+                json: async () => ({ success: false })
+            });
+
+            await authController.login(req, res);
+
+            expect(global.fetch).toHaveBeenCalledWith(
+                'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+                expect.objectContaining({
+                    method: 'POST',
+                    body: JSON.stringify({
+                        secret: 'secret-key',
+                        response: 'bad-token',
+                        remoteip: '127.0.0.1'
+                    })
+                })
+            );
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ message: 'Robot verification failed. Please try again.' });
+            expect(dbQuery).not.toHaveBeenCalled();
         });
 
         it('returns 400 for invalid email', async () => {

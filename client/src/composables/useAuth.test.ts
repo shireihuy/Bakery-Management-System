@@ -35,6 +35,9 @@ describe('useAuth', () => {
 
     const route = await login('admin@example.com', 'secret');
     expect(route).toBe('/dashboard');
+    expect(global.fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
+      body: JSON.stringify({ email: 'admin@example.com', password: 'secret', turnstileToken: undefined })
+    }));
     expect(user.value?.email).toBe('admin@example.com');
     expect(localStorage.getItem('token')).toBe('token-123');
     expect(joinUserRoom).toHaveBeenCalled();
@@ -77,7 +80,10 @@ describe('useAuth', () => {
     const { useAuth } = await import('./useAuth');
     const { login, register, updateProfile, user } = useAuth();
 
-    await expect(login('customer@example.com', 'secret')).resolves.toBe('/customer');
+    await expect(login('customer@example.com', 'secret', 'turnstile-token')).resolves.toBe('/customer');
+    expect(global.fetch).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({
+      body: JSON.stringify({ email: 'customer@example.com', password: 'secret', turnstileToken: 'turnstile-token' })
+    }));
     expect(user.value?.role).toBe('Customer');
 
     await expect(login('bad@example.com', 'wrong')).rejects.toThrow('Invalid credentials');

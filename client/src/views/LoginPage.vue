@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router';
 import { Loader2, ArrowLeft, Eye, EyeOff, Sparkles } from 'lucide-vue-next';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
-import SimpleCaptcha from '../components/SimpleCaptcha.vue';
+import TurnstileWidget from '../components/TurnstileWidget.vue';
 
 const router = useRouter();
 const { login } = useAuth();
@@ -14,11 +14,17 @@ const email = ref('');
 const password = ref('');
 const error = ref('');
 const isLoading = ref(false);
-const isCaptchaVerified = ref(false);
 const showPassword = ref(false);
+const turnstileToken = ref('');
+const turnstileWidget = ref<InstanceType<typeof TurnstileWidget> | null>(null);
+const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
 
-const onCaptchaVerify = (status: boolean) => {
-    isCaptchaVerified.value = status;
+const onTurnstileVerify = (token: string) => {
+    turnstileToken.value = token;
+};
+
+const onTurnstileExpire = () => {
+    turnstileToken.value = '';
 };
 
 const onToggleMode = () => {
@@ -33,18 +39,20 @@ const handleSubmit = async () => {
     error.value = '';
     isLoading.value = true;
     
-    if (!isCaptchaVerified.value) {
+    if (turnstileSiteKey && !turnstileToken.value) {
         error.value = t('auth.captchaRequired');
         isLoading.value = false;
         return;
     }
     
     try {
-        const redirectPath = await login(email.value, password.value);
+        const redirectPath = await login(email.value, password.value, turnstileToken.value);
         
         router.push(redirectPath);
     } catch (err: any) {
         error.value = err.message || 'Login failed. Please check your credentials.';
+        turnstileToken.value = '';
+        turnstileWidget.value?.reset();
     } finally {
         isLoading.value = false;
     }
@@ -129,7 +137,13 @@ const handleSubmit = async () => {
               </div>
             </div>
             
-            <SimpleCaptcha @verify="onCaptchaVerify" />
+            <TurnstileWidget
+              ref="turnstileWidget"
+              :site-key="turnstileSiteKey"
+              :disabled="isLoading"
+              @verify="onTurnstileVerify"
+              @expire="onTurnstileExpire"
+            />
 
             <button
               type="submit"
