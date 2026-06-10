@@ -198,13 +198,7 @@ INSERT INTO products (id, name, category, price, description, image_url, stock_q
 (6, 'Matcha Cheesecake', 'Cakes', 7.50, 'Velvety smooth cheesecake with a hint of matcha and a graham cracker crust.', 'https://images.unsplash.com/photo-1622374149938-1c0b1a08ad11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBjYWtlfGVufDF8fHx8MTc2NDkzOTc1OHww&ixlib=rb-4.1.0&q=80&w=400', 15),
 (7, 'Matcha Cake', 'Cakes', 22.00, 'Delicate layers of premium Japanese matcha cake with white chocolate cream frosting.', 'https://images.unsplash.com/photo-1622374149938-1c0b1a08ad11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBjYWtlJTIwZ3JlZW4lMjB0ZWF8ZW58MXx8fHwxNzY0OTM5NzU4fDA&ixlib=rb-4.1.0&q=80&w=1080', 10),
 (10, 'Matcha Latte', 'Beverages', 5.50, 'Creamy matcha latte made with ceremonial grade matcha and steamed milk.', 'https://images.unsplash.com/photo-1725799957338-51f677c0ffa3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXRjaGElMjBsYXR0ZSUyMGRyaW5rfGVufDF8fHx8MTc2NDkxNzk0Nnww&ixlib=rb-4.1.0&q=80&w=1080', 30)
-ON CONFLICT (id) DO UPDATE SET
-    name = EXCLUDED.name,
-    category = EXCLUDED.category,
-    price = EXCLUDED.price,
-    description = EXCLUDED.description,
-    image_url = EXCLUDED.image_url,
-    stock_quantity = EXCLUDED.stock_quantity;
+ON CONFLICT (id) DO NOTHING;
 
 -- Reset serial sequence
 SELECT setval('products_id_seq', (SELECT MAX(id) FROM products));
