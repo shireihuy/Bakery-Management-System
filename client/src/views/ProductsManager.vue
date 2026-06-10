@@ -170,9 +170,9 @@ const handleResetRatings = async (productId: string) => {
 
 const handleAddBatch = async () => {
     if (!editingProduct.value) return;
-    const quantity = parseFloat(batchForm.value.quantity);
-    if (Number.isNaN(quantity) || quantity <= 0) {
-        alert('Batch quantity must be greater than 0');
+    const quantity = Number(batchForm.value.quantity);
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+        alert('Batch quantity must be a whole number greater than 0');
         return;
     }
 
@@ -433,7 +433,7 @@ const getBatchStatus = (product: Product) => {
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div class="space-y-1">
                         <label class="text-xs font-medium text-gray-700">Batch Qty</label>
-                        <input v-model="batchForm.quantity" type="number" min="0" step="0.01" class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                        <input v-model="batchForm.quantity" type="number" min="1" step="1" class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
                       </div>
                       <div class="space-y-1">
                         <label class="text-xs font-medium text-gray-700">Expiry</label>

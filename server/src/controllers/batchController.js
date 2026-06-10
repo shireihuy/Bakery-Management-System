@@ -16,8 +16,8 @@ const syncProductStock = async (productId) => {
 };
 
 const parsePositiveQuantity = (value) => {
-    const parsed = parseFloat(value);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 };
 
 // GET /products/:id/batches
@@ -56,7 +56,7 @@ const addBatch = async (req, res) => {
 
     const parsedQuantity = parsePositiveQuantity(quantity);
     if (parsedQuantity === null) {
-        return res.status(400).json({ message: 'Quantity must be greater than 0' });
+        return res.status(400).json({ message: 'Quantity must be a whole number greater than 0' });
     }
 
     try {

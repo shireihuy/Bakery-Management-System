@@ -128,9 +128,9 @@ const handleSubmit = async () => {
 
 const handleAddBatch = async () => {
     if (!editingItem.value || !editingItem.value.isProduct) return;
-    const quantity = parseFloat(batchForm.value.quantity);
-    if (Number.isNaN(quantity) || quantity <= 0) {
-        alert('Batch quantity must be greater than 0');
+    const quantity = Number(batchForm.value.quantity);
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+        alert('Batch quantity must be a whole number greater than 0');
         return;
     }
 
@@ -381,7 +381,7 @@ const handleDelete = (id: string) => {
                                 <input 
                                     v-model.number="form.quantity" 
                                     type="number" 
-                                    step="0.1" 
+                                    step="1" 
                                     :disabled="!!(editingItem && editingItem.isProduct)"
                                     required 
                                     class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none font-bold disabled:bg-gray-50 disabled:text-gray-500"
@@ -397,7 +397,7 @@ const handleDelete = (id: string) => {
                         <div class="space-y-1">
                             <label class="text-sm font-medium text-gray-700">{{ t('inventory.minStockAlert') }}</label>
                             <div class="relative">
-                                <input v-model.number="form.minQuantity" type="number" step="0.1" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
+                                <input v-model.number="form.minQuantity" type="number" step="1" required class="w-full px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50 disabled:text-gray-500">
                                 <AlertTriangle class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-400 opacity-50" />
                             </div>
                         </div>
@@ -434,7 +434,7 @@ const handleDelete = (id: string) => {
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-gray-700">Batch Qty</label>
-                                <input v-model="batchForm.quantity" type="number" min="0" step="0.01" class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <input v-model="batchForm.quantity" type="number" min="1" step="1" class="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500">
                             </div>
                             <div class="space-y-1">
                                 <label class="text-xs font-medium text-gray-700">Expiry</label>

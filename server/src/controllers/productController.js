@@ -182,7 +182,13 @@ const createProduct = async (req, res) => {
         image_url = getUploadedImageUrl(req.file);
     }
 
-    const initialQty = parseFloat(initialBatchQty) || 0;
+    const initialQty = initialBatchQty === undefined || initialBatchQty === ''
+        ? 0
+        : Number(initialBatchQty);
+
+    if (!Number.isInteger(initialQty) || initialQty < 0) {
+        return res.status(400).json({ message: 'Initial batch quantity must be a whole number' });
+    }
 
     try {
         const result = await query(

@@ -71,6 +71,14 @@ describe('batchController', () => {
             expect(res.status).toHaveBeenCalledWith(400);
         });
 
+        it('returns 400 for decimal quantity', async () => {
+            const req = { params: { id: 1 }, body: { quantity: 1.5 } };
+            const res = mockRes();
+            await batchController.addBatch(req, res);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ message: 'Quantity must be a whole number greater than 0' });
+        });
+
         it('returns 404 if product not found', async () => {
             const req = { params: { id: 1 }, body: { quantity: 10 } };
             const res = mockRes();
