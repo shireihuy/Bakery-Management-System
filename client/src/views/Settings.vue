@@ -4,7 +4,7 @@ import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
 import { API_URL } from '../config/api';
 import { useCurrency } from '../composables/useCurrency';
-import { User, Save, Ticket, Key, CreditCard, MapPin, Store } from 'lucide-vue-next';
+import { User, Save, Ticket, Key, CreditCard, MapPin, Store, Layout } from 'lucide-vue-next';
 import { useGHN } from '../composables/useGHN';
 
 const { user, updateProfile } = useAuth();
@@ -39,7 +39,7 @@ const onDistrictChange = () => {
 };
 
 const isSaving = ref(false);
-const activeTab = ref<'profile' | 'coupons' | 'payment' | 'location'>('profile');
+const activeTab = ref<'profile' | 'coupons' | 'payment' | 'location' | 'landing'>('profile');
 const message = ref({ text: '', type: '' as 'success' | 'error' | '' });
 
 const coupons = ref<any[]>([]);
@@ -115,6 +115,41 @@ const storeLocationConfig = ref({
 });
 const isLocationLoading = ref(false);
 
+const landingPageConfig = ref({
+    brandName: 'The Artisan Bakery',
+    brandAccent: 'Bakery',
+    tagline: 'Fresh • Organic • Daily',
+    heroBadge: 'Fresh from the oven',
+    heroTitle: 'Matcha Bakery',
+    heroAccent: 'Crafted Daily',
+    heroSubtitle: 'Fresh Japanese-inspired pastries, soft breads, and matcha treats baked every morning.',
+    primaryButtonText: '',
+    secondaryButtonText: '',
+    heroImage: 'https://images.unsplash.com/photo-1592637970552-6c27432e7913?auto=format&fit=crop&q=80&w=1080',
+    heroRatingText: '4.9/5 Rating',
+    heroRatingSubtext: 'Trusted by thousands',
+    signatureTitle: 'Our Artisan',
+    signatureAccent: 'Icons',
+    storyTitle: 'Better Dough,\nBigger Dreams.',
+    storyBody: "We believe that the best pastries start with the best ingredients. That's why we source everything sustainably and organically.",
+    storeTitle: 'Visit Our',
+    storeAccent: 'Store',
+    storeDescription: 'Come by and experience the aroma of freshly baked goods in person.',
+    storeName: 'The Artisan Bakery',
+    storeHours: 'Open 6 AM - 8 PM',
+    ctaTitle: 'Taste the',
+    ctaAccent: 'Excellence.',
+    ctaImage: 'https://images.unsplash.com/photo-1555932450-31a8aec2adf1?auto=format&fit=crop&q=80&w=1080',
+    footerEstablished: 'Est. 2020',
+    features: [
+        { icon: 'Sparkles', title: 'Freshly Baked Daily', description: 'All our products are baked fresh every morning using traditional methods and premium ingredients.' },
+        { icon: 'Heart', title: 'Made with Love', description: 'Every item is handcrafted with care and passion by our skilled bakers who love what they do.' },
+        { icon: 'Award', title: 'Premium Quality', description: 'We use only the finest organic flour, natural ingredients, and authentic matcha powder.' },
+        { icon: 'Coffee', title: 'Matcha Specialties', description: 'Our signature matcha-infused pastries and breads are unique and absolutely delicious.' }
+    ]
+});
+const isLandingLoading = ref(false);
+
 const onStoreProvinceChange = () => {
     storeLocationConfig.value.district_id = null;
     storeLocationConfig.value.ward_code = null;
@@ -177,6 +212,55 @@ const saveStoreLocationConfig = async () => {
         }
     } catch (e) {
         message.value = { text: 'Failed to update store location', type: 'error' };
+    } finally {
+        isSaving.value = false;
+    }
+};
+
+const loadLandingPageConfig = async () => {
+    if (!isAdminOrManager.value) return;
+    isLandingLoading.value = true;
+    try {
+        const response = await fetch(`${API_URL}/system/settings`);
+        if (response.ok) {
+            const settings = await response.json();
+            if (settings.landing_page_config) {
+                landingPageConfig.value = {
+                    ...landingPageConfig.value,
+                    ...settings.landing_page_config,
+                    features: settings.landing_page_config.features?.length
+                        ? settings.landing_page_config.features
+                        : landingPageConfig.value.features
+                };
+            }
+        }
+    } catch (e) {
+        console.error('Failed loading landing page settings', e);
+    } finally {
+        isLandingLoading.value = false;
+    }
+};
+
+const saveLandingPageConfig = async () => {
+    isSaving.value = true;
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_URL}/system/settings`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ key: 'landing_page_config', value: landingPageConfig.value })
+        });
+
+        if (res.ok) {
+            message.value = { text: 'Landing page settings updated', type: 'success' };
+        } else {
+            throw new Error();
+        }
+    } catch (e) {
+        message.value = { text: 'Failed to update landing page settings', type: 'error' };
     } finally {
         isSaving.value = false;
     }
@@ -272,6 +356,7 @@ onMounted(async () => {
     loadCoupons();
     loadPaymentSettings();
     loadStoreLocationConfig();
+    loadLandingPageConfig();
 });
 
 const handleSave = async () => {
@@ -345,6 +430,15 @@ const handleSave = async () => {
                     >
                         <Store class="w-4 h-4" />
                         Store Location
+                    </button>
+                    <button
+                        v-if="isAdminOrManager"
+                        @click="activeTab = 'landing'"
+                        class="w-full flex items-center gap-3 px-4 py-2 rounded-lg transition-all font-medium border"
+                        :class="activeTab === 'landing' ? 'bg-green-50 text-green-700 border-green-200 shadow-sm' : 'text-gray-600 hover:bg-gray-50 border-transparent'"
+                    >
+                        <Layout class="w-4 h-4" />
+                        Landing Page
                     </button>
                 </div>
 
@@ -712,6 +806,157 @@ const handleSave = async () => {
                                 <Save v-if="!isSaving" class="w-4 h-4" />
                                 <span v-if="isSaving" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
                                 {{ isSaving ? 'Saving...' : 'Save Location' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Landing Page Tab -->
+                <div v-else-if="activeTab === 'landing' && isAdminOrManager" class="md:col-span-2 space-y-6">
+                    <div class="bg-green-50 border border-green-200 p-4 rounded-xl flex items-start gap-3">
+                        <Layout class="w-5 h-5 text-green-700 mt-0.5" />
+                        <p class="text-xs text-green-800 leading-relaxed">
+                            Edit the public landing page text, media URLs, and feature cards without redeploying the frontend.
+                        </p>
+                    </div>
+
+                    <form @submit.prevent="saveLandingPageConfig" class="space-y-6">
+                        <div v-if="isLandingLoading" class="text-sm text-gray-500">Loading landing settings...</div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Brand Name</label>
+                                <input v-model="landingPageConfig.brandName" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Header Tagline</label>
+                                <input v-model="landingPageConfig.tagline" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Hero Title</label>
+                                <input v-model="landingPageConfig.heroTitle" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Hero Accent</label>
+                                <input v-model="landingPageConfig.heroAccent" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Hero Badge</label>
+                                <input v-model="landingPageConfig.heroBadge" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Footer Established Text</label>
+                                <input v-model="landingPageConfig.footerEstablished" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Hero Subtitle</label>
+                            <textarea v-model="landingPageConfig.heroSubtitle" rows="3" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500 resize-none"></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Primary Button Text</label>
+                                <input v-model="landingPageConfig.primaryButtonText" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" placeholder="Uses default if empty" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Secondary Button Text</label>
+                                <input v-model="landingPageConfig.secondaryButtonText" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" placeholder="Uses default if empty" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Hero Image URL</label>
+                                <input v-model="landingPageConfig.heroImage" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">CTA Image URL</label>
+                                <input v-model="landingPageConfig.ctaImage" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Hero Rating Text</label>
+                                <input v-model="landingPageConfig.heroRatingText" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Hero Rating Subtext</label>
+                                <input v-model="landingPageConfig.heroRatingSubtext" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Signature Title</label>
+                                <input v-model="landingPageConfig.signatureTitle" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Signature Accent</label>
+                                <input v-model="landingPageConfig.signatureAccent" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Story Title</label>
+                                <textarea v-model="landingPageConfig.storyTitle" rows="2" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500 resize-none"></textarea>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Story Body</label>
+                                <textarea v-model="landingPageConfig.storyBody" rows="2" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500 resize-none"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Store Section Title</label>
+                                <input v-model="landingPageConfig.storeTitle" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Store Section Accent</label>
+                                <input v-model="landingPageConfig.storeAccent" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Store Name</label>
+                                <input v-model="landingPageConfig.storeName" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Store Hours</label>
+                                <input v-model="landingPageConfig.storeHours" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1 md:col-span-2">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Store Description</label>
+                                <textarea v-model="landingPageConfig.storeDescription" rows="2" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500 resize-none"></textarea>
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">CTA Title</label>
+                                <input v-model="landingPageConfig.ctaTitle" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">CTA Accent</label>
+                                <input v-model="landingPageConfig.ctaAccent" class="w-full px-4 py-2.5 border rounded-xl focus:ring-2 focus:ring-green-500" />
+                            </div>
+                        </div>
+
+                        <div class="space-y-3">
+                            <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">Feature Cards</label>
+                            <div v-for="(feature, index) in landingPageConfig.features" :key="index" class="grid grid-cols-1 md:grid-cols-[120px_1fr] gap-3 p-3 border rounded-xl">
+                                <select v-model="feature.icon" class="px-3 py-2 border rounded-lg text-sm bg-white">
+                                    <option value="Sparkles">Sparkles</option>
+                                    <option value="Heart">Heart</option>
+                                    <option value="Award">Award</option>
+                                    <option value="Coffee">Coffee</option>
+                                </select>
+                                <div class="space-y-2">
+                                    <input v-model="feature.title" class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Feature title" />
+                                    <textarea v-model="feature.description" rows="2" class="w-full px-3 py-2 border rounded-lg text-sm resize-none" placeholder="Feature description"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-if="message.text" :class="`p-3 rounded-lg text-sm font-medium ${message.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`">
+                            {{ message.text }}
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" :disabled="isSaving" class="flex items-center gap-2 px-8 py-3 bg-green-700 text-white font-black rounded-2xl hover:bg-green-800 transition-all disabled:opacity-50">
+                                <Save v-if="!isSaving" class="w-4 h-4" />
+                                <span v-if="isSaving" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                {{ isSaving ? 'Saving...' : 'Save Landing Page' }}
                             </button>
                         </div>
                     </form>

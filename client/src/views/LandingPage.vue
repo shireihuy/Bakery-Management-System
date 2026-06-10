@@ -120,7 +120,55 @@ const handleScroll = () => {
     isScrolled.value = window.scrollY > 20;
 };
 
+interface LandingFeature {
+    icon: string;
+    title: string;
+    description: string;
+}
+
+const defaultLandingConfig = {
+    brandName: 'The Artisan Bakery',
+    brandAccent: 'Bakery',
+    tagline: 'Fresh • Organic • Daily',
+    heroBadge: 'Fresh from the oven',
+    heroTitle: 'Matcha Bakery',
+    heroAccent: 'Crafted Daily',
+    heroSubtitle: 'Fresh Japanese-inspired pastries, soft breads, and matcha treats baked every morning.',
+    primaryButtonText: '',
+    secondaryButtonText: '',
+    heroImage: 'https://images.unsplash.com/photo-1592637970552-6c27432e7913?auto=format&fit=crop&q=80&w=1080',
+    heroRatingText: '4.9/5 Rating',
+    heroRatingSubtext: 'Trusted by thousands',
+    signatureTitle: 'Our Artisan',
+    signatureAccent: 'Icons',
+    storyTitle: 'Better Dough,\nBigger Dreams.',
+    storyBody: "We believe that the best pastries start with the best ingredients. That's why we source everything sustainably and organically.",
+    features: [
+        { icon: 'Sparkles', title: 'Freshly Baked Daily', description: 'All our products are baked fresh every morning using traditional methods and premium ingredients.' },
+        { icon: 'Heart', title: 'Made with Love', description: 'Every item is handcrafted with care and passion by our skilled bakers who love what they do.' },
+        { icon: 'Award', title: 'Premium Quality', description: 'We use only the finest organic flour, natural ingredients, and authentic matcha powder.' },
+        { icon: 'Coffee', title: 'Matcha Specialties', description: 'Our signature matcha-infused pastries and breads are unique and absolutely delicious.' }
+    ] as LandingFeature[],
+    storeTitle: 'Visit Our',
+    storeAccent: 'Store',
+    storeDescription: 'Come by and experience the aroma of freshly baked goods in person.',
+    storeName: 'The Artisan Bakery',
+    storeHours: 'Open 6 AM - 8 PM',
+    ctaTitle: 'Taste the',
+    ctaAccent: 'Excellence.',
+    ctaImage: 'https://images.unsplash.com/photo-1555932450-31a8aec2adf1?auto=format&fit=crop&q=80&w=1080',
+    footerEstablished: 'Est. 2020'
+};
+
+const landingConfig = ref({ ...defaultLandingConfig });
 const storeLocation = ref('');
+
+const iconMap = {
+    Sparkles,
+    Heart,
+    Award,
+    Coffee
+};
 
 const loadStoreInfo = async () => {
     try {
@@ -129,6 +177,15 @@ const loadStoreInfo = async () => {
             const settings = await response.json();
             if (settings.store_location_config && settings.store_location_config.address) {
                 storeLocation.value = settings.store_location_config.address;
+            }
+            if (settings.landing_page_config) {
+                landingConfig.value = {
+                    ...defaultLandingConfig,
+                    ...settings.landing_page_config,
+                    features: settings.landing_page_config.features?.length
+                        ? settings.landing_page_config.features
+                        : defaultLandingConfig.features
+                };
             }
         }
     } catch {
@@ -154,28 +211,10 @@ onUnmounted(() => {
 
 
 
-const features = computed(() => [
-    {
-        icon: Sparkles,
-        title: "Freshly Baked Daily",
-        description: "All our products are baked fresh every morning using traditional methods and premium ingredients."
-    },
-    {
-        icon: Heart,
-        title: "Made with Love",
-        description: "Every item is handcrafted with care and passion by our skilled bakers who love what they do."
-    },
-    {
-        icon: Award,
-        title: "Premium Quality",
-        description: "We use only the finest organic flour, natural ingredients, and authentic matcha powder."
-    },
-    {
-        icon: Coffee,
-        title: "Matcha Specialties",
-        description: "Our signature matcha-infused pastries and breads are unique and absolutely delicious."
-    }
-]);
+const features = computed(() => landingConfig.value.features.map(feature => ({
+    ...feature,
+    icon: iconMap[feature.icon as keyof typeof iconMap] || Sparkles
+})));
 
 
 const signatureProducts = [
@@ -227,8 +266,8 @@ const mapUrl = computed(() => {
                 <img src="/matcha-cake-logo.png" alt="Matcha Bakery Logo" class="w-full h-full object-cover" />
               </div>
               <div>
-                <h1 class="text-bakery-900 font-bold text-xl tracking-tight">The Artisan <span class="text-bakery-600">Bakery</span></h1>
-                <p class="text-[10px] text-bakery-500 uppercase tracking-[0.2em] font-black">Fresh • Organic • Daily</p>
+                <h1 class="text-bakery-900 font-bold text-xl tracking-tight">{{ landingConfig.brandName }} <span class="text-bakery-600">{{ landingConfig.brandAccent }}</span></h1>
+                <p class="text-[10px] text-bakery-500 uppercase tracking-[0.2em] font-black">{{ landingConfig.tagline }}</p>
               </div>
             </router-link>
             <div class="flex items-center gap-4">
@@ -368,31 +407,31 @@ const mapUrl = computed(() => {
           <div class="space-y-10 text-center lg:text-left flex flex-col items-center lg:items-start">
             <div class="inline-block">
               <span class="bg-bakery-900 text-white px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl">
-                🍃 {{ t('nav.about') }}
+                {{ landingConfig.heroBadge }}
               </span>
             </div>
             <h1 class="text-5xl lg:text-8xl text-bakery-900 leading-[0.95] font-black tracking-tighter">
-              {{ t('landing.heroTitle').split(',')[0] }} <br/>
+              {{ landingConfig.heroTitle }} <br/>
               <span class="text-transparent bg-clip-text bg-linear-to-r from-bakery-600 to-bakery-400">
-                {{ t('landing.heroTitle').split(',')[1] || 'Crafted Daily' }}
+                {{ landingConfig.heroAccent }}
               </span>
             </h1>
             <p class="text-xl text-bakery-500 leading-relaxed max-w-xl font-medium mx-auto lg:mx-0">
-              {{ t('landing.heroSubtitle') }}
+              {{ landingConfig.heroSubtitle }}
             </p>
             <div class="flex flex-wrap justify-center lg:justify-start gap-4 lg:gap-6 pt-6">
               <button
                 @click="onGetStarted"
                 class="inline-flex items-center justify-center rounded-3xl text-lg font-black h-16 px-10 lg:px-12 bg-bakery-900 hover:bg-bakery-950 text-white shadow-2xl hover:-translate-y-1 transition-all active:scale-95"
               >
-                {{ t('landing.enterShop') }}
+                {{ landingConfig.primaryButtonText || t('landing.enterShop') }}
                 <ShoppingCart class="w-6 h-6 ml-3" />
               </button>
               <button
                 @click="onViewMenu"
                 class="inline-flex items-center justify-center rounded-3xl text-lg font-black h-16 px-10 lg:px-12 border-2 border-bakery-100 text-bakery-900 hover:bg-bakery-50 transition-all"
               >
-                {{ t('landing.viewMenu') }}
+                {{ landingConfig.secondaryButtonText || t('landing.viewMenu') }}
               </button>
             </div>
           </div>
@@ -400,8 +439,8 @@ const mapUrl = computed(() => {
             <div class="absolute -inset-4 lg:-inset-10 bg-bakery-200/30 rounded-[5rem] blur-3xl animate-pulse"></div>
             <div class="relative rounded-[2.5rem] lg:rounded-[4rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.15)] border-8 lg:border-12 border-white group">
               <img
-                src="https://images.unsplash.com/photo-1592637970552-6c27432e7913?auto=format&fit=crop&q=80&w=1080"
-                alt="Matcha Bakery"
+                :src="landingConfig.heroImage"
+                :alt="landingConfig.heroTitle"
                 class="w-full h-[400px] lg:h-[650px] object-cover transition-transform duration-1000 group-hover:scale-105"
               />
               <div class="absolute bottom-6 lg:bottom-10 left-6 lg:left-10 right-6 lg:right-10 glass-card p-5 lg:p-8 rounded-4xl lg:rounded-[3rem] shadow-2xl">
@@ -410,8 +449,8 @@ const mapUrl = computed(() => {
                     <Star class="w-6 h-6 lg:w-8 lg:h-8 text-accent-gold fill-accent-gold" />
                   </div>
                   <div>
-                    <p class="text-bakery-900 font-black text-xl lg:text-2xl tracking-tight">4.9/5 Rating</p>
-                    <p class="text-bakery-500 font-bold uppercase tracking-widest text-[10px]">Trusted by thousands</p>
+                    <p class="text-bakery-900 font-black text-xl lg:text-2xl tracking-tight">{{ landingConfig.heroRatingText }}</p>
+                    <p class="text-bakery-500 font-bold uppercase tracking-widest text-[10px]">{{ landingConfig.heroRatingSubtext }}</p>
                   </div>
                 </div>
               </div>
@@ -425,7 +464,7 @@ const mapUrl = computed(() => {
       <!-- Signature Grid -->
       <section class="bg-white py-32 border-y border-bakery-50">
         <div class="container mx-auto px-6 text-center mb-20 space-y-4">
-            <h2 class="text-5xl font-black text-bakery-900 tracking-tight">Our Artisan <span class="text-bakery-600">Icons</span></h2>
+            <h2 class="text-5xl font-black text-bakery-900 tracking-tight">{{ landingConfig.signatureTitle }} <span class="text-bakery-600">{{ landingConfig.signatureAccent }}</span></h2>
             <div class="w-20 h-1.5 bg-bakery-900 mx-auto rounded-full"></div>
         </div>
         <div class="container mx-auto px-6">
@@ -448,10 +487,10 @@ const mapUrl = computed(() => {
           <div class="grid lg:grid-cols-3 gap-20 items-center">
             <div class="lg:col-span-1 space-y-8">
                 <div class="w-16 h-1 bg-bakery-900 rounded-full"></div>
-                <h2 class="text-5xl font-black text-bakery-900 leading-[1.1] tracking-tighter">Better Dough,<br/>Bigger Dreams.</h2>
-                <p class="text-bakery-500 text-lg font-medium leading-relaxed">We believe that the best pastries start with the best ingredients. That's why we source everything sustainably and organically.</p>
+                <h2 class="text-5xl font-black text-bakery-900 leading-[1.1] tracking-tighter whitespace-pre-line">{{ landingConfig.storyTitle }}</h2>
+                <p class="text-bakery-500 text-lg font-medium leading-relaxed">{{ landingConfig.storyBody }}</p>
                 <button @click="onViewMenu" class="inline-flex items-center text-bakery-900 font-black text-lg gap-3 group">
-                    {{ t('landing.viewMenu') }}
+                    {{ landingConfig.secondaryButtonText || t('landing.viewMenu') }}
                     <div class="w-10 h-10 rounded-full bg-bakery-900 text-white flex items-center justify-center group-hover:translate-x-2 transition-transform shadow-xl">
                         <ArrowRight class="w-5 h-5" />
                     </div>
@@ -478,10 +517,10 @@ const mapUrl = computed(() => {
       <section class="bg-white py-32">
         <div class="container mx-auto px-6">
           <div class="text-center mb-16 space-y-4">
-            <h2 class="text-5xl font-black text-bakery-900 tracking-tight">Visit Our <span class="text-bakery-600">Store</span></h2>
+            <h2 class="text-5xl font-black text-bakery-900 tracking-tight">{{ landingConfig.storeTitle }} <span class="text-bakery-600">{{ landingConfig.storeAccent }}</span></h2>
             <div class="w-20 h-1.5 bg-bakery-900 mx-auto rounded-full"></div>
             <p class="text-xl text-bakery-500 font-medium max-w-2xl mx-auto pt-4">
-              Come by and experience the aroma of freshly baked goods in person.
+              {{ landingConfig.storeDescription }}
             </p>
           </div>
 
@@ -503,13 +542,13 @@ const mapUrl = computed(() => {
                   <MapPin class="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 class="text-bakery-900 font-black text-lg mb-1">The Artisan Bakery</h3>
+                  <h3 class="text-bakery-900 font-black text-lg mb-1">{{ landingConfig.storeName }}</h3>
                   <p class="text-bakery-500 text-sm font-medium mb-3 line-clamp-2">
                     {{ storeLocation || t('landing.locationTitle') }}
                   </p>
                   <div class="flex items-center gap-2 text-bakery-600 text-sm font-bold">
                     <Clock class="w-4 h-4" />
-                    <span>Open 6 AM - 8 PM</span>
+                    <span>{{ landingConfig.storeHours }}</span>
                   </div>
                 </div>
               </div>
@@ -522,16 +561,16 @@ const mapUrl = computed(() => {
       <section class="container mx-auto px-6 mb-20 lg:mb-32">
         <div class="bg-bakery-900 rounded-[3rem] lg:rounded-[5rem] py-20 lg:py-32 relative overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.3)] group">
             <div class="absolute inset-0 opacity-20 transition-transform duration-[10s] group-hover:scale-125">
-                <img src="https://images.unsplash.com/photo-1555932450-31a8aec2adf1?auto=format&fit=crop&q=80&w=1080" class="w-full h-full object-cover">
+                <img :src="landingConfig.ctaImage" class="w-full h-full object-cover">
             </div>
             <div class="container mx-auto px-6 text-center relative z-10 space-y-8 lg:space-y-12">
               <div class="max-w-4xl mx-auto space-y-6 lg:space-y-8">
                 <h2 class="text-5xl lg:text-8xl text-white font-black tracking-tighter leading-tight">
-                  Taste the <br/>
-                  <span class="text-bakery-400">Excellence.</span>
+                  {{ landingConfig.ctaTitle }} <br/>
+                  <span class="text-bakery-400">{{ landingConfig.ctaAccent }}</span>
                 </h2>
                 <p class="text-xl text-bakery-200/70 font-medium max-w-2xl mx-auto">
-                   {{ t('landing.heroSubtitle') }}
+                   {{ landingConfig.heroSubtitle }}
                 </p>
               </div>
               <div class="flex flex-col sm:flex-row items-center justify-center gap-8">
@@ -539,12 +578,12 @@ const mapUrl = computed(() => {
                     @click="onGetStarted"
                      class="h-20 px-16 rounded-[2.5rem] bg-white text-bakery-900 font-black text-xl hover:bg-bakery-50 shadow-2xl transition-all active:scale-95 flex items-center gap-4 group/btn"
                   >
-                    {{ t('landing.enterShop') }}
+                    {{ landingConfig.primaryButtonText || t('landing.enterShop') }}
                     <ArrowRight class="w-7 h-7 group-hover/btn:translate-x-2 transition-transform" />
                   </button>
                   <div class="flex items-center gap-12 text-white/40 font-black uppercase tracking-[0.3em] text-[10px]">
                       <div class="flex items-center gap-3">
-                           <Clock class="w-5 h-5 text-bakery-400" /> 6 AM - 8 PM
+                           <Clock class="w-5 h-5 text-bakery-400" /> {{ landingConfig.storeHours }}
                       </div>
                        <div class="flex items-center gap-3">
                            <MapPin class="w-5 h-5 text-bakery-400" /> {{ storeLocation || t('landing.locationTitle') }}
@@ -564,8 +603,8 @@ const mapUrl = computed(() => {
                 <img src="/matcha-cake-logo.png" alt="Logo" class="w-full h-full object-cover" />
               </div>
               <div>
-                <h3 class="text-bakery-900 font-black text-2xl tracking-tighter">The Artisan Bakery</h3>
-                <p class="text-[10px] text-bakery-500 font-black uppercase tracking-[0.3em]">Est. 2020</p>
+                <h3 class="text-bakery-900 font-black text-2xl tracking-tighter">{{ landingConfig.storeName }}</h3>
+                <p class="text-[10px] text-bakery-500 font-black uppercase tracking-[0.3em]">{{ landingConfig.footerEstablished }}</p>
               </div>
             </router-link>
             <div class="text-bakery-400 text-[10px] font-black tracking-[0.4em] uppercase">
@@ -577,3 +616,5 @@ const mapUrl = computed(() => {
 
     </div>
 </template>
+
+
