@@ -10,10 +10,20 @@ async function migrate() {
         console.log('Base schema initialized.');
         // Step 2: Apply incremental migrations (safe on existing DBs due to IF NOT EXISTS / ADD COLUMN IF NOT EXISTS)
         await query(`
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS province_id INTEGER,
+            ADD COLUMN IF NOT EXISTS district_id INTEGER,
+            ADD COLUMN IF NOT EXISTS ward_code VARCHAR(50)
+        `);
+
+        await query(`
             ALTER TABLE orders 
             ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50),
             ADD COLUMN IF NOT EXISTS payment_status VARCHAR(50) DEFAULT 'Pending',
-            ADD COLUMN IF NOT EXISTS transaction_id VARCHAR(255)
+            ADD COLUMN IF NOT EXISTS transaction_id VARCHAR(255),
+            ADD COLUMN IF NOT EXISTS district_id INTEGER,
+            ADD COLUMN IF NOT EXISTS ward_code VARCHAR(50),
+            ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 0
         `);
 
         await query(`

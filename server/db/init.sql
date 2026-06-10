@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS users (
     role user_role DEFAULT 'Customer',
     status VARCHAR(20) DEFAULT 'active',
     address TEXT,
+    province_id INTEGER,
+    district_id INTEGER,
+    ward_code VARCHAR(50),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -96,6 +99,8 @@ CREATE TABLE IF NOT EXISTS orders (
     customer_email VARCHAR(255),
     customer_phone VARCHAR(20),
     customer_address TEXT,
+    district_id INTEGER,
+    ward_code VARCHAR(50),
     total_price DECIMAL(10, 2) NOT NULL,
     coupon_id INTEGER REFERENCES coupons(id) DEFAULT NULL,
     discount_amount DECIMAL(10, 2) DEFAULT 0.00,
@@ -109,7 +114,8 @@ CREATE TABLE IF NOT EXISTS orders (
     start_time TIMESTAMP WITH TIME ZONE,
     completed_time TIMESTAMP WITH TIME ZONE,
     delivery_type VARCHAR(20) DEFAULT 'Pick-up',
-    cancel_reason TEXT
+    cancel_reason TEXT,
+    version INTEGER DEFAULT 0
 );
 
 -- Order Details (Line items)
