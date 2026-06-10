@@ -277,11 +277,11 @@ watch(messages, () => scrollToBottom(), { deep: true });
 </script>
 
 <template>
-    <div class="flex h-[calc(100vh-10rem)] bg-white rounded-2xl shadow-sm border border-green-100 overflow-hidden">
+    <div class="flex flex-col md:flex-row h-[calc(100svh-7rem)] md:h-[calc(100vh-10rem)] min-h-0 bg-white md:rounded-2xl shadow-sm border border-green-100 overflow-hidden">
         <!-- Sidebar -->
-        <div class="w-80 border-r border-green-100 flex flex-col bg-green-50/10">
-            <div class="p-4 border-b border-green-100">
-                <h2 class="text-xl font-bold text-green-900 mb-4 flex items-center gap-2">
+        <div class="w-full md:w-80 h-56 md:h-auto shrink-0 border-b md:border-b-0 md:border-r border-green-100 flex flex-col bg-green-50/10">
+            <div class="p-3 md:p-4 border-b border-green-100">
+                <h2 class="text-lg md:text-xl font-bold text-green-900 mb-3 md:mb-4 flex items-center gap-2">
                     <MessageSquare class="w-5 h-5 text-green-600" />
                     Support Chat
                 </h2>
@@ -296,12 +296,12 @@ watch(messages, () => scrollToBottom(), { deep: true });
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-2 space-y-1">
+            <div class="flex-1 min-h-0 overflow-y-auto p-2 space-y-1">
                 <button 
                     v-for="conv in filteredConversations" 
                     :key="conv.id"
                     @click="selectConversation(conv)"
-                    class="w-full p-4 rounded-xl text-left transition-all flex items-start gap-3 group relative"
+                    class="w-full p-3 md:p-4 rounded-xl text-left transition-all flex items-start gap-3 group relative"
                     :class="selectedConversation?.id === conv.id ? 'bg-green-600 text-white shadow-lg shadow-green-200' : 'hover:bg-green-100/50'"
                 >
                     <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center font-bold border border-white/30 shrink-0 capitalize">
@@ -324,30 +324,31 @@ watch(messages, () => scrollToBottom(), { deep: true });
         </div>
 
         <!-- Chat Area -->
-        <div class="flex-1 flex flex-col bg-white">
+        <div class="flex-1 min-h-0 flex flex-col bg-white">
             <template v-if="selectedConversation">
                 <!-- Header -->
-                <div class="p-4 border-b border-green-100 flex items-center justify-between bg-white sticky top-0 z-10">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700 capitalize">
+                <div class="p-3 md:p-4 border-b border-green-100 flex items-center justify-between gap-3 bg-white sticky top-0 z-10">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700 capitalize shrink-0">
                             {{ (selectedConversation.name || 'U').charAt(0) }}
                         </div>
-                        <div>
-                            <div class="font-bold text-gray-900 text-sm">{{ selectedConversation.name }}</div>
-                            <div class="text-[10px] text-green-600">{{ selectedConversation.email }}</div>
+                        <div class="min-w-0">
+                            <div class="font-bold text-gray-900 text-sm truncate">{{ selectedConversation.name }}</div>
+                            <div class="text-[10px] text-green-600 truncate">{{ selectedConversation.email }}</div>
                         </div>
                     </div>
                     <button 
                         @click="openOrderModal()"
-                        class="flex items-center gap-2 px-4 py-2 bg-bakery-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-all shadow-md shadow-bakery-100 active:scale-95"
+                        class="shrink-0 flex items-center gap-2 px-3 md:px-4 py-2 bg-bakery-900 text-white rounded-xl text-xs font-bold hover:bg-black transition-all shadow-md shadow-bakery-100 active:scale-95"
                     >
                         <PlusCircle class="w-4 h-4" />
-                        Create Order
+                        <span class="hidden sm:inline">Create Order</span>
+                        <span class="sm:hidden">Order</span>
                     </button>
                 </div>
 
                 <!-- Messages -->
-                <div ref="messageContainer" class="flex-1 overflow-y-auto p-6 space-y-4">
+                <div ref="messageContainer" class="flex-1 min-h-0 overflow-y-auto p-3 md:p-6 space-y-4">
                     <div 
                         v-for="msg in messages" 
                         :key="msg.id"
@@ -355,7 +356,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
                         :class="msg.sender_id === user?.id ? 'items-end' : 'items-start'"
                     >
                         <div 
-                            class="max-w-[70%] p-4 rounded-2xl text-sm shadow-sm relative group"
+                            class="max-w-[88%] md:max-w-[70%] p-3 md:p-4 rounded-2xl text-sm shadow-sm relative group break-words"
                             :class="msg.sender_id === user?.id 
                                 ? 'bg-green-600 text-white rounded-tr-none' 
                                 : parseMessage(msg.message).type === 'ORDER_REQUEST'
@@ -397,18 +398,18 @@ watch(messages, () => scrollToBottom(), { deep: true });
                 </div>
 
                 <!-- Input -->
-                <div class="p-4 border-t border-green-100">
+                <div class="p-3 md:p-4 border-t border-green-100">
                     <form @submit.prevent="handleSend" class="flex gap-2">
                         <input 
                             v-model="newMessage"
                             type="text" 
                             placeholder="Type your message..." 
-                            class="flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 transition-all text-sm"
+                            class="min-w-0 flex-1 px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 transition-all text-sm"
                         >
                         <button 
                             type="submit"
                             :disabled="!newMessage.trim()"
-                            class="px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                            class="shrink-0 px-4 md:px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-md active:scale-95 disabled:opacity-50 disabled:active:scale-100"
                         >
                             <Send class="w-5 h-5" />
                         </button>
@@ -425,19 +426,19 @@ watch(messages, () => scrollToBottom(), { deep: true });
         </div>
 
         <!-- Order Creation Modal -->
-        <div v-if="isOrderModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
-                <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-bakery-50">
-                    <div>
-                        <h2 class="text-xl font-bold text-bakery-900">Create Order for {{ selectedConversation?.name }}</h2>
+        <div v-if="isOrderModalOpen" class="fixed inset-0 z-50 flex items-start md:items-center justify-center bg-black/50 backdrop-blur-sm p-2 md:p-4 overflow-y-auto">
+            <div class="bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[calc(100svh-1rem)] md:max-h-[90vh] my-auto">
+                <div class="p-4 md:p-6 border-b border-gray-100 flex justify-between items-center gap-3 bg-bakery-50">
+                    <div class="min-w-0">
+                        <h2 class="text-base md:text-xl font-bold text-bakery-900 truncate">Create Order for {{ selectedConversation?.name }}</h2>
                         <p class="text-xs text-bakery-400 mt-1">Select items to add to the customer's new order</p>
                     </div>
-                    <button @click="isOrderModalOpen = false" class="text-gray-400 hover:text-gray-600 p-2"><X class="w-6 h-6" /></button>
+                    <button @click="isOrderModalOpen = false" class="shrink-0 text-gray-400 hover:text-gray-600 p-2"><X class="w-6 h-6" /></button>
                 </div>
 
-                <div class="flex-1 overflow-hidden flex flex-col md:flex-row">
+                <div class="flex-1 min-h-0 overflow-y-auto md:overflow-hidden flex flex-col md:flex-row">
                     <!-- Product Selection -->
-                    <div class="flex-1 overflow-y-auto p-6 space-y-4 border-r border-gray-100">
+                    <div class="flex-1 md:min-h-0 md:overflow-y-auto p-4 md:p-6 space-y-4 md:border-r border-gray-100">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div 
                                 v-for="product in products" 
@@ -445,8 +446,8 @@ watch(messages, () => scrollToBottom(), { deep: true });
                                 class="p-3 border border-gray-100 rounded-2xl hover:border-bakery-900 transition-all cursor-pointer group flex gap-3"
                                 @click="addToOrder(product)"
                             >
-                                <img :src="product.image" class="w-16 h-16 rounded-xl object-cover" />
-                                <div class="flex-1">
+                                <img :src="product.image" class="w-16 h-16 rounded-xl object-cover shrink-0" />
+                                <div class="flex-1 min-w-0">
                                     <div class="font-bold text-sm text-bakery-900">{{ product.name }}</div>
                                     <div class="text-xs text-bakery-400">{{ formatPrice(product.price) }}</div>
                                     <button class="mt-2 text-[10px] font-bold text-bakery-900 bg-bakery-50 px-2 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity">
@@ -458,7 +459,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
                     </div>
 
                     <!-- Order Summary -->
-                    <div class="w-full md:w-80 bg-gray-50/50 p-6 flex flex-col">
+                    <div class="w-full md:w-80 md:min-h-0 bg-gray-50/50 p-4 md:p-6 flex flex-col">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-sm font-black uppercase tracking-widest text-bakery-400">Order Summary</h3>
                             <!-- Delivery Toggle in Modal -->
@@ -475,7 +476,7 @@ watch(messages, () => scrollToBottom(), { deep: true });
                                 >D</button>
                             </div>
                         </div>
-                        <div class="flex-1 overflow-y-auto space-y-3">
+                        <div class="md:flex-1 md:min-h-0 md:overflow-y-auto space-y-3">
                             <div v-if="orderItems.length === 0" class="h-full flex flex-col items-center justify-center text-center opacity-30">
                                 <ShoppingBag class="w-8 h-8 mb-2" />
                                 <p class="text-xs">No items added yet</p>
