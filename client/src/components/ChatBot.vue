@@ -248,7 +248,7 @@ watch(currentLocale, () => { resetChat(); });
       leave-from-class="transform translate-x-0 translate-y-0 opacity-100 scale-100"
       leave-to-class="transform translate-x-10 -translate-y-10 opacity-0 scale-95"
     >
-      <div v-if="isOpen" class="absolute bottom-16 md:bottom-20 right-0 w-[calc(100vw-2rem)] sm:w-80 md:w-96 glass-card rounded-4xl md:rounded-[2.5rem] overflow-hidden flex flex-col max-h-[70vh] ring-1 ring-bakery-900/5 shadow-2xl">
+      <div v-if="isOpen" class="absolute bottom-16 md:bottom-20 right-0 w-[calc(100vw-2rem)] sm:w-80 md:w-96 glass-card rounded-4xl md:rounded-[2.5rem] overflow-hidden flex flex-col max-h-[calc(100svh-7rem)] md:max-h-[70vh] ring-1 ring-bakery-900/5 shadow-2xl">
         <!-- Header -->
         <div class="bg-bakery-900 p-6 text-white flex items-center gap-4">
           <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-2xl">

@@ -179,7 +179,7 @@ watch(user, (newUser) => {
 </script>
 
 <template>
-  <div v-if="isVisible" class="fixed bottom-4 md:bottom-24 right-4 md:right-6 z-100 flex flex-col items-end">
+  <div v-if="isVisible" class="fixed bottom-20 md:bottom-24 right-4 md:right-6 z-100 flex flex-col items-end">
     <!-- Support Toggle Button -->
     <button
       @click="toggleChat"
@@ -202,7 +202,7 @@ watch(user, (newUser) => {
       leave-from-class="transform translate-y-0 opacity-100 scale-100"
       leave-to-class="transform translate-y-10 opacity-0 scale-95"
     >
-      <div v-if="isOpen" class="absolute bottom-16 md:bottom-20 right-0 w-[calc(100vw-2rem)] sm:w-80 md:w-96 bg-white rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-bakery-100 max-h-[60vh]">
+      <div v-if="isOpen" class="absolute bottom-16 md:bottom-20 right-0 w-[calc(100vw-2rem)] sm:w-80 md:w-96 bg-white rounded-3xl overflow-hidden flex flex-col shadow-2xl border border-bakery-100 max-h-[calc(100svh-7rem)] md:max-h-[60vh]">
         <!-- Header -->
         <div class="bg-accent-gold p-4 text-bakery-900 flex items-center justify-between">
           <div class="flex items-center gap-3">
