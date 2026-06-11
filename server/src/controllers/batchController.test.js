@@ -142,7 +142,7 @@ describe('batchController', () => {
             const res = mockRes();
             dbQuery.mockResolvedValueOnce({ rows: [{ id: 1 }] }); // delete
             dbQuery.mockResolvedValueOnce({}); // sync
-            dbQuery.mockResolvedValueOnce({ rows: [{ stock_quantity: 10 }] }); // updated stock
+            dbQuery.mockResolvedValueOnce({ rows: [{ active_stock: 10 }] }); // active stock after sync
 
             await batchController.deleteBatch(req, res);
 

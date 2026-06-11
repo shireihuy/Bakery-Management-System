@@ -57,13 +57,17 @@ describe('orderController / paymentController / notificationController', () => {
 
     it('creates an order and emits stock update', async () => {
         client.query
-            .mockResolvedValueOnce({})
-            .mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bread', price: '3', stock_quantity: 10 }] })
-            .mockResolvedValueOnce({ rows: [] })
-            .mockResolvedValueOnce({ rows: [{ id: 10 }] })
-            .mockResolvedValueOnce({ rows: [] })
-            .mockResolvedValueOnce({ rows: [] })
-            .mockResolvedValueOnce({});
+            .mockResolvedValueOnce({}) // BEGIN
+            .mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bread', price: '3', stock_quantity: 10 }] }) // product
+            .mockResolvedValueOnce({ rows: [{ active_stock: '10' }] }) // active stock check
+            .mockResolvedValueOnce({ rows: [] }) // flash sale
+            .mockResolvedValueOnce({ rows: [{ id: 10 }] }) // insert order
+            .mockResolvedValueOnce({ rows: [{ id: 55 }] }) // insert order detail
+            .mockResolvedValueOnce({ rows: [{ id: 100, quantity: '10' }] }) // active batches for FEFO
+            .mockResolvedValueOnce({ rows: [] }) // update batch quantity
+            .mockResolvedValueOnce({ rows: [] }) // save allocation
+            .mockResolvedValueOnce({ rows: [] }) // sync product stock
+            .mockResolvedValueOnce({}); // COMMIT
         db.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });
 
         const req = {

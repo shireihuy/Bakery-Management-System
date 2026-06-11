@@ -17,6 +17,8 @@ export interface Product {
   readonly price: number;
   readonly cost?: number;
   readonly stock: number;
+  readonly activeQuantity?: number;
+  readonly totalQuantity?: number;
   readonly unit?: string;
   readonly image: string;
   readonly description?: string;

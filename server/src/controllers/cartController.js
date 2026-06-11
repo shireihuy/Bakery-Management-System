@@ -11,7 +11,13 @@ const getCart = async (req, res) => {
                 ci.quantity,
                 p.name,
                 p.price,
-                p.stock_quantity as stock,
+                COALESCE((
+                    SELECT SUM(pb.quantity)
+                    FROM product_batches pb
+                    WHERE pb.product_id = p.id
+                      AND pb.quantity > 0
+                      AND (pb.expiration_date IS NULL OR pb.expiration_date >= CURRENT_DATE)
+                ), 0) as stock,
                 p.image_url as image,
                 p.category,
                 fsi.sale_price as flash_sale_price,

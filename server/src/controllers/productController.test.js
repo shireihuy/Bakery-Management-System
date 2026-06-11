@@ -64,6 +64,7 @@ describe('productController', () => {
         expect(res.body[0].batches).toHaveLength(1);
         expect(res.body[0].activeQuantity).toBe(4);
         expect(res.body[0].totalQuantity).toBe(4);
+        expect(res.body[0].stock).toBe(4);
         expect(res.body[0].flashSale.salePrice).toBe(1.8);
         expect(res.body[0].rating).toBe('4.5');
     });

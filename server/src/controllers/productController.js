@@ -67,7 +67,7 @@ const getProducts = async (req, res) => {
                 description: p.description,
                 image: resolveImageUrl(p.image_url),
                 is_active: p.is_active,
-                stock: parseFloat(p.stock_quantity || 0),
+                stock: activeQuantity,
                 min_stock: parseFloat(p.min_stock_level || 5),
                 unit: p.unit || 'pcs',
                 last_restocked: p.last_restocked,

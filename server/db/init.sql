@@ -127,6 +127,15 @@ CREATE TABLE IF NOT EXISTS order_details (
     subtotal DECIMAL(10, 2) NOT NULL
 );
 
+-- Tracks which batches were consumed per order line (for cancel restores)
+CREATE TABLE IF NOT EXISTS order_detail_allocations (
+    id SERIAL PRIMARY KEY,
+    order_detail_id INTEGER NOT NULL REFERENCES order_details(id) ON DELETE CASCADE,
+    batch_id INTEGER NOT NULL REFERENCES product_batches(id),
+    quantity DECIMAL(10, 2) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Payments Table
 CREATE TABLE IF NOT EXISTS payments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

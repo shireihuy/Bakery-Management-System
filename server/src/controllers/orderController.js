@@ -10,6 +10,13 @@ const DeliveryService = require('../services/deliveryService');
 const payos = require('../config/payos');
 
 const GHNClient = require('../utils/ghnClient');
+const {
+    getActiveStock,
+    syncProductStock,
+    deductActiveStockFEFO,
+    saveOrderDetailAllocations,
+    restoreOrderStock
+} = require('../utils/batchStock');
 
 const createOrder = async (req, res) => {
     const { 
@@ -73,8 +80,9 @@ const createOrder = async (req, res) => {
             }
 
             const product = productRes.rows[0];
-            
-            if (product.stock_quantity < item.quantity) {
+            const activeStock = await getActiveStock(client, product.id);
+
+            if (activeStock < item.quantity) {
                 throw new Error(`Insufficient stock for product: ${product.name}`);
             }
 
@@ -204,17 +212,17 @@ const createOrder = async (req, res) => {
 
         const orderId = orderResult.rows[0].id;
 
-        // 5. Insert into order_details and update stock
+        // 5. Insert order lines, deduct active batches (FEFO), and sync sellable stock
         for (const item of verifiedItems) {
-            await client.query(
-                'INSERT INTO order_details (order_id, product_id, quantity, subtotal) VALUES ($1, $2, $3, $4)',
+            const detailResult = await client.query(
+                'INSERT INTO order_details (order_id, product_id, quantity, subtotal) VALUES ($1, $2, $3, $4) RETURNING id',
                 [orderId, item.product_id, item.quantity, item.subtotal]
             );
+            const orderDetailId = detailResult.rows[0].id;
 
-            await client.query(
-                'UPDATE products SET stock_quantity = stock_quantity - $1 WHERE id = $2',
-                [item.quantity, item.product_id]
-            );
+            const allocations = await deductActiveStockFEFO(client, item.product_id, item.quantity);
+            await saveOrderDetailAllocations(client, orderDetailId, allocations);
+            await syncProductStock(client, item.product_id);
 
             if (item.isFlashSale && item.flashSaleItemId && item.sale_quantity > 0) {
                 await client.query(
@@ -485,36 +493,14 @@ const updateOrderStatus = async (req, res) => {
                 );
             }
 
-            // Restore product stock
-            const itemsRes = await client.query(`
-                SELECT od.product_id, od.quantity, fsi.id as flash_sale_item_id
-                FROM order_details od
-                LEFT JOIN products p ON od.product_id = p.id
-                LEFT JOIN flash_sale_items fsi ON p.id = fsi.product_id
-                JOIN orders o ON od.order_id = o.id
-                JOIN flash_sales fs ON fsi.flash_sale_id = fs.id
-                WHERE od.order_id = $1 
-                  AND fs.start_time <= o.order_date 
-                  AND fs.end_time >= o.order_date
-            `, [id]);
+            await restoreOrderStock(client, id);
 
-            // Note: The logic above for finding the flash sale item is a bit complex 
-            // because we didn't store flash_sale_item_id in order_details.
-            // Ideally we should add flash_sale_item_id to order_details table.
-            // Let's do a simpler approach: check if subtotal/quantity matches flash sale price at that time.
-            
             const allItemsRes = await client.query(
                 'SELECT product_id, quantity, subtotal FROM order_details WHERE order_id = $1',
                 [id]
             );
 
             for (const item of allItemsRes.rows) {
-                await client.query(
-                    'UPDATE products SET stock_quantity = stock_quantity + $1 WHERE id = $2',
-                    [item.quantity, item.product_id]
-                );
-
-                // Check if this item was a flash sale item
                 const unitPrice = Number(item.subtotal) / item.quantity;
                 const fsCheck = await client.query(`
                     SELECT fsi.id 

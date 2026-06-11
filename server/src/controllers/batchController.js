@@ -1,43 +1,10 @@
 const { query } = require('../config/db');
 const NotificationController = require('./notificationController');
-
-// Helper: recalculate and sync stock_quantity on the products table
-const syncProductStock = async (productId) => {
-    await query(`
-        UPDATE products
-        SET stock_quantity = (
-            SELECT COALESCE(SUM(quantity), 0)
-            FROM product_batches
-            WHERE product_id = $1
-        ),
-        last_restocked = CURRENT_TIMESTAMP
-        WHERE id = $1
-    `, [productId]);
-};
+const { syncProductStock, getActiveStock } = require('../utils/batchStock');
 
 const parsePositiveQuantity = (value) => {
     const parsed = Number(value);
     return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
-};
-
-const getActiveStockSnapshot = async (productId) => {
-    const result = await query(`
-        SELECT
-            p.name,
-            COALESCE(p.min_stock_level, 5) AS min_stock_level,
-            COALESCE(SUM(
-                CASE
-                    WHEN b.expiration_date IS NULL OR b.expiration_date >= CURRENT_DATE THEN b.quantity
-                    ELSE 0
-                END
-            ), 0) AS active_stock
-        FROM products p
-        LEFT JOIN product_batches b ON b.product_id = p.id
-        WHERE p.id = $1
-        GROUP BY p.id, p.name, p.min_stock_level
-    `, [productId]);
-
-    return result.rows[0];
 };
 
 // GET /products/:id/batches
@@ -97,16 +64,15 @@ const addBatch = async (req, res) => {
             RETURNING *
         `, [productId, parsedQuantity, finalExpiry, notes || null]);
 
-        await syncProductStock(productId);
+        await syncProductStock(query, productId);
 
-        const stockSnapshot = await getActiveStockSnapshot(productId);
-        const currentStock = Number.parseFloat(stockSnapshot?.active_stock ?? product.stock_quantity ?? 0);
-        const minStock = Number.parseFloat(stockSnapshot?.min_stock_level ?? product.min_stock_level ?? 5);
+        const currentStock = await getActiveStock(query, productId);
+        const minStock = Number.parseFloat(product.min_stock_level ?? 5);
 
         if (currentStock <= minStock) {
             NotificationController.notifyAdmins(
                 'Low Stock Alert',
-                `Product "${stockSnapshot?.name || product.name}" is low on stock (${currentStock} left).`,
+                `Product "${product.name}" is low on stock (${currentStock} left).`,
                 'warning'
             ).catch((notifyErr) => {
                 console.error('Error notifying admins after batch add:', notifyErr);
@@ -144,12 +110,11 @@ const deleteBatch = async (req, res) => {
             return res.status(404).json({ message: 'Batch not found' });
         }
 
-        // Sync cached stock
-        await syncProductStock(productId);
+        await syncProductStock(query, productId);
 
         if (global.io) {
-            const updated = await query('SELECT stock_quantity FROM products WHERE id = $1', [productId]);
-            global.io.emit('stock:updated', { productId, newStock: updated.rows[0]?.stock_quantity ?? 0 });
+            const currentStock = await getActiveStock(query, productId);
+            global.io.emit('stock:updated', { productId, newStock: currentStock });
         }
 
         res.json({ message: 'Batch deleted successfully' });

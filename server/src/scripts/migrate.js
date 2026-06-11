@@ -77,6 +77,16 @@ async function migrate() {
                   SELECT 1 FROM product_batches b WHERE b.product_id = p.id
               )
         `);
+
+        await query(`
+            CREATE TABLE IF NOT EXISTS order_detail_allocations (
+                id SERIAL PRIMARY KEY,
+                order_detail_id INTEGER NOT NULL REFERENCES order_details(id) ON DELETE CASCADE,
+                batch_id INTEGER NOT NULL REFERENCES product_batches(id),
+                quantity DECIMAL(10, 2) NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
     } catch (err) {
         console.error('Migration failed:', err.message);
         throw err;
