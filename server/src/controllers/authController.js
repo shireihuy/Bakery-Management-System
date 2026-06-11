@@ -3,7 +3,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
+const SIMPLE_CAPTCHA_TOKEN = 'simple-captcha-verified';
+
 const verifyTurnstile = async (token, remoteIp) => {
+    if (process.env.BOT_CHECK_MODE === 'simple' || token === SIMPLE_CAPTCHA_TOKEN) {
+        return true;
+    }
+
     if (!process.env.TURNSTILE_SECRET_KEY) {
         return true;
     }

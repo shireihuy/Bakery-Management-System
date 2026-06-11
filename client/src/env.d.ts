@@ -6,6 +6,7 @@ declare module "*.vue" {
 
 interface ImportMetaEnv {
   readonly VITE_TURNSTILE_SITE_KEY?: string;
+  readonly VITE_BOT_CHECK_MODE?: 'simple' | 'turnstile';
 }
 
 interface ImportMeta {
