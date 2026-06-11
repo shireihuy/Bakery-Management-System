@@ -5,7 +5,6 @@ import { Loader2, ArrowLeft, Phone, MapPin } from 'lucide-vue-next';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
 import { useGHN } from '../composables/useGHN';
-import SimpleCaptcha from '../components/SimpleCaptcha.vue';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -18,11 +17,6 @@ const phone = ref('');
 const address = ref('');
 const error = ref('');
 const isLoading = ref(false);
-const isCaptchaVerified = ref(false);
-
-const onCaptchaVerify = (status: boolean) => {
-    isCaptchaVerified.value = status;
-};
 
 const { register, login } = useAuth();
 const { provinces, districts, wards, fetchProvinces, fetchDistricts, fetchWards } = useGHN();
@@ -68,11 +62,6 @@ const handleSubmit = async () => {
 
     if (password.value.length < 6) {
       error.value = t('auth.passTooShort');
-      return;
-    }
-
-    if (!isCaptchaVerified.value) {
-      error.value = t('auth.captchaRequired');
       return;
     }
 
@@ -261,8 +250,6 @@ const handleSubmit = async () => {
                 </div>
             </div>
             
-            <SimpleCaptcha @verify="onCaptchaVerify" />
-
             <button
               type="submit"
               class="h-14 w-full rounded-2xl bg-bakery-900 hover:bg-bakery-800 text-white font-black text-lg transition-all active:scale-[0.98] shadow-xl shadow-bakery-900/10 flex items-center justify-center gap-3 mt-4"
