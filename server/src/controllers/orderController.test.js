@@ -128,4 +128,71 @@ describe('orderController', () => {
             expect(res.status).toHaveBeenCalledWith(404);
         });
     });
+
+    describe('updateOrderStatus', () => {
+        it('clears payment QR data when cancelling an unpaid order', async () => {
+            const req = {
+                params: { id: '7' },
+                user: { id: 1, role: 'Admin' },
+                body: { status: 'Cancelled', cancel_reason: 'Customer requested cancellation', version: 1 }
+            };
+            const res = mockRes();
+
+            dbQueryMock
+                .mockResolvedValueOnce({}) // BEGIN
+                .mockResolvedValueOnce({
+                    rows: [{
+                        id: 7,
+                        version: 1,
+                        status: 'Pending',
+                        payment_status: 'Pending',
+                        payment_method: 'qr',
+                        coupon_id: null,
+                        customer_id: 'u1'
+                    }]
+                })
+                .mockResolvedValueOnce({
+                    rows: [{
+                        id: 7,
+                        status: 'Cancelled',
+                        payment_status: 'Cancelled',
+                        customer_id: 'u1'
+                    }]
+                })
+                .mockResolvedValueOnce({ rows: [] }) // flash sale item lookup
+                .mockResolvedValueOnce({ rows: [] }) // order details
+                .mockResolvedValueOnce({}) // COMMIT
+                .mockResolvedValueOnce({ rows: [{ id: 7 }] }); // get updated order details for response
+
+            await orderController.updateOrderStatus(req, res);
+
+            const updateSql = dbQueryMock.mock.calls[2][0];
+            expect(updateSql).toContain('payment_status');
+            expect(updateSql).toContain('payment_url = NULL');
+            expect(updateSql).toContain('qr_code = NULL');
+            expect(updateSql).toContain('transaction_id = NULL');
+            expect(res.json).toHaveBeenCalled();
+        });
+
+        it('blocks marking cancelled orders as paid', async () => {
+            const req = {
+                params: { id: '8' },
+                user: { id: 1, role: 'Admin' },
+                body: { payment_status: 'Paid', version: 1 }
+            };
+            const res = mockRes();
+
+            dbQueryMock
+                .mockResolvedValueOnce({}) // BEGIN
+                .mockResolvedValueOnce({
+                    rows: [{ id: 8, version: 1, status: 'Cancelled', payment_status: 'Cancelled' }]
+                })
+                .mockResolvedValueOnce({}); // ROLLBACK
+
+            await orderController.updateOrderStatus(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ message: 'Cancelled orders cannot be marked as paid' });
+        });
+    });
 });

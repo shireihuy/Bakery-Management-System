@@ -392,6 +392,11 @@ const updateOrderStatus = async (req, res) => {
             return res.status(400).json({ message: 'Paid orders cannot be cancelled' });
         }
 
+        if (currentOrder.status === 'Cancelled' && payment_status === 'Paid') {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: 'Cancelled orders cannot be marked as paid' });
+        }
+
         // Ensure Customers can only cancel their own pending/unpaid orders.
         if (req.user && req.user.role === 'Customer') {
             if (currentOrder.customer_id !== req.user.id) {
@@ -434,6 +439,14 @@ const updateOrderStatus = async (req, res) => {
         if (payment_status) {
             updateFields.push(`payment_status = $${paramCount++}`);
             params.push(payment_status);
+        }
+
+        if (status === 'Cancelled') {
+            updateFields.push(`payment_status = $${paramCount++}`);
+            params.push('Cancelled');
+            updateFields.push('payment_url = NULL');
+            updateFields.push('qr_code = NULL');
+            updateFields.push('transaction_id = NULL');
         }
 
         if (cancel_reason && status === 'Cancelled') {

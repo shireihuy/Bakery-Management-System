@@ -808,7 +808,7 @@ const confirmCancelOrder = async () => {
                         <Eye class="w-3.5 h-3.5 mr-1.5" /> {{ t('shop.viewDetails') }}
                     </button>
 
-                    <div v-if="order.status === 'Pending' && order.paymentStatus !== 'Paid'" class="grid grid-cols-2 gap-2">
+                    <div v-if="order.status === 'Pending' && !['Paid', 'Cancelled'].includes(order.paymentStatus || '')" class="grid grid-cols-2 gap-2">
                         <button
                             @click="router.push(`/payment/${order.id}`)"
                             class="h-9 rounded-xl bg-bakery-900 text-white text-xs font-bold hover:bg-black flex items-center justify-center transition-all shadow-lg shadow-bakery-100"
@@ -1349,7 +1349,7 @@ const confirmCancelOrder = async () => {
             </div>
 
             <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-                <div v-if="viewingOrder.status === 'Pending' && viewingOrder.paymentStatus !== 'Paid'" class="mr-auto flex gap-2">
+                <div v-if="viewingOrder.status === 'Pending' && !['Paid', 'Cancelled'].includes(viewingOrder.paymentStatus || '')" class="mr-auto flex gap-2">
                     <button
                          @click="router.push(`/payment/${viewingOrder.id}`)"
                          class="px-4 py-2 rounded-lg bg-bakery-900 text-white font-bold text-sm hover:bg-black shadow-lg transition-all flex items-center gap-2"

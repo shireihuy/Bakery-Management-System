@@ -164,6 +164,12 @@ onMounted(async () => {
 
     order.value = found || null;
 
+    if (order.value?.status === 'Cancelled' || order.value?.paymentStatus === 'Cancelled') {
+        alert('This order has been cancelled and can no longer be paid.');
+        router.push('/customer');
+        return;
+    }
+
     // Fetch payment config
     try {
         const token = localStorage.getItem('token');
@@ -196,7 +202,7 @@ onMounted(async () => {
     }
 
     // Auto-restore PayOS session if order is pending and has a payment link
-    if (order.value && order.value.paymentStatus === 'Pending' && (order.value.paymentMethod === 'qr' || order.value.paymentMethod === 'QR (PayOS)') && order.value.transactionId) {
+    if (order.value && order.value.status !== 'Cancelled' && order.value.paymentStatus === 'Pending' && (order.value.paymentMethod === 'qr' || order.value.paymentMethod === 'QR (PayOS)') && order.value.transactionId) {
         payosUrl.value = order.value.paymentUrl || '';
         payosData.value = {
             paymentLinkId: order.value.transactionId,
@@ -208,6 +214,11 @@ onMounted(async () => {
 
 const handlePayment = async () => {
     if (!selectedMethod.value || !order.value) return;
+    if (order.value.status === 'Cancelled' || order.value.paymentStatus === 'Cancelled') {
+        alert('This order has been cancelled and can no longer be paid.');
+        router.push('/customer');
+        return;
+    }
 
     try {
         // Initiate in backend

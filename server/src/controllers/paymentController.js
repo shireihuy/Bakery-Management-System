@@ -70,6 +70,12 @@ const initiatePayment = async (req, res) => {
         }
 
         const order = result.rows[0];
+        if (order.status === 'Cancelled' || order.payment_status === 'Cancelled') {
+            return res.status(400).json({ message: 'Cancelled orders cannot be paid' });
+        }
+        if (order.payment_status === 'Paid') {
+            return res.status(400).json({ message: 'Order is already paid' });
+        }
 
         // 2. Update order with payment method
         await query(
@@ -171,7 +177,7 @@ const verifyPayment = async (req, res) => {
 
         // 🚀 FAIL-SAFE POLLING: If local DB says 'Pending' but method is 'qr'
         // we check PayOS directly in case the webhook was blocked (e.g. localhost)
-        if (order.payment_status === 'Pending' && (order.payment_method === 'qr' || order.payment_method === 'QR (PayOS)')) {
+        if (order.status !== 'Cancelled' && order.payment_status === 'Pending' && (order.payment_method === 'qr' || order.payment_method === 'QR (PayOS)')) {
             try {
                 const payosInfo = await payos.paymentRequests.get(orderId);
                 
@@ -258,6 +264,9 @@ const simulateCallback = async (req, res) => {
         }
 
         const order = orderResult.rows[0];
+        if (order.status === 'Cancelled' || order.payment_status === 'Cancelled') {
+            return res.status(400).json({ message: 'Cancelled orders cannot be paid' });
+        }
 
         // Update payment status
         // If status is 'success', we also move the order to 'Ready'
@@ -270,11 +279,14 @@ const simulateCallback = async (req, res) => {
                 status = $2::varchar, 
                 transaction_id = $3,
                 start_time = CASE WHEN $2::varchar = 'Ready' THEN CURRENT_TIMESTAMP ELSE start_time END
-            WHERE id = $4 
+            WHERE id = $4 AND status != 'Cancelled'
             RETURNING *
         `;
 
-        await query(updateQuery, [nextPaymentStatus, nextOrderStatus, transactionId || `TX_${Date.now()}`, orderId]);
+        const updateResult = await query(updateQuery, [nextPaymentStatus, nextOrderStatus, transactionId || `TX_${Date.now()}`, orderId]);
+        if (updateResult.rows.length === 0) {
+            return res.status(409).json({ message: 'Order can no longer be paid' });
+        }
 
         if (status === 'success') {
             scheduleDeliveryDispatchAfterPayment(order);
@@ -325,7 +337,7 @@ const handlePayOSWebhook = async (req, res) => {
                     status = $2::varchar, 
                     transaction_id = $3,
                     start_time = CURRENT_TIMESTAMP
-                WHERE id = $4 AND payment_status != 'Paid'
+                WHERE id = $4 AND payment_status != 'Paid' AND status != 'Cancelled'
                 RETURNING *
             `;
             const result = await query(updateQuery, ['Paid', 'Ready', webhookData.paymentLinkId, orderId]);

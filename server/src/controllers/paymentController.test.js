@@ -48,6 +48,18 @@ describe('paymentController', () => {
         expect(res.body.message).toMatch(/Mock/);
     });
 
+    it('rejects payment initiation for cancelled orders', async () => {
+        db.query.mockResolvedValueOnce({
+            rows: [{ id: 10, status: 'Cancelled', payment_status: 'Cancelled', total_price: 100 }]
+        });
+
+        const res = mockRes();
+        await controller.initiatePayment({ body: { orderId: 10, method: 'qr' } }, res);
+
+        expect(res.statusCode).toBe(400);
+        expect(res.body.message).toBe('Cancelled orders cannot be paid');
+    });
+
     it('reuses existing PayOS link when available', async () => {
         process.env.PAYOS_CLIENT_ID = 'real-client';
         db.query
@@ -157,7 +169,7 @@ describe('paymentController', () => {
                     delivery_type: 'Delivery'
                 }]
             })
-            .mockResolvedValueOnce({ rows: [] })
+            .mockResolvedValueOnce({ rows: [{ id: 5, status: 'Ready', payment_status: 'Paid' }] })
             .mockResolvedValueOnce({ rows: [] })
             .mockResolvedValueOnce({
                 rows: [{
@@ -187,6 +199,18 @@ describe('paymentController', () => {
         await vi.advanceTimersByTimeAsync(30000);
         expect(DeliveryService.dispatchDelivery).toHaveBeenCalledWith(5);
         expect(DeliveryService.dispatchDelivery).toHaveBeenCalledWith(6);
+    });
+
+    it('rejects simulated payment callback for cancelled orders', async () => {
+        db.query.mockResolvedValueOnce({
+            rows: [{ id: 11, status: 'Cancelled', payment_status: 'Cancelled', total_price: 100 }]
+        });
+
+        const res = mockRes();
+        await controller.simulateCallback({ body: { orderId: 11, status: 'success', transactionId: 'tx-11' } }, res);
+
+        expect(res.statusCode).toBe(400);
+        expect(res.body.message).toBe('Cancelled orders cannot be paid');
     });
 
     it('returns and updates payment settings', async () => {

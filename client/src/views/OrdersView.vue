@@ -349,7 +349,7 @@ const confirmCancel = async () => {
                         <span class="text-sm font-medium text-gray-700 flex items-center w-full sm:w-auto">{{ t('orders.updateStatus') }}:</span>
                         <div class="flex gap-2 flex-wrap">
                             <button 
-                                v-if="viewingOrder.paymentStatus !== 'Paid'"
+                                v-if="viewingOrder.status !== 'Cancelled' && viewingOrder.paymentStatus !== 'Paid'"
                                 @click="updateOrderStatus(viewingOrder.id, undefined, 'Paid')"
                                 class="px-3 py-1.5 bg-bakery-900 text-white text-sm font-medium rounded hover:bg-black border border-bakery-900 transition-colors flex items-center gap-2"
                             >
