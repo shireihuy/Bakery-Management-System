@@ -19,12 +19,12 @@ import { API_URL } from "../config/api";
 const user = ref<User | null>(null);
 
 export function useAuth() {
-  const login = async (email: string, password?: string, turnstileToken?: string) => {
+  const login = async (email: string, password?: string) => {
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, turnstileToken })
+        body: JSON.stringify({ email, password })
       });
 
       if (!response.ok) {

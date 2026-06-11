@@ -101,15 +101,10 @@ const register = async (req, res) => {
 
 
 const login = async (req, res) => {
-    const { email, password, turnstileToken } = req.body;
+    const { email, password } = req.body;
     const normalizedEmail = email ? email.toLowerCase() : '';
 
     try {
-        const isHuman = await verifyTurnstile(turnstileToken, req.ip);
-        if (!isHuman) {
-            return res.status(400).json({ message: 'Robot verification failed. Please try again.' });
-        }
-
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [normalizedEmail]);
         const user = result.rows[0];
 
