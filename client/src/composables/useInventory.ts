@@ -43,23 +43,28 @@ export function useInventory() {
       const products = await prodRes.json();
 
       // 2. Map Products to InventoryItems
-      const productItems: InventoryItem[] = products.map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        category: p.category,
-        quantity: p.stock || 0,
-        minQuantity: p.min_stock || 5,
-        unit: p.unit || "pcs",
-        lastRestocked: p.last_restocked
-          ? new Date(p.last_restocked).toISOString().split("T")[0]
-          : "Never",
-        isProduct: true,
-        batches: p.batches || [],
-        nearestExpiry: p.nearestExpiry || null,
-        hasExpiredBatch: p.hasExpiredBatch || false,
-        activeQuantity: p.activeQuantity || p.stock || 0,
-        totalQuantity: p.totalQuantity || p.stock || 0
-      }));
+      const productItems: InventoryItem[] = products.map((p: any) => {
+        const activeQuantity = Number(p.activeQuantity ?? p.stock ?? 0);
+        const totalQuantity = Number(p.totalQuantity ?? p.stock ?? 0);
+
+        return {
+          id: p.id,
+          name: p.name,
+          category: p.category,
+          quantity: activeQuantity,
+          minQuantity: p.min_stock || 5,
+          unit: p.unit || "pcs",
+          lastRestocked: p.last_restocked
+            ? new Date(p.last_restocked).toISOString().split("T")[0]
+            : "Never",
+          isProduct: true,
+          batches: p.batches || [],
+          nearestExpiry: p.nearestExpiry || null,
+          hasExpiredBatch: p.hasExpiredBatch || false,
+          activeQuantity,
+          totalQuantity
+        };
+      });
 
       // TODO: In the future, fetch from /api/inventory for supplies
       // For now, we only show Products as inventory

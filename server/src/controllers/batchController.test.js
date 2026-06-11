@@ -89,7 +89,7 @@ describe('batchController', () => {
             expect(res.status).toHaveBeenCalledWith(404);
         });
 
-        it('adds a batch and triggers low stock notification if necessary', async () => {
+        it('adds a batch and triggers low stock notification if active stock is still low', async () => {
             const req = { params: { id: 1 }, body: { quantity: 5, expirationDate: '2023-12-01', notes: 'test' } };
             const res = mockRes();
             
@@ -99,14 +99,30 @@ describe('batchController', () => {
             dbQuery.mockResolvedValueOnce({ rows: [{ id: 1, product_id: 1, quantity: '5', expiration_date: '2023-12-01', received_at: '2023-01-01', notes: 'test' }] });
             // sync product stock
             dbQuery.mockResolvedValueOnce({});
-            // get updated product
-            dbQuery.mockResolvedValueOnce({ rows: [{ stock_quantity: 5, min_stock_level: 10, name: 'Bread' }] });
+            // get active stock snapshot
+            dbQuery.mockResolvedValueOnce({ rows: [{ active_stock: 5, min_stock_level: 10, name: 'Bread' }] });
 
             await batchController.addBatch(req, res);
 
             expect(res.status).toHaveBeenCalledWith(201);
             expect(notifyAdminsMock).toHaveBeenCalled();
             expect(global.io.emit).toHaveBeenCalledWith('stock:updated', { productId: 1, newStock: 5 });
+        });
+
+        it('does not trigger low stock notification when active stock is above the alert level', async () => {
+            const req = { params: { id: 1 }, body: { quantity: 12, expirationDate: '', notes: 'fresh' } };
+            const res = mockRes();
+
+            dbQuery.mockResolvedValueOnce({ rows: [{ id: 1, name: 'Bread', min_stock_level: 5, stock_quantity: 0 }] });
+            dbQuery.mockResolvedValueOnce({ rows: [{ id: 1, product_id: 1, quantity: '12', expiration_date: null, received_at: '2023-01-01', notes: 'fresh' }] });
+            dbQuery.mockResolvedValueOnce({});
+            dbQuery.mockResolvedValueOnce({ rows: [{ active_stock: 12, min_stock_level: 5, name: 'Bread' }] });
+
+            await batchController.addBatch(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(201);
+            expect(notifyAdminsMock).not.toHaveBeenCalled();
+            expect(global.io.emit).toHaveBeenCalledWith('stock:updated', { productId: 1, newStock: 12 });
         });
     });
 

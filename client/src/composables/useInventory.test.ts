@@ -23,6 +23,8 @@ describe('useInventory', () => {
           name: 'Bread',
           category: 'Bakery',
           stock: 5,
+          activeQuantity: 4,
+          totalQuantity: 6,
           min_stock: 2,
           unit: 'pcs',
           last_restocked: '2026-05-26T00:00:00.000Z',
@@ -38,6 +40,9 @@ describe('useInventory', () => {
 
     await fetchInventory();
     expect(inventory.value[0].name).toBe('Bread');
+    expect(inventory.value[0].quantity).toBe(4);
+    expect(inventory.value[0].activeQuantity).toBe(4);
+    expect(inventory.value[0].totalQuantity).toBe(6);
     expect(lowStockItems.value).toHaveLength(0);
     expect(onMock).toHaveBeenCalledWith('stock:updated', expect.any(Function));
   });

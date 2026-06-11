@@ -56,6 +56,8 @@ const getProducts = async (req, res) => {
             const activeBatches = batches.filter(b => !b.expirationDate || new Date(b.expirationDate) >= todayStart);
             const expiredBatches = batches.filter(b => b.expirationDate && new Date(b.expirationDate) < todayStart);
             const nearestExpiry = activeBatches.find(b => b.expirationDate)?.expirationDate || null;
+            const activeQuantity = activeBatches.reduce((sum, b) => sum + Number(b.quantity || 0), 0);
+            const totalQuantity = batches.reduce((sum, b) => sum + Number(b.quantity || 0), 0);
 
             return {
                 id: p.id.toString(),
@@ -70,6 +72,8 @@ const getProducts = async (req, res) => {
                 unit: p.unit || 'pcs',
                 last_restocked: p.last_restocked,
                 batches,
+                activeQuantity,
+                totalQuantity,
                 nearestExpiry,
                 hasExpiredBatch: expiredBatches.length > 0,
                 ingredients: Array.isArray(p.ingredients) ? p.ingredients : JSON.parse(p.ingredients || '[]'),
@@ -140,14 +144,20 @@ const getProductById = async (req, res) => {
             notes: b.notes
         }));
 
-        const nearestExpiry = batches.find(b => b.expirationDate)?.expirationDate || null;
+        const todayStart = new Date(new Date().toDateString());
+        const activeBatches = batches.filter(b => !b.expirationDate || new Date(b.expirationDate) >= todayStart);
+        const nearestExpiry = activeBatches.find(b => b.expirationDate)?.expirationDate || null;
+        const activeQuantity = activeBatches.reduce((sum, b) => sum + Number(b.quantity || 0), 0);
+        const totalQuantity = batches.reduce((sum, b) => sum + Number(b.quantity || 0), 0);
         const product = {
             ...p,
             image_url: resolveImageUrl(p.image_url),
             expirationDate: p.expiration_date,
             batches,
+            activeQuantity,
+            totalQuantity,
             nearestExpiry,
-            hasExpiredBatch: batches.some(b => b.expirationDate && new Date(b.expirationDate) < new Date(new Date().toDateString())),
+            hasExpiredBatch: batches.some(b => b.expirationDate && new Date(b.expirationDate) < todayStart),
             rating: parseFloat(p.avg_rating).toFixed(1),
             totalVotes: parseInt(p.total_votes),
             flashSale: p.flash_sale_price ? {

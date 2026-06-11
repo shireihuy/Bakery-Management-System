@@ -51,7 +51,7 @@ describe('productController', () => {
                     id: 11,
                     product_id: 1,
                     quantity: '4',
-                    expiration_date: '2026-06-01',
+                    expiration_date: null,
                     received_at: '2026-05-20',
                     notes: 'fresh'
                 }]
@@ -62,6 +62,8 @@ describe('productController', () => {
 
         expect(res.body).toHaveLength(1);
         expect(res.body[0].batches).toHaveLength(1);
+        expect(res.body[0].activeQuantity).toBe(4);
+        expect(res.body[0].totalQuantity).toBe(4);
         expect(res.body[0].flashSale.salePrice).toBe(1.8);
         expect(res.body[0].rating).toBe('4.5');
     });

@@ -20,6 +20,26 @@ const parsePositiveQuantity = (value) => {
     return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
 };
 
+const getActiveStockSnapshot = async (productId) => {
+    const result = await query(`
+        SELECT
+            p.name,
+            COALESCE(p.min_stock_level, 5) AS min_stock_level,
+            COALESCE(SUM(
+                CASE
+                    WHEN b.expiration_date IS NULL OR b.expiration_date >= CURRENT_DATE THEN b.quantity
+                    ELSE 0
+                END
+            ), 0) AS active_stock
+        FROM products p
+        LEFT JOIN product_batches b ON b.product_id = p.id
+        WHERE p.id = $1
+        GROUP BY p.id, p.name, p.min_stock_level
+    `, [productId]);
+
+    return result.rows[0];
+};
+
 // GET /products/:id/batches
 const getBatches = async (req, res) => {
     const { id } = req.params;
@@ -79,15 +99,14 @@ const addBatch = async (req, res) => {
 
         await syncProductStock(productId);
 
-        const updated = await query('SELECT stock_quantity, min_stock_level, name FROM products WHERE id = $1', [productId]);
-        const updatedProduct = updated.rows[0] || product;
-        const currentStock = Number.parseFloat(updatedProduct.stock_quantity ?? product.stock_quantity ?? 0);
-        const minStock = Number.parseFloat(updatedProduct.min_stock_level ?? product.min_stock_level ?? 0);
+        const stockSnapshot = await getActiveStockSnapshot(productId);
+        const currentStock = Number.parseFloat(stockSnapshot?.active_stock ?? product.stock_quantity ?? 0);
+        const minStock = Number.parseFloat(stockSnapshot?.min_stock_level ?? product.min_stock_level ?? 5);
 
         if (currentStock <= minStock) {
             NotificationController.notifyAdmins(
                 'Low Stock Alert',
-                `Product "${updatedProduct.name}" is low on stock (${currentStock} left).`,
+                `Product "${stockSnapshot?.name || product.name}" is low on stock (${currentStock} left).`,
                 'warning'
             ).catch((notifyErr) => {
                 console.error('Error notifying admins after batch add:', notifyErr);
