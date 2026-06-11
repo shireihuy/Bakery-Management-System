@@ -3,6 +3,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const http = require('http');
 const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
 
 const path = require('path');
 const pool = require('./config/db');
@@ -23,6 +24,43 @@ const PORT = process.env.PORT || 3000;
 // Store io in global for controllers
 global.io = io;
 
+const supportStaffRoles = ['Admin', 'Manager', 'Cashier'];
+
+const verifySocketUser = async (socket, next) => {
+  const token = socket.handshake.auth?.token;
+
+  if (!token) {
+    return next(new Error('Authentication required'));
+  }
+
+  try {
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (!user.sessionId) {
+      return next(new Error('Session expired'));
+    }
+
+    const sessionResult = await pool.query(
+      'SELECT current_session_id FROM users WHERE id = $1',
+      [user.id]
+    );
+
+    if (
+      sessionResult.rows.length === 0 ||
+      sessionResult.rows[0].current_session_id !== user.sessionId
+    ) {
+      return next(new Error('Session expired'));
+    }
+
+    socket.user = user;
+    next();
+  } catch (err) {
+    next(new Error('Invalid token'));
+  }
+};
+
+io.use(verifySocketUser);
+
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
@@ -31,18 +69,22 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 io.on('connection', (socket) => {
   
 
-  socket.on('join:user', (userId) => {
-    socket.join(`user_${userId}`);
+  socket.on('join:user', () => {
+    socket.join(`user_${socket.user.id}`);
     
   });
 
   socket.on('join:admin', () => {
+    if (!supportStaffRoles.includes(socket.user.role)) {
+      return;
+    }
     socket.join('admin_support');
     
   });
 
   socket.on('message:send', async (data) => {
-    const { sender_id, receiver_id, message } = data;
+    const { receiver_id, message } = data;
+    const sender_id = socket.user.id;
     try {
       const result = await pool.query(
         'INSERT INTO chat_messages (sender_id, receiver_id, message) VALUES ($1, $2, $3) RETURNING *',
@@ -57,7 +99,7 @@ io.on('connection', (socket) => {
         const senderResult = await pool.query('SELECT name, role FROM users WHERE id = $1', [sender_id]);
         if (senderResult.rows.length > 0) {
             const sender = senderResult.rows[0];
-            if (!['Admin', 'Manager', 'Cashier'].includes(sender.role)) {
+            if (!supportStaffRoles.includes(sender.role)) {
                 await NotificationController.notifySupportStaff(
                     'New Support Message',
                     `${sender.name}: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`,
@@ -71,7 +113,9 @@ io.on('connection', (socket) => {
       io.to(`user_${sender_id}`).emit('message:receive', newMessage);
 
       // Also broadcast to all admins monitoring support
-      io.to('admin_support').emit('message:receive', newMessage);
+      if (!receiver_id || supportStaffRoles.includes(socket.user.role)) {
+        io.to('admin_support').emit('message:receive', newMessage);
+      }
       
     } catch (err) {
       console.error('Socket message error:', err);

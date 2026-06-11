@@ -38,6 +38,7 @@ export function useAuth() {
       localStorage.setItem("token", data.token);
 
       // Join socket room for real-time notifications
+      socketService.reconnect();
       socketService.joinUserRoom();
 
       // Return redirect path based on role
@@ -79,6 +80,7 @@ export function useAuth() {
     user.value = null;
     localStorage.removeItem("user");
     localStorage.removeItem("token");
+    socketService.disconnect();
   };
 
   const autoLogin = () => {
