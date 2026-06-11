@@ -48,6 +48,39 @@ describe('couponController', () => {
             expect(res.status).toHaveBeenCalledWith(201);
             expect(res.json).toHaveBeenCalledWith({ id: 2, code: 'NEW10' });
         });
+
+        it('normalizes empty dates and whole-number values before creating', async () => {
+            const res = mockRes();
+            const req = { body: { code: ' new10 ', discount_type: 'fixed', discount_value: '2', min_purchase_amount: '10', usage_limit: '', start_date: '', end_date: '', is_active: true } };
+            dbQuery.mockResolvedValueOnce({ rows: [{ id: 2, code: 'NEW10' }] });
+
+            await couponController.createCoupon(req, res);
+
+            expect(dbQuery.mock.calls[0][1]).toEqual(['NEW10', 'fixed', 2, 10, null, null, null, true]);
+            expect(res.status).toHaveBeenCalledWith(201);
+        });
+
+        it('returns 400 for decimal coupon amounts', async () => {
+            const res = mockRes();
+            const req = { body: { code: 'NEW10', discount_type: 'fixed', discount_value: '2.50', min_purchase_amount: '10.75' } };
+
+            await couponController.createCoupon(req, res);
+
+            expect(dbQuery).not.toHaveBeenCalled();
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith({ message: 'Coupon amounts must be whole numbers' });
+        });
+
+        it('returns 409 for duplicate coupon code', async () => {
+            const res = mockRes();
+            const req = { body: { code: 'NEW10', discount_type: 'percentage', discount_value: 10, min_purchase_amount: 50 } };
+            dbQuery.mockRejectedValueOnce({ code: '23505', constraint: 'coupons_code_key' });
+
+            await couponController.createCoupon(req, res);
+
+            expect(res.status).toHaveBeenCalledWith(409);
+            expect(res.json).toHaveBeenCalledWith({ message: 'Coupon code already exists' });
+        });
     });
 
     describe('updateCoupon', () => {

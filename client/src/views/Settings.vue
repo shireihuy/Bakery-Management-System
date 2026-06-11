@@ -45,6 +45,7 @@ const message = ref({ text: '', type: '' as 'success' | 'error' | '' });
 const coupons = ref<any[]>([]);
 const isCouponsLoading = ref(false);
 const showCouponModal = ref(false);
+const couponMessage = ref({ text: '', type: '' as 'success' | 'error' | '' });
 const currentCoupon = ref<any>({
     code: '', discount_type: 'percentage', discount_value: 0, min_purchase_amount: 0,
     usage_limit: null, start_date: '', end_date: '', is_active: true
@@ -283,24 +284,40 @@ const loadCoupons = async () => {
 };
 
 const saveCoupon = async () => {
+    couponMessage.value = { text: '', type: '' };
     try {
         const method = currentCoupon.value.id ? 'PUT' : 'POST';
         const url = currentCoupon.value.id
             ? `${API_URL}/coupons/${currentCoupon.value.id}`
             : `${API_URL}/coupons`;
+        const payload = {
+            ...currentCoupon.value,
+            code: String(currentCoupon.value.code || '').trim().toUpperCase(),
+            discount_value: parseInt(currentCoupon.value.discount_value || 0, 10),
+            min_purchase_amount: parseInt(currentCoupon.value.min_purchase_amount || 0, 10),
+            usage_limit: currentCoupon.value.usage_limit === '' || currentCoupon.value.usage_limit === null
+                ? null
+                : parseInt(currentCoupon.value.usage_limit, 10),
+            start_date: currentCoupon.value.start_date || null,
+            end_date: currentCoupon.value.end_date || null
+        };
 
         const res = await fetch(url, {
             method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(currentCoupon.value)
+            body: JSON.stringify(payload)
         });
 
         if(res.ok) {
             await loadCoupons();
             showCouponModal.value = false;
+        } else {
+            const data = await res.json().catch(() => ({}));
+            couponMessage.value = { text: data.message || 'Failed to save coupon', type: 'error' };
         }
     } catch(e) {
         console.error('Failed to save coupon', e);
+        couponMessage.value = { text: 'Failed to save coupon', type: 'error' };
     }
 };
 
@@ -329,6 +346,7 @@ const toggleCouponStatus = async (coupon: any) => {
 };
 
 const openAddCoupon = () => {
+    couponMessage.value = { text: '', type: '' };
     currentCoupon.value = { code: '', discount_type: 'percentage', discount_value: 0, min_purchase_amount: 0, usage_limit: null, start_date: '', end_date: '', is_active: true };
     showCouponModal.value = true;
 };
@@ -986,17 +1004,17 @@ const handleSave = async () => {
                          </div>
                          <div>
                              <label class="block text-xs font-medium text-gray-700 mb-1">Discount Value</label>
-                             <input v-model="currentCoupon.discount_value" type="number" step="0.01" class="w-full px-3 py-2 border rounded-lg">
+                             <input v-model.number="currentCoupon.discount_value" type="number" step="1" min="0" inputmode="numeric" class="w-full px-3 py-2 border rounded-lg">
                          </div>
                      </div>
                      <div class="grid grid-cols-2 gap-4">
                          <div>
                              <label class="block text-xs font-medium text-gray-700 mb-1">Min. Purchase (USD $)</label>
-                             <input v-model="currentCoupon.min_purchase_amount" type="number" step="0.01" class="w-full px-3 py-2 border rounded-lg">
+                             <input v-model.number="currentCoupon.min_purchase_amount" type="number" step="1" min="0" inputmode="numeric" class="w-full px-3 py-2 border rounded-lg">
                          </div>
                          <div>
                              <label class="block text-xs font-medium text-gray-700 mb-1">Usage Limit</label>
-                             <input v-model="currentCoupon.usage_limit" type="number" placeholder="Unlimited" class="w-full px-3 py-2 border rounded-lg">
+                             <input v-model.number="currentCoupon.usage_limit" type="number" min="0" placeholder="Unlimited" class="w-full px-3 py-2 border rounded-lg">
                          </div>
                      </div>
                      <div class="grid grid-cols-2 gap-4">
@@ -1008,6 +1026,9 @@ const handleSave = async () => {
                              <label class="block text-xs font-medium text-gray-700 mb-1">End Date</label>
                              <input v-model="currentCoupon.end_date" type="datetime-local" class="w-full px-3 py-2 border rounded-lg text-sm">
                          </div>
+                     </div>
+                     <div v-if="couponMessage.text" :class="`p-3 rounded-lg text-sm font-medium ${couponMessage.type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`">
+                         {{ couponMessage.text }}
                      </div>
                  </div>
                  <div class="p-4 bg-gray-50 flex justify-end gap-3 border-t">

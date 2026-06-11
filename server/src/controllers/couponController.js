@@ -1,5 +1,46 @@
 const { query } = require('../config/db');
 
+const normalizeCouponInput = (body) => {
+    const normalizeNumber = (value, fallback = 0) => {
+        if (value === '' || value === null || value === undefined) return fallback;
+        return Number(value);
+    };
+
+    return {
+        code: String(body.code || '').trim().toUpperCase(),
+        discount_type: body.discount_type,
+        discount_value: normalizeNumber(body.discount_value),
+        min_purchase_amount: normalizeNumber(body.min_purchase_amount),
+        usage_limit: body.usage_limit === '' || body.usage_limit === null || body.usage_limit === undefined
+            ? null
+            : Number(body.usage_limit),
+        start_date: body.start_date || null,
+        end_date: body.end_date || null,
+        is_active: body.is_active
+    };
+};
+
+const validateWholeNumberCouponInput = ({ discount_value, min_purchase_amount, usage_limit }) => {
+    if (!Number.isInteger(discount_value) || !Number.isInteger(min_purchase_amount)) {
+        return 'Coupon amounts must be whole numbers';
+    }
+
+    if (usage_limit !== null && !Number.isInteger(usage_limit)) {
+        return 'Usage limit must be a whole number';
+    }
+
+    return null;
+};
+
+const handleCouponError = (res, err, action) => {
+    if (err.code === '23505' && err.constraint === 'coupons_code_key') {
+        return res.status(409).json({ message: 'Coupon code already exists' });
+    }
+
+    console.error(`Error ${action} coupon:`, err);
+    return res.status(500).json({ message: `Server error ${action} coupon`, error: err.message });
+};
+
 const getAllCoupons = async (req, res) => {
     try {
         const result = await query('SELECT * FROM coupons ORDER BY created_at DESC');
@@ -14,7 +55,11 @@ const createCoupon = async (req, res) => {
     const {
         code, discount_type, discount_value, min_purchase_amount,
         usage_limit, start_date, end_date, is_active
-    } = req.body;
+    } = normalizeCouponInput(req.body);
+    const validationError = validateWholeNumberCouponInput({ discount_value, min_purchase_amount, usage_limit });
+    if (validationError) {
+        return res.status(400).json({ message: validationError });
+    }
 
     try {
         const result = await query(
@@ -27,8 +72,7 @@ const createCoupon = async (req, res) => {
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
-        console.error('Error creating coupon:', err);
-        res.status(500).json({ message: 'Server error creating coupon', error: err.message });
+        handleCouponError(res, err, 'creating');
     }
 };
 
@@ -37,7 +81,11 @@ const updateCoupon = async (req, res) => {
     const {
         code, discount_type, discount_value, min_purchase_amount,
         usage_limit, start_date, end_date, is_active
-    } = req.body;
+    } = normalizeCouponInput(req.body);
+    const validationError = validateWholeNumberCouponInput({ discount_value, min_purchase_amount, usage_limit });
+    if (validationError) {
+        return res.status(400).json({ message: validationError });
+    }
 
     try {
         const result = await query(
@@ -53,8 +101,7 @@ const updateCoupon = async (req, res) => {
         }
         res.json(result.rows[0]);
     } catch (err) {
-        console.error('Error updating coupon:', err);
-        res.status(500).json({ message: 'Server error updating coupon', error: err.message });
+        handleCouponError(res, err, 'updating');
     }
 };
 
