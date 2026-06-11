@@ -15,7 +15,7 @@ router.delete('/:id', authenticateToken, authorizeRoles('Admin', 'Manager'), use
 router.get('/', authenticateToken, authorizeRoles('Admin', 'Manager'), async (req, res) => {
     try {
         const result = await pool.query(
-            'SELECT id, name, email, role, status, phone_number as phone, address, created_at as "joinDate" FROM users ORDER BY created_at DESC'
+            'SELECT id, name, email, role, status, phone_number as phone, address, province_id, district_id, ward_code, created_at as "joinDate" FROM users ORDER BY created_at DESC'
         );
 
         // Transform data to match frontend expectations if needed

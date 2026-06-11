@@ -36,7 +36,18 @@ describe('authController', () => {
     describe('register', () => {
         it('registers a new user successfully', async () => {
             const req = {
-                body: { name: 'Test', email: 'Test@test.com', password: 'password', role: 'Cashier', status: 'active' }
+                body: {
+                    name: 'Test',
+                    email: 'Test@test.com',
+                    password: 'password',
+                    role: 'Cashier',
+                    status: 'active',
+                    phone_number: '123',
+                    address: '42 Main',
+                    province_id: 202,
+                    district_id: 1442,
+                    ward_code: '1A'
+                }
             };
             const res = mockRes();
 
@@ -48,6 +59,7 @@ describe('authController', () => {
             await authController.register(req, res);
 
             expect(dbQuery).toHaveBeenCalledTimes(2);
+            expect(dbQuery.mock.calls[1][1]).toEqual(expect.arrayContaining(['123', '42 Main', 202, 1442, '1A']));
             expect(res.status).toHaveBeenCalledWith(201);
             expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ token: 'fake-token' }));
         });

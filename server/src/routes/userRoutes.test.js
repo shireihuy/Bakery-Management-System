@@ -44,7 +44,7 @@ describe('userRoutes inline controller', () => {
     it('GET /api/users fetches all users for admins', async () => {
         pool.query.mockResolvedValueOnce({
             rows: [
-                { id: 1, name: 'Admin', joinDate: '2026-05-26T12:00:00Z' },
+                { id: 1, name: 'Admin', address: '42 Main', province_id: 202, district_id: 1442, ward_code: '1A', joinDate: '2026-05-26T12:00:00Z' },
                 { id: 2, name: 'NoDateUser', joinDate: null }
             ]
         });
@@ -54,7 +54,16 @@ describe('userRoutes inline controller', () => {
         expect(res.status).toBe(200);
         expect(res.body).toHaveLength(2);
         expect(res.body[0].joinDate).toBe('2026-05-26');
+        expect(res.body[0]).toEqual(expect.objectContaining({
+            address: '42 Main',
+            province_id: 202,
+            district_id: 1442,
+            ward_code: '1A'
+        }));
         expect(res.body[1].joinDate).toBe('N/A');
+        expect(pool.query.mock.calls[0][0]).toContain('province_id');
+        expect(pool.query.mock.calls[0][0]).toContain('district_id');
+        expect(pool.query.mock.calls[0][0]).toContain('ward_code');
     });
 
     it('GET /api/users handles DB errors', async () => {

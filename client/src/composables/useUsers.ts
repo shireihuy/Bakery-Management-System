@@ -84,11 +84,15 @@ export function useUsers() {
         },
         body: JSON.stringify(updates)
       });
-      if (response.ok) {
-        await fetchUsers(); // Refresh list
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to update user");
       }
+
+      await fetchUsers(); // Refresh list
     } catch (err) {
       console.error("Failed to update user:", err);
+      throw err;
     }
   };
 

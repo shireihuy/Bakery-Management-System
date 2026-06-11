@@ -67,12 +67,39 @@ describe('useUsers', () => {
             .mockResolvedValueOnce({ ok: true })
             .mockResolvedValueOnce({ ok: true, json: async () => [] }); // for fetchUsers
 
-        await updateUser('u1', { name: 'Updated Name' });
+        await updateUser('u1', {
+            name: 'Updated Name',
+            address: '42 Main',
+            province_id: 202,
+            district_id: 1442,
+            ward_code: '1A'
+        });
 
         expect(global.fetch).toHaveBeenCalledWith(
             expect.stringContaining('/users/u1'),
-            expect.objectContaining({ method: 'PUT', body: JSON.stringify({ name: 'Updated Name' }) })
+            expect.objectContaining({
+                method: 'PUT',
+                body: JSON.stringify({
+                    name: 'Updated Name',
+                    address: '42 Main',
+                    province_id: 202,
+                    district_id: 1442,
+                    ward_code: '1A'
+                })
+            })
         );
+    });
+
+    it('throws backend errors when updating a user fails', async () => {
+        const { useUsers } = await import('./useUsers');
+        const { updateUser } = useUsers();
+
+        global.fetch = vi.fn().mockResolvedValueOnce({
+            ok: false,
+            json: async () => ({ message: 'Server error updating user' })
+        });
+
+        await expect(updateUser('u1', { address: '42 Main' })).rejects.toThrow('Server error updating user');
     });
 
     it('deletes a user successfully', async () => {
