@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { Loader2, ArrowLeft, Eye, EyeOff, Sparkles } from 'lucide-vue-next';
 import { useAuth } from '../composables/useAuth';
 import { useI18n } from '../composables/useI18n';
+import SimpleCaptcha from '../components/SimpleCaptcha.vue';
 
 const router = useRouter();
 const { login } = useAuth();
@@ -14,6 +15,13 @@ const password = ref('');
 const error = ref('');
 const isLoading = ref(false);
 const showPassword = ref(false);
+const isCaptchaVerified = ref(false);
+const captchaResetKey = ref(0);
+
+const onCaptchaVerify = (status: boolean) => {
+    isCaptchaVerified.value = status;
+};
+
 const onToggleMode = () => {
     router.push('/register');
 };
@@ -25,12 +33,20 @@ const onBackToHome = () => {
 const handleSubmit = async () => {
     error.value = '';
     isLoading.value = true;
+
+    if (!isCaptchaVerified.value) {
+        error.value = t('auth.captchaRequired');
+        isLoading.value = false;
+        return;
+    }
     
     try {
         const redirectPath = await login(email.value, password.value);
         router.push(redirectPath);
     } catch (err: any) {
         error.value = err.message || 'Login failed. Please check your credentials.';
+        isCaptchaVerified.value = false;
+        captchaResetKey.value += 1;
     } finally {
         isLoading.value = false;
     }
@@ -115,6 +131,8 @@ const handleSubmit = async () => {
               </div>
             </div>
             
+            <SimpleCaptcha :key="captchaResetKey" @verify="onCaptchaVerify" />
+
             <button
               type="submit"
               class="h-14 w-full rounded-2xl bg-bakery-900 hover:bg-bakery-800 text-white font-black text-lg transition-all active:scale-[0.98] shadow-xl shadow-bakery-900/10 flex items-center justify-center gap-3"
